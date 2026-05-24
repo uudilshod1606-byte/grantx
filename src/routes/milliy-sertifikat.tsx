@@ -81,7 +81,7 @@ const subjects = [
     name: "CEFR English",
     description: "Milliy sertifikat ingliz tili imtihoni — B2 va C1 darajalari.",
     icon: Languages,
-    color: "oklch(0.7 1.0.2 250)",
+    color: "oklch(0.7 0.2 250)",
     questions: 0,
     duration: "90 daqiqa",
   },
@@ -100,7 +100,7 @@ const subjects = [
     description: "O'zbek tili va adabiyotidan milliy sertifikat imtihoni.",
     icon: BookText,
     color: "oklch(0.6 0.18 150)",
-    questions: 5,
+    questions: 0,
     duration: "90 daqiqa",
   },
   {
@@ -109,7 +109,7 @@ const subjects = [
     description: "O'zbekiston va jahon tarixi bo'yicha milliy sertifikat.",
     icon: Clock,
     color: "oklch(0.7 0.15 50)",
-    questions: 5,
+    questions: 0,
     duration: "90 daqiqa",
   },
   {
@@ -117,8 +117,8 @@ const subjects = [
     name: "Fizika",
     description: "Milliy sertifikat fizika imtihoni — mexanika, elektrodinamika, optika.",
     icon: Zap,
-    color: "oklch(0.7 0.2 220)",
-    questions: 5,
+    color: "oklch(0.7 1.0.2 220)",
+    questions: 0,
     duration: "90 daqiqa",
   },
   {
@@ -127,7 +127,7 @@ const subjects = [
     description: "Milliy sertifikat biologiya imtihoni — zoologiya, botanika, anatomiya.",
     icon: Leaf,
     color: "oklch(0.65 0.18 140)",
-    questions: 5,
+    questions: 0,
     duration: "90 daqiqa",
   },
   {
@@ -136,7 +136,7 @@ const subjects = [
     description: "Milliy sertifikat kimyo imtihoni — organik va noorganik kimyo.",
     icon: FlaskConical,
     color: "oklch(0.7 0.2 300)",
-    questions: 5,
+    questions: 0,
     duration: "90 daqiqa",
   },
 ];
