@@ -9,8 +9,14 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MilliySertifikatRouteImport } from './routes/milliy-sertifikat'
 import { Route as IndexRouteImport } from './routes/index'
 
+const MilliySertifikatRoute = MilliySertifikatRouteImport.update({
+  id: '/milliy-sertifikat',
+  path: '/milliy-sertifikat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +25,39 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/milliy-sertifikat': typeof MilliySertifikatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/milliy-sertifikat': typeof MilliySertifikatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/milliy-sertifikat': typeof MilliySertifikatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/milliy-sertifikat'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/milliy-sertifikat'
+  id: '__root__' | '/' | '/milliy-sertifikat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MilliySertifikatRoute: typeof MilliySertifikatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/milliy-sertifikat': {
+      id: '/milliy-sertifikat'
+      path: '/milliy-sertifikat'
+      fullPath: '/milliy-sertifikat'
+      preLoaderRoute: typeof MilliySertifikatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +70,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MilliySertifikatRoute: MilliySertifikatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

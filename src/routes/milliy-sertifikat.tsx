@@ -135,7 +135,7 @@ const subjects = [
     name: "Kimyo",
     description: "Milliy sertifikat kimyo imtihoni — organik va noorganik kimyo.",
     icon: FlaskConical,
-    color: "oklch(1.7 0.2 300)",
+    color: "oklch(0.7 0.2 300)",
     questions: 5,
     duration: "90 daqiqa",
   },
