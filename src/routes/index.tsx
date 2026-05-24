@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { GraduationCap, Sparkles, BookOpen, Trophy, Target, Menu, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -114,6 +114,7 @@ function Programs() {
       icon: BookOpen,
       tag: "Oliy ta'lim",
       title: "DTM",
+      href: "#",
       desc: "Davlat test markazi imtihonlariga to'liq tayyorlov. Barcha blok fanlar bo'yicha video darslar, mock testlar va shaxsiy reyting.",
       points: ["Barcha bloklar", "10 000+ test", "Jonli darslar"],
     },
@@ -121,8 +122,9 @@ function Programs() {
       icon: Trophy,
       tag: "O'qituvchilar uchun",
       title: "Milliy Sertifikat",
-      desc: "Chet tili va kasbiy sertifikatlarga tayyorlov. B2 va C1 darajalari uchun maxsus modullar va simulyatsiyalar.",
-      points: ["B2 / C1 darajalar", "Real format testlar", "Mentor qo'llab-quvvatlash"],
+      href: "/milliy-sertifikat",
+      desc: "CEFR English, Matematika, Ona tili va adabiyot, Tarix, Fizika, Biologiya, Kimyo fanlaridan milliy sertifikatga tayyorlov.",
+      points: ["7 ta asosiy fan", "Real format testlar", "Mentor qo'llab-quvvatlash"],
     },
   ];
   return (
@@ -133,36 +135,45 @@ function Programs() {
       </div>
 
       <div className="mt-12 grid gap-6 md:grid-cols-2">
-        {items.map((it, i) => (
-          <div
-            key={it.title}
-            className="group relative overflow-hidden rounded-3xl glass p-8 transition duration-500 hover:-translate-y-1 hover:glow"
-            style={{ animationDelay: `${i * 0.1}s` }}
-          >
-            <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/20 blur-2xl transition group-hover:bg-primary/40" />
-            <div className="relative">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl gradient-bg glow">
-                <it.icon className="h-7 w-7 text-primary-foreground" />
+        {items.map((it, i) => {
+          const Card = (
+            <div
+              key={it.title}
+              className="group relative overflow-hidden rounded-3xl glass p-8 transition duration-500 hover:-translate-y-1 hover:glow"
+              style={{ animationDelay: `${i * 0.1}s` }}
+            >
+              <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/20 blur-2xl transition group-hover:bg-primary/40" />
+              <div className="relative">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl gradient-bg glow">
+                  <it.icon className="h-7 w-7 text-primary-foreground" />
+                </div>
+                <div className="mt-6 inline-flex rounded-full bg-white/5 px-3 py-1 text-xs text-muted-foreground">
+                  {it.tag}
+                </div>
+                <h3 className="mt-3 text-3xl font-bold">{it.title}</h3>
+                <p className="mt-3 text-muted-foreground">{it.desc}</p>
+                <ul className="mt-6 space-y-2">
+                  {it.points.map((p) => (
+                    <li key={p} className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 text-accent" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+                <Button className="mt-8 gradient-bg text-primary-foreground hover:opacity-90">
+                  Batafsil <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-              <div className="mt-6 inline-flex rounded-full bg-white/5 px-3 py-1 text-xs text-muted-foreground">
-                {it.tag}
-              </div>
-              <h3 className="mt-3 text-3xl font-bold">{it.title}</h3>
-              <p className="mt-3 text-muted-foreground">{it.desc}</p>
-              <ul className="mt-6 space-y-2">
-                {it.points.map((p) => (
-                  <li key={p} className="flex items-center gap-2 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-accent" />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-              <Button className="mt-8 gradient-bg text-primary-foreground hover:opacity-90">
-                Batafsil <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </div>
-          </div>
-        ))}
+          );
+          return it.href && it.href !== "#" ? (
+            <Link to={it.href} className="block">
+              {Card}
+            </Link>
+          ) : (
+            Card
+          );
+        })}
       </div>
     </section>
   );
