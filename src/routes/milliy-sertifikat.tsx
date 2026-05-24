@@ -117,7 +117,7 @@ const subjects = [
     name: "Fizika",
     description: "Milliy sertifikat fizika imtihoni — mexanika, elektrodinamika, optika.",
     icon: Zap,
-    color: "oklch(0.7 1.0.2 220)",
+    color: "oklch(0.7 0.2 220)",
     questions: 0,
     duration: "90 daqiqa",
   },
@@ -215,13 +215,19 @@ function SubjectCard({ subject, index }: { subject: typeof subjects[0]; index: n
         </div>
 
         {/* Action */}
-        <Button
-          className="mt-6 w-full gap-2 gradient-bg text-primary-foreground hover:opacity-90"
-          size="lg"
+        <Link
+          to="/milliy-sertifikat/$subjectId"
+          params={{ subjectId: subject.id }}
+          className="mt-6 block"
         >
-          Imtihonni boshlash
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </Button>
+          <Button
+            className="w-full gap-2 gradient-bg text-primary-foreground hover:opacity-90"
+            size="lg"
+          >
+            Imtihonni boshlash
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Button>
+        </Link>
       </div>
     </div>
   );
