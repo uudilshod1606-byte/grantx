@@ -114,7 +114,7 @@ function Programs() {
       icon: BookOpen,
       tag: "Oliy ta'lim",
       title: "DTM",
-      href: "#",
+      href: "/dtm",
       desc: "Davlat test markazi imtihonlariga to'liq tayyorlov. Barcha blok fanlar bo'yicha video darslar, mock testlar va shaxsiy reyting.",
       points: ["Barcha bloklar", "10 000+ test", "Jonli darslar"],
     },
