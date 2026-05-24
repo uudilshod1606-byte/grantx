@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MilliySertifikatRouteImport } from './routes/milliy-sertifikat'
+import { Route as DtmRouteImport } from './routes/dtm'
 import { Route as IndexRouteImport } from './routes/index'
 
 const MilliySertifikatRoute = MilliySertifikatRouteImport.update({
   id: '/milliy-sertifikat',
   path: '/milliy-sertifikat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DtmRoute = DtmRouteImport.update({
+  id: '/dtm',
+  path: '/dtm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +31,31 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dtm': typeof DtmRoute
   '/milliy-sertifikat': typeof MilliySertifikatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dtm': typeof DtmRoute
   '/milliy-sertifikat': typeof MilliySertifikatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dtm': typeof DtmRoute
   '/milliy-sertifikat': typeof MilliySertifikatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/milliy-sertifikat'
+  fullPaths: '/' | '/dtm' | '/milliy-sertifikat'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/milliy-sertifikat'
-  id: '__root__' | '/' | '/milliy-sertifikat'
+  to: '/' | '/dtm' | '/milliy-sertifikat'
+  id: '__root__' | '/' | '/dtm' | '/milliy-sertifikat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DtmRoute: typeof DtmRoute
   MilliySertifikatRoute: typeof MilliySertifikatRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/milliy-sertifikat'
       fullPath: '/milliy-sertifikat'
       preLoaderRoute: typeof MilliySertifikatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dtm': {
+      id: '/dtm'
+      path: '/dtm'
+      fullPath: '/dtm'
+      preLoaderRoute: typeof DtmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DtmRoute: DtmRoute,
   MilliySertifikatRoute: MilliySertifikatRoute,
 }
 export const routeTree = rootRouteImport
