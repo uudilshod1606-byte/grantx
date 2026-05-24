@@ -243,7 +243,7 @@ function SubjectsGrid() {
         {subjects.map((subject, i) => (
           <SubjectCard key={subject.id} subject={subject} index={i} />
         ))}
-      </<div>
+      </div>
     </section>
   );
 }
