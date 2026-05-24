@@ -114,6 +114,7 @@ function Programs() {
       icon: BookOpen,
       tag: "Oliy ta'lim",
       title: "DTM",
+      href: "#",
       desc: "Davlat test markazi imtihonlariga to'liq tayyorlov. Barcha blok fanlar bo'yicha video darslar, mock testlar va shaxsiy reyting.",
       points: ["Barcha bloklar", "10 000+ test", "Jonli darslar"],
     },
@@ -121,8 +122,9 @@ function Programs() {
       icon: Trophy,
       tag: "O'qituvchilar uchun",
       title: "Milliy Sertifikat",
-      desc: "Chet tili va kasbiy sertifikatlarga tayyorlov. B2 va C1 darajalari uchun maxsus modullar va simulyatsiyalar.",
-      points: ["B2 / C1 darajalar", "Real format testlar", "Mentor qo'llab-quvvatlash"],
+      href: "/milliy-sertifikat",
+      desc: "CEFR English, Matematika, Ona tili va adabiyot, Tarix, Fizika, Biologiya, Kimyo fanlaridan milliy sertifikatga tayyorlov.",
+      points: ["7 ta asosiy fan", "Real format testlar", "Mentor qo'llab-quvvatlash"],
     },
   ];
   return (
