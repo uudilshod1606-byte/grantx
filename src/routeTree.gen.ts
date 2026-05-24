@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as MilliySertifikatRouteImport } from './routes/milliy-sertifikat'
 import { Route as DtmRouteImport } from './routes/dtm'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MilliySertifikatSubjectIdRouteImport } from './routes/milliy-sertifikat.$subjectId'
 
 const MilliySertifikatRoute = MilliySertifikatRouteImport.update({
   id: '/milliy-sertifikat',
@@ -28,35 +29,53 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MilliySertifikatSubjectIdRoute =
+  MilliySertifikatSubjectIdRouteImport.update({
+    id: '/$subjectId',
+    path: '/$subjectId',
+    getParentRoute: () => MilliySertifikatRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dtm': typeof DtmRoute
-  '/milliy-sertifikat': typeof MilliySertifikatRoute
+  '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dtm': typeof DtmRoute
-  '/milliy-sertifikat': typeof MilliySertifikatRoute
+  '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dtm': typeof DtmRoute
-  '/milliy-sertifikat': typeof MilliySertifikatRoute
+  '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dtm' | '/milliy-sertifikat'
+  fullPaths:
+    | '/'
+    | '/dtm'
+    | '/milliy-sertifikat'
+    | '/milliy-sertifikat/$subjectId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dtm' | '/milliy-sertifikat'
-  id: '__root__' | '/' | '/dtm' | '/milliy-sertifikat'
+  to: '/' | '/dtm' | '/milliy-sertifikat' | '/milliy-sertifikat/$subjectId'
+  id:
+    | '__root__'
+    | '/'
+    | '/dtm'
+    | '/milliy-sertifikat'
+    | '/milliy-sertifikat/$subjectId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DtmRoute: typeof DtmRoute
-  MilliySertifikatRoute: typeof MilliySertifikatRoute
+  MilliySertifikatRoute: typeof MilliySertifikatRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -82,13 +101,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/milliy-sertifikat/$subjectId': {
+      id: '/milliy-sertifikat/$subjectId'
+      path: '/$subjectId'
+      fullPath: '/milliy-sertifikat/$subjectId'
+      preLoaderRoute: typeof MilliySertifikatSubjectIdRouteImport
+      parentRoute: typeof MilliySertifikatRoute
+    }
   }
 }
+
+interface MilliySertifikatRouteChildren {
+  MilliySertifikatSubjectIdRoute: typeof MilliySertifikatSubjectIdRoute
+}
+
+const MilliySertifikatRouteChildren: MilliySertifikatRouteChildren = {
+  MilliySertifikatSubjectIdRoute: MilliySertifikatSubjectIdRoute,
+}
+
+const MilliySertifikatRouteWithChildren =
+  MilliySertifikatRoute._addFileChildren(MilliySertifikatRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DtmRoute: DtmRoute,
-  MilliySertifikatRoute: MilliySertifikatRoute,
+  MilliySertifikatRoute: MilliySertifikatRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
