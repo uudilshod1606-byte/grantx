@@ -57,8 +57,12 @@ function Navbar() {
           <a href="#aloqa" className="text-sm text-muted-foreground transition hover:text-foreground">Aloqa</a>
         </div>
         <div className="hidden items-center gap-2 md:flex">
-          <Button variant="ghost" className="text-foreground hover:bg-white/10">Kirish</Button>
-          <Button className="gradient-bg text-primary-foreground hover:opacity-90">Boshlash</Button>
+          <Link to="/login">
+            <Button variant="ghost" className="text-foreground hover:bg-white/10">Kirish</Button>
+          </Link>
+          <Link to="/signup">
+            <Button className="gradient-bg text-primary-foreground hover:opacity-90">Boshlash</Button>
+          </Link>
         </div>
         <button className="md:hidden rounded-lg p-2 hover:bg-white/10" aria-label="Menu">
           <Menu className="h-5 w-5" />
