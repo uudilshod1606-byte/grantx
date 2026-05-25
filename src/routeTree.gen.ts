@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as MilliySertifikatRouteImport } from './routes/milliy-sertifikat'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as DtmRouteImport } from './routes/dtm'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +25,11 @@ const SignupRoute = SignupRouteImport.update({
 const MilliySertifikatRoute = MilliySertifikatRouteImport.update({
   id: '/milliy-sertifikat',
   path: '/milliy-sertifikat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DtmRoute = DtmRouteImport.update({
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
+  '/login': typeof LoginRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
   '/signup': typeof SignupRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
+  '/login': typeof LoginRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
   '/signup': typeof SignupRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
+  '/login': typeof LoginRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
   '/signup': typeof SignupRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/dtm'
+    | '/login'
     | '/milliy-sertifikat'
     | '/signup'
     | '/milliy-sertifikat/$subjectId'
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/dtm'
+    | '/login'
     | '/milliy-sertifikat'
     | '/signup'
     | '/milliy-sertifikat/$subjectId'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/dtm'
+    | '/login'
     | '/milliy-sertifikat'
     | '/signup'
     | '/milliy-sertifikat/$subjectId'
@@ -104,6 +116,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   DtmRoute: typeof DtmRoute
+  LoginRoute: typeof LoginRoute
   MilliySertifikatRoute: typeof MilliySertifikatRouteWithChildren
   SignupRoute: typeof SignupRoute
 }
@@ -122,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/milliy-sertifikat'
       fullPath: '/milliy-sertifikat'
       preLoaderRoute: typeof MilliySertifikatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dtm': {
@@ -170,6 +190,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   DtmRoute: DtmRoute,
+  LoginRoute: LoginRoute,
   MilliySertifikatRoute: MilliySertifikatRouteWithChildren,
   SignupRoute: SignupRoute,
 }
