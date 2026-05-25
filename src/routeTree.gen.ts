@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as MilliySertifikatRouteImport } from './routes/milliy-sertifikat'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DtmRouteImport } from './routes/dtm'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -30,6 +31,11 @@ const MilliySertifikatRoute = MilliySertifikatRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DtmRoute = DtmRouteImport.update({
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
   '/signup': typeof SignupRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
   '/signup': typeof SignupRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
   '/signup': typeof SignupRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/dtm'
+    | '/forgot-password'
     | '/login'
     | '/milliy-sertifikat'
     | '/signup'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/dtm'
+    | '/forgot-password'
     | '/login'
     | '/milliy-sertifikat'
     | '/signup'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/dtm'
+    | '/forgot-password'
     | '/login'
     | '/milliy-sertifikat'
     | '/signup'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   DtmRoute: typeof DtmRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   MilliySertifikatRoute: typeof MilliySertifikatRouteWithChildren
   SignupRoute: typeof SignupRoute
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dtm': {
@@ -190,6 +210,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   DtmRoute: DtmRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MilliySertifikatRoute: MilliySertifikatRouteWithChildren,
   SignupRoute: SignupRoute,
