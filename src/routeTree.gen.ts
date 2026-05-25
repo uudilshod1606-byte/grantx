@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as MilliySertifikatRouteImport } from './routes/milliy-sertifikat'
 import { Route as DtmRouteImport } from './routes/dtm'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MilliySertifikatSubjectIdRouteImport } from './routes/milliy-sertifikat.$subjectId'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MilliySertifikatRoute = MilliySertifikatRouteImport.update({
   id: '/milliy-sertifikat',
   path: '/milliy-sertifikat',
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/signup': typeof SignupRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRoutesByTo {
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/signup': typeof SignupRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRoutesById {
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/dtm': typeof DtmRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/signup': typeof SignupRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRouteTypes {
@@ -71,6 +80,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dtm'
     | '/milliy-sertifikat'
+    | '/signup'
     | '/milliy-sertifikat/$subjectId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -78,6 +88,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dtm'
     | '/milliy-sertifikat'
+    | '/signup'
     | '/milliy-sertifikat/$subjectId'
   id:
     | '__root__'
@@ -85,6 +96,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/dtm'
     | '/milliy-sertifikat'
+    | '/signup'
     | '/milliy-sertifikat/$subjectId'
   fileRoutesById: FileRoutesById
 }
@@ -93,10 +105,18 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DtmRoute: typeof DtmRoute
   MilliySertifikatRoute: typeof MilliySertifikatRouteWithChildren
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/milliy-sertifikat': {
       id: '/milliy-sertifikat'
       path: '/milliy-sertifikat'
@@ -151,7 +171,18 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DtmRoute: DtmRoute,
   MilliySertifikatRoute: MilliySertifikatRouteWithChildren,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
