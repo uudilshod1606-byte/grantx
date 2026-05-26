@@ -108,6 +108,9 @@ function Navbar() {
           <Link to="/dashboard" className="text-sm text-foreground transition">Dashboard</Link>
           <Link to="/dtm" className="text-sm text-muted-foreground transition hover:text-foreground">DTM</Link>
           <Link to="/milliy-sertifikat" className="text-sm text-muted-foreground transition hover:text-foreground">Milliy Sertifikat</Link>
+          <Link to="/leaderboard" className="text-sm text-muted-foreground transition hover:text-foreground">Reyting</Link>
+          <Link to="/achievements" className="text-sm text-muted-foreground transition hover:text-foreground">Yutuqlar</Link>
+          <Link to="/history" className="text-sm text-muted-foreground transition hover:text-foreground">Tarix</Link>
         </div>
         <div className="hidden items-center gap-2 md:flex">
           <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-bg text-sm font-semibold text-primary-foreground">
