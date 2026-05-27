@@ -16,10 +16,18 @@ import {
   PenTool,
   Lock,
   Check,
+  Trophy,
+  Star,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExamRunner } from "@/components/exam/ExamRunner";
+import {
+  DTM_DURATION_MINUTES,
+  DTM_MAX_SCORE,
+  DTM_POINTS,
+  DTM_QUESTIONS_PER_SUBJECT,
+} from "@/lib/domain";
 
 export const Route = createFileRoute("/dtm")({
   component: DtmPage,
@@ -35,20 +43,20 @@ export const Route = createFileRoute("/dtm")({
   }),
 });
 
-type Subject = {
+type PickSubject = {
   id: string;
   name: string;
   icon: LucideIcon;
   hint: string;
 };
 
-const MANDATORY: Subject[] = [
+const MANDATORY: PickSubject[] = [
   { id: "ona-tili", name: "Ona tili", icon: BookOpen, hint: "Majburiy" },
   { id: "matematika-m", name: "Matematika", icon: PenTool, hint: "Majburiy" },
   { id: "tarix-m", name: "Tarix", icon: Landmark, hint: "Majburiy" },
 ];
 
-const MAIN_POOL: Subject[] = [
+const MAIN_POOL: PickSubject[] = [
   { id: "matematika", name: "Matematika", icon: PenTool, hint: "Aniq fanlar" },
   { id: "fizika", name: "Fizika", icon: Atom, hint: "Aniq fanlar" },
   { id: "kimyo", name: "Kimyo", icon: FlaskConical, hint: "Tabiiy fanlar" },
@@ -63,6 +71,7 @@ const MAIN_POOL: Subject[] = [
 
 function DtmPage() {
   const [step, setStep] = useState<"select" | "exam">("select");
+  // Ordered picks: index 0 = 1st main (3.1 ball), index 1 = 2nd main (2.1 ball).
   const [picked, setPicked] = useState<string[]>([]);
 
   const pickedSubjects = useMemo(
@@ -97,13 +106,34 @@ function DtmPage() {
       ) : (
         <ExamRunner
           title="DTM imtihoni"
-          subjects={[...MANDATORY, ...pickedSubjects].map((s) => ({
-            id: s.id,
-            name: s.name,
-            icon: s.icon,
-            questions: 0,
-          }))}
-          durationMinutes={180}
+          kind="dtm"
+          subjects={[
+            ...MANDATORY.map((s) => ({
+              id: s.id,
+              name: s.name,
+              icon: s.icon,
+              block: "mandatory" as const,
+              pointsPerQuestion: DTM_POINTS.mandatory,
+              questionCount: DTM_QUESTIONS_PER_SUBJECT.mandatory,
+            })),
+            {
+              id: pickedSubjects[0].id,
+              name: pickedSubjects[0].name,
+              icon: pickedSubjects[0].icon,
+              block: "main1" as const,
+              pointsPerQuestion: DTM_POINTS.main1,
+              questionCount: DTM_QUESTIONS_PER_SUBJECT.main1,
+            },
+            {
+              id: pickedSubjects[1].id,
+              name: pickedSubjects[1].name,
+              icon: pickedSubjects[1].icon,
+              block: "main2" as const,
+              pointsPerQuestion: DTM_POINTS.main2,
+              questionCount: DTM_QUESTIONS_PER_SUBJECT.main2,
+            },
+          ]}
+          durationMinutes={DTM_DURATION_MINUTES}
           onExit={() => setStep("select")}
         />
       )}
@@ -140,7 +170,7 @@ function SelectStep({
   onStart,
 }: {
   picked: string[];
-  pickedSubjects: Subject[];
+  pickedSubjects: PickSubject[];
   togglePick: (id: string) => void;
   onStart: () => void;
 }) {
@@ -155,14 +185,23 @@ function SelectStep({
           Ikkita <span className="gradient-text">asosiy fan</span>ni tanlang
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-          DTM formatiga muvofiq Ona tili, Matematika va Tarix avtomatik qo'shiladi.
-          Siz faqat ikkita asosiy blok fanini tanlaysiz.
+          Real DTM formati: 3 majburiy fan (har biri 10 savol · 1.1 ball),
+          1-asosiy fan (30 savol · 3.1 ball) va 2-asosiy fan (30 savol · 2.1 ball).
+          Jami {DTM_MAX_SCORE} ball, 180 daqiqa.
         </p>
+        <div className="mx-auto mt-5 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span className="rounded-full bg-white/5 px-3 py-1 text-muted-foreground">
+            <Trophy className="mr-1 inline h-3 w-3 text-accent" /> Maksimal: {DTM_MAX_SCORE} ball
+          </span>
+          <span className="rounded-full bg-white/5 px-3 py-1 text-muted-foreground">
+            <Star className="mr-1 inline h-3 w-3 text-accent" /> 90 ta savol
+          </span>
+        </div>
       </div>
 
       <div className="mt-10">
         <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-          <Lock className="h-4 w-4" /> Majburiy fanlar
+          <Lock className="h-4 w-4" /> Majburiy fanlar · 1.1 ball / savol
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {MANDATORY.map((s) => (
@@ -185,14 +224,17 @@ function SelectStep({
 
       <div className="mt-10">
         <div className="mb-3 flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Asosiy blok fanlari</span>
+          <span className="text-muted-foreground">
+            Asosiy blok fanlari · birinchi tanlangan = 1-asosiy (3.1 ball), ikkinchi = 2-asosiy (2.1 ball)
+          </span>
           <span className="text-muted-foreground">
             Tanlangan: <span className="text-foreground">{picked.length}</span>/2
           </span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {MAIN_POOL.map((s) => {
-            const active = picked.includes(s.id);
+            const order = picked.indexOf(s.id); // 0 = 1-asosiy, 1 = 2-asosiy
+            const active = order >= 0;
             const disabled = !active && picked.length >= 2;
             return (
               <button
@@ -224,7 +266,13 @@ function SelectStep({
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold">{s.name}</div>
-                  <div className="text-xs text-muted-foreground">{s.hint}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {active
+                      ? order === 0
+                        ? "1-asosiy fan · 3.1 ball/savol"
+                        : "2-asosiy fan · 2.1 ball/savol"
+                      : s.hint}
+                  </div>
                 </div>
                 <div
                   className={[
@@ -234,7 +282,9 @@ function SelectStep({
                       : "border-white/20",
                   ].join(" ")}
                 >
-                  {active && <Check className="h-3.5 w-3.5" />}
+                  {active ? (
+                    <span className="text-[10px] font-bold">{order + 1}</span>
+                  ) : null}
                 </div>
               </button>
             );
@@ -245,18 +295,28 @@ function SelectStep({
       <div className="glass sticky bottom-4 mt-10 flex flex-col gap-4 rounded-2xl p-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">Imtihon tuzilmasi:</span>
-          {[...MANDATORY, ...pickedSubjects].map((s, i) => (
-            <span key={s.id + i} className="rounded-full bg-white/5 px-3 py-1 text-xs">
-              {s.name}
+          {MANDATORY.map((s) => (
+            <span key={s.id} className="rounded-full bg-white/5 px-3 py-1 text-xs">
+              {s.name} <span className="text-muted-foreground">· 1.1</span>
             </span>
           ))}
+          {pickedSubjects[0] && (
+            <span className="rounded-full bg-primary/15 px-3 py-1 text-xs text-primary">
+              {pickedSubjects[0].name} · 3.1
+            </span>
+          )}
+          {pickedSubjects[1] && (
+            <span className="rounded-full bg-accent/15 px-3 py-1 text-xs text-accent">
+              {pickedSubjects[1].name} · 2.1
+            </span>
+          )}
           {pickedSubjects.length < 2 &&
             Array.from({ length: 2 - pickedSubjects.length }).map((_, i) => (
               <span
                 key={"empty" + i}
                 className="rounded-full border border-dashed border-white/15 px-3 py-1 text-xs text-muted-foreground"
               >
-                Tanlanmagan
+                {pickedSubjects.length + i === 0 ? "1-asosiy tanlanmagan" : "2-asosiy tanlanmagan"}
               </span>
             ))}
         </div>
