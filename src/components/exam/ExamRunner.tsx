@@ -23,36 +23,59 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  questionsRepo,
+  type DtmBlock,
+  type ExamKind,
+  type Question,
+} from "@/lib/domain";
 
 export type ExamSubject = {
   id: string;
   name: string;
   icon: LucideIcon;
-  questions: number;
+  /** DTM block (mandatory / main1 / main2). Omit for Milliy. */
+  block?: DtmBlock;
+  /** Points awarded per correct answer for this subject. */
+  pointsPerQuestion: number;
+  /** Number of questions for this subject. */
+  questionCount: number;
 };
 
 type Props = {
   title: string;
+  kind: ExamKind;
   subjects: ExamSubject[];
   durationMinutes: number;
   onExit: () => void;
 };
 
-// Deterministic placeholder "correct" answer per question — used only because
-// real questions will be added manually later. Replace with real grading then.
-function placeholderCorrect(subjectId: string, qIndex: number) {
-  let h = 0;
-  const s = `${subjectId}:${qIndex}`;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h) % 4;
-}
+export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: Props) {
+  // Pull real questions for each subject from the repo (filtered by kind + block).
+  const subjectQuestions = useMemo(() => {
+    const all = questionsRepo.list();
+    const map: Record<string, Question[]> = {};
+    for (const s of subjects) {
+      map[s.id] = all.filter(
+        (q) =>
+          q.subjectId === s.id &&
+          q.kind === kind &&
+          (kind !== "dtm" || (q.block ?? null) === (s.block ?? null))
+      );
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) {
-  const QPS = subjects[0]?.questions ?? 0;
-  const useFallback = QPS === 0;
-  // When real questions don't exist yet, render 10 placeholder slots so the
-  // exam interface is fully usable for layout/UX purposes.
-  const effectiveQ = useFallback ? 10 : QPS;
+  // Per-subject question count — real questions if any, otherwise planned count.
+  const subjectSlots = useMemo(() => {
+    return subjects.map((s) => {
+      const real = subjectQuestions[s.id] ?? [];
+      const count = real.length > 0 ? Math.min(real.length, s.questionCount) : s.questionCount;
+      return { ...s, count };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [activeSubject, setActiveSubject] = useState(0);
   const [activeQ, setActiveQ] = useState(0);
@@ -76,9 +99,11 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
     return () => clearInterval(t);
   }, [submitted]);
 
-  const current = subjects[activeSubject];
+  const current = subjectSlots[activeSubject];
+  const currentReal = subjectQuestions[current.id] ?? [];
+  const currentQuestion: Question | undefined = currentReal[activeQ];
   const subjectAnswers = answers[current.id] ?? {};
-  const totalQuestions = subjects.length * effectiveQ;
+  const totalQuestions = subjectSlots.reduce((acc, s) => acc + s.count, 0);
   const answeredCount = Object.values(answers).reduce(
     (acc, m) => acc + Object.keys(m).length,
     0
@@ -102,13 +127,14 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
   const goPrev = () => {
     if (activeQ > 0) setActiveQ(activeQ - 1);
     else if (activeSubject > 0) {
-      setActiveSubject(activeSubject - 1);
-      setActiveQ(effectiveQ - 1);
+      const prev = activeSubject - 1;
+      setActiveSubject(prev);
+      setActiveQ(subjectSlots[prev].count - 1);
     }
   };
   const goNext = () => {
-    if (activeQ < effectiveQ - 1) setActiveQ(activeQ + 1);
-    else if (activeSubject < subjects.length - 1) {
+    if (activeQ < current.count - 1) setActiveQ(activeQ + 1);
+    else if (activeSubject < subjectSlots.length - 1) {
       setActiveSubject(activeSubject + 1);
       setActiveQ(0);
     }
@@ -123,22 +149,36 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
   };
 
   if (submitted) {
-    // Grade
-    let correct = 0;
-    let incorrect = 0;
-    subjects.forEach((s) => {
+    // Grade per subject using real questions + admin-defined points.
+    const breakdown = subjectSlots.map((s) => {
+      const real = subjectQuestions[s.id] ?? [];
       const subj = answers[s.id] ?? {};
-      for (let i = 0; i < effectiveQ; i++) {
+      let c = 0;
+      let w = 0;
+      let score = 0;
+      let maxScore = 0;
+      for (let i = 0; i < s.count; i++) {
+        const q = real[i];
+        const pts = q?.points ?? s.pointsPerQuestion;
+        maxScore += pts;
         const a = subj[i];
         if (a === undefined) continue;
-        if (a === placeholderCorrect(s.id, i)) correct++;
-        else incorrect++;
+        if (q && a === q.correctIndex) {
+          c++;
+          score += pts;
+        } else {
+          w++;
+        }
       }
+      return { subject: s, correct: c, wrong: w, unanswered: s.count - c - w, score, maxScore };
     });
+
+    const correct = breakdown.reduce((a, b) => a + b.correct, 0);
+    const incorrect = breakdown.reduce((a, b) => a + b.wrong, 0);
     const unanswered = totalQuestions - correct - incorrect;
-    const percent = totalQuestions
-      ? Math.round((correct / totalQuestions) * 100)
-      : 0;
+    const totalScore = Math.round(breakdown.reduce((a, b) => a + b.score, 0) * 10) / 10;
+    const maxScore = Math.round(breakdown.reduce((a, b) => a + b.maxScore, 0) * 10) / 10;
+    const percent = maxScore ? Math.round((totalScore / maxScore) * 100) : 0;
     const grade =
       percent >= 85
         ? { label: "A'lo", tone: "text-emerald-400" }
@@ -151,15 +191,16 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
     return (
       <ResultView
         title={title}
+        kind={kind}
         correct={correct}
         incorrect={incorrect}
         unanswered={unanswered}
         total={totalQuestions}
         percent={percent}
+        totalScore={totalScore}
+        maxScore={maxScore}
         grade={grade}
-        subjects={subjects}
-        answers={answers}
-        effectiveQ={effectiveQ}
+        breakdown={breakdown}
         onRestart={restart}
         onExit={onExit}
       />
@@ -180,7 +221,7 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
             <X className="mr-1 h-4 w-4" /> Chiqish
           </Button>
           <div className="hidden text-sm text-muted-foreground md:block">
-            {title} · {subjects.length} fan · {totalQuestions} savol
+            {title} · {subjectSlots.length} fan · {totalQuestions} savol
           </div>
         </div>
         <div
@@ -220,12 +261,20 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
       </div>
 
       {/* Subject tabs (only if multi-subject) */}
-      {subjects.length > 1 && (
+      {subjectSlots.length > 1 && (
         <div className="mb-4 flex flex-wrap gap-2">
-          {subjects.map((s, i) => {
+          {subjectSlots.map((s, i) => {
             const active = i === activeSubject;
             const ans = Object.keys(answers[s.id] ?? {}).length;
             const Icon = s.icon;
+            const blockLabel =
+              s.block === "mandatory"
+                ? "Majburiy"
+                : s.block === "main1"
+                ? "1-asosiy"
+                : s.block === "main2"
+                ? "2-asosiy"
+                : null;
             return (
               <button
                 key={s.id + i}
@@ -242,13 +291,18 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
               >
                 <Icon className="h-4 w-4" />
                 <span>{s.name}</span>
+                {blockLabel && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] uppercase ${active ? "bg-white/20" : "bg-white/10 text-muted-foreground"}`}>
+                    {blockLabel}
+                  </span>
+                )}
                 <span
                   className={[
                     "rounded-full px-2 py-0.5 text-[10px]",
                     active ? "bg-white/20" : "bg-white/10 text-muted-foreground",
                   ].join(" ")}
                 >
-                  {ans}/{effectiveQ}
+                  {ans}/{s.count}
                 </span>
               </button>
             );
@@ -261,24 +315,42 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
         <div className="glass rounded-2xl p-5 md:p-8">
           <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
             <span>
-              {current.name} · Savol {activeQ + 1}/{effectiveQ}
+              {current.name} · Savol {activeQ + 1}/{current.count}
             </span>
-            <span>{useFallback ? "Demo" : "5 ball"}</span>
+            <span>
+              {(currentQuestion?.points ?? current.pointsPerQuestion).toFixed(1)} ball
+            </span>
           </div>
 
-          <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
-            <Sparkles className="mx-auto h-5 w-5 text-accent" />
-            <p className="mt-3 text-sm text-muted-foreground">
-              Savol matni tez orada qo'shiladi.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground/70">
-              Bu joyga {current.name} fanidan {activeQ + 1}-savol kiritiladi.
-            </p>
-          </div>
+          {currentQuestion ? (
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6">
+              {currentQuestion.imageUrl && (
+                <img
+                  src={currentQuestion.imageUrl}
+                  alt="Savol rasmi"
+                  className="mx-auto mb-4 max-h-72 rounded-lg border border-white/10"
+                />
+              )}
+              <p className="whitespace-pre-wrap text-base leading-relaxed">
+                {currentQuestion.text}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+              <Sparkles className="mx-auto h-5 w-5 text-accent" />
+              <p className="mt-3 text-sm text-muted-foreground">
+                Savol matni tez orada qo'shiladi.
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground/70">
+                Bu joyga {current.name} fanidan {activeQ + 1}-savol kiritiladi.
+              </p>
+            </div>
+          )}
 
           <div className="mt-5 grid gap-2">
             {(["A", "B", "C", "D"] as const).map((label, idx) => {
               const selected = subjectAnswers[activeQ] === idx;
+              const optionText = currentQuestion?.options[idx];
               return (
                 <button
                   key={label}
@@ -300,8 +372,8 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
                   >
                     {label}
                   </span>
-                  <span className="text-sm text-muted-foreground">
-                    Variant {label} — matn keyinroq qo'shiladi
+                  <span className={`text-sm ${optionText ? "text-foreground" : "text-muted-foreground"}`}>
+                    {optionText ?? `Variant ${label} — matn keyinroq qo'shiladi`}
                   </span>
                 </button>
               );
@@ -321,8 +393,8 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
               onClick={goNext}
               className="gradient-bg text-primary-foreground hover:opacity-90"
               disabled={
-                activeSubject === subjects.length - 1 &&
-                activeQ === effectiveQ - 1
+                activeSubject === subjectSlots.length - 1 &&
+                activeQ === current.count - 1
               }
             >
               Keyingi <ArrowRight className="ml-2 h-4 w-4" />
@@ -335,11 +407,11 @@ export function ExamRunner({ title, subjects, durationMinutes, onExit }: Props) 
           <div className="mb-3 flex items-center justify-between">
             <div className="text-sm font-semibold">{current.name}</div>
             <div className="text-xs text-muted-foreground">
-              {Object.keys(subjectAnswers).length}/{effectiveQ}
+              {Object.keys(subjectAnswers).length}/{current.count}
             </div>
           </div>
           <div className="grid grid-cols-6 gap-1.5 lg:grid-cols-5">
-            {Array.from({ length: effectiveQ }).map((_, i) => {
+            {Array.from({ length: current.count }).map((_, i) => {
               const answered = subjectAnswers[i] !== undefined;
               const isActive = i === activeQ;
               return (
@@ -413,30 +485,41 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
+type Breakdown = {
+  subject: ExamSubject & { count: number };
+  correct: number;
+  wrong: number;
+  unanswered: number;
+  score: number;
+  maxScore: number;
+};
+
 function ResultView({
   title,
+  kind,
   correct,
   incorrect,
   unanswered,
   total,
   percent,
+  totalScore,
+  maxScore,
   grade,
-  subjects,
-  answers,
-  effectiveQ,
+  breakdown,
   onRestart,
   onExit,
 }: {
   title: string;
+  kind: ExamKind;
   correct: number;
   incorrect: number;
   unanswered: number;
   total: number;
   percent: number;
+  totalScore: number;
+  maxScore: number;
   grade: { label: string; tone: string };
-  subjects: ExamSubject[];
-  answers: Record<string, Record<number, number>>;
-  effectiveQ: number;
+  breakdown: Breakdown[];
   onRestart: () => void;
   onExit: () => void;
 }) {
@@ -457,9 +540,10 @@ function ResultView({
               }}
             >
               <div className="flex h-36 w-36 flex-col items-center justify-center rounded-full bg-background">
-                <span className="text-4xl font-bold gradient-text">{percent}%</span>
+                <span className="text-3xl font-bold gradient-text">{totalScore}</span>
+                <span className="text-[10px] text-muted-foreground">/ {maxScore} ball</span>
                 <span className={`mt-1 text-xs font-semibold ${grade.tone}`}>
-                  {grade.label}
+                  {percent}% · {grade.label}
                 </span>
               </div>
             </div>
@@ -468,12 +552,14 @@ function ResultView({
           {/* Summary */}
           <div className="text-center md:text-left">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-muted-foreground">
-              <Trophy className="h-3.5 w-3.5 text-accent" /> Natija tayyor
+              <Trophy className="h-3.5 w-3.5 text-accent" />
+              {kind === "dtm" ? "DTM natija" : "Natija tayyor"}
             </div>
             <h2 className="mt-3 text-2xl font-bold md:text-4xl">{title} — yakunlandi</h2>
             <p className="mt-2 text-sm text-muted-foreground md:text-base">
-              Quyida sizning natijalaringiz va har bir fan bo'yicha qisqacha
-              hisobot keltirilgan.
+              {kind === "dtm"
+                ? `Real DTM formuli bo'yicha hisoblangan ball: ${totalScore} / ${maxScore}`
+                : "Har bir fan bo'yicha qisqacha hisobot quyida keltirilgan."}
             </p>
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-start">
               <Button
@@ -500,13 +586,13 @@ function ResultView({
           <StatCard
             icon={Target}
             label="Umumiy ball"
-            value={`${correct * 5}/${total * 5}`}
+            value={`${totalScore} / ${maxScore}`}
             tone="text-foreground"
           />
           <StatCard
             icon={CheckCircle2}
             label="To'g'ri javoblar"
-            value={String(correct)}
+            value={`${correct} / ${total}`}
             tone="text-emerald-400"
           />
           <StatCard
@@ -526,18 +612,17 @@ function ResultView({
 
       {/* Per-subject breakdown */}
       <div className="mt-6 grid gap-3">
-        {subjects.map((s) => {
-          const subj = answers[s.id] ?? {};
-          let c = 0;
-          let w = 0;
-          for (let i = 0; i < effectiveQ; i++) {
-            const a = subj[i];
-            if (a === undefined) continue;
-            if (a === placeholderCorrect(s.id, i)) c++;
-            else w++;
-          }
-          const pct = effectiveQ ? Math.round((c / effectiveQ) * 100) : 0;
+        {breakdown.map(({ subject: s, correct: c, wrong: w, unanswered: u, score, maxScore: mx }) => {
+          const pct = s.count ? Math.round((c / s.count) * 100) : 0;
           const Icon = s.icon;
+          const blockLabel =
+            s.block === "mandatory"
+              ? "Majburiy"
+              : s.block === "main1"
+              ? "1-asosiy"
+              : s.block === "main2"
+              ? "2-asosiy"
+              : null;
           return (
             <div key={s.id} className="glass rounded-2xl p-4">
               <div className="flex flex-wrap items-center gap-3">
@@ -545,15 +630,24 @@ function ResultView({
                   <Icon className="h-5 w-5 text-accent" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold">{s.name}</div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold">{s.name}</span>
+                    {blockLabel && (
+                      <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
+                        {blockLabel} · {s.pointsPerQuestion} ball/savol
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-muted-foreground">
-                    {c} to'g'ri · {w} noto'g'ri · {effectiveQ - c - w} javobsiz
+                    {c} to'g'ri · {w} noto'g'ri · {u} javobsiz
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold gradient-text">{pct}%</div>
+                  <div className="text-lg font-bold gradient-text">
+                    {Math.round(score * 10) / 10} / {Math.round(mx * 10) / 10}
+                  </div>
                   <div className="text-xs text-muted-foreground">
-                    {c}/{effectiveQ}
+                    {pct}% · {c}/{s.count}
                   </div>
                 </div>
               </div>

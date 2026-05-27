@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Users,
   FileQuestion,
@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   Inbox,
   ArrowLeft,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,13 +37,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import {
+  ADMIN_SUBJECTS,
   SUBJECTS,
-  DIFFICULTIES,
+  defaultPointsFor,
   questionsRepo,
   examsRepo,
   attemptsRepo,
   isAdminEmail,
-  type Difficulty,
+  type DtmBlock,
   type ExamKind,
   type Question,
 } from "@/lib/domain";
@@ -200,18 +203,20 @@ function EmptyBox({ icon: Icon, title, description, action }: { icon: any; title
 function QuestionsTab() {
   const [questions, setQuestions] = useState<Question[]>(() => questionsRepo.list());
   const [search, setSearch] = useState("");
-  const [subjectFilter, setSubjectFilter] = useState<string>("all");
+  const [kindFilter, setKindFilter] = useState<"all" | ExamKind>("all");
+  const [blockFilter, setBlockFilter] = useState<"all" | DtmBlock>("all");
   const [open, setOpen] = useState(false);
 
   const refresh = () => setQuestions(questionsRepo.list());
 
   const filtered = useMemo(() => {
     return questions.filter((q) => {
-      if (subjectFilter !== "all" && q.subjectId !== subjectFilter) return false;
+      if (kindFilter !== "all" && q.kind !== kindFilter) return false;
+      if (blockFilter !== "all" && (q.block ?? null) !== blockFilter) return false;
       if (search && !q.text.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [questions, search, subjectFilter]);
+  }, [questions, search, kindFilter, blockFilter]);
 
   return (
     <div className="space-y-4 animate-fade-up">
@@ -225,13 +230,25 @@ function QuestionsTab() {
             className="pl-9"
           />
         </div>
-        <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-          <SelectTrigger className="w-[200px]"><SelectValue placeholder="Fan" /></SelectTrigger>
+        <Select value={kindFilter} onValueChange={(v) => setKindFilter(v as typeof kindFilter)}>
+          <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tur" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Barcha fanlar</SelectItem>
-            {SUBJECTS.map((s) => (<SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>))}
+            <SelectItem value="all">Barcha turlar</SelectItem>
+            <SelectItem value="dtm">DTM</SelectItem>
+            <SelectItem value="milliy">Milliy Sertifikat</SelectItem>
           </SelectContent>
         </Select>
+        {kindFilter === "dtm" && (
+          <Select value={blockFilter} onValueChange={(v) => setBlockFilter(v as typeof blockFilter)}>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="Blok" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Barcha bloklar</SelectItem>
+              <SelectItem value="mandatory">Majburiy blok</SelectItem>
+              <SelectItem value="main1">1-asosiy blok</SelectItem>
+              <SelectItem value="main2">2-asosiy blok</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gradient-bg text-primary-foreground"><Plus className="mr-2 h-4 w-4" /> Yangi savol</Button>
@@ -252,22 +269,43 @@ function QuestionsTab() {
             <thead className="bg-white/5 text-left text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Savol</th>
+                <th className="px-4 py-3">Tur</th>
                 <th className="px-4 py-3">Fan</th>
-                <th className="px-4 py-3">Darajasi</th>
+                <th className="px-4 py-3">Blok</th>
+                <th className="px-4 py-3">Ball</th>
                 <th className="px-4 py-3 text-right">Amallar</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((q) => {
-                const subj = SUBJECTS.find((s) => s.id === q.subjectId);
+                const subjName = subjectNameFor(q.kind, q.subjectId, q.block);
+                const blockLabel =
+                  q.kind === "dtm"
+                    ? q.block === "mandatory"
+                      ? "Majburiy"
+                      : q.block === "main1"
+                      ? "1-asosiy"
+                      : q.block === "main2"
+                      ? "2-asosiy"
+                      : "—"
+                    : "—";
                 return (
                   <tr key={q.id} className="border-t border-white/5">
-                    <td className="max-w-md truncate px-4 py-3">{q.text}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{subj?.name ?? q.subjectId}</td>
+                    <td className="max-w-md truncate px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {q.imageUrl && <ImagePlus className="h-3.5 w-3.5 text-accent" />}
+                        <span className="truncate">{q.text}</span>
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs">
-                        {DIFFICULTIES.find((d) => d.id === q.difficulty)?.name}
+                        {q.kind === "dtm" ? "DTM" : "Milliy"}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{subjName}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{blockLabel}</td>
+                    <td className="px-4 py-3 font-semibold gradient-text">
+                      {(q.points ?? defaultPointsFor(q.kind, q.block ?? null)).toFixed(1)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button size="sm" variant="ghost" onClick={() => { questionsRepo.remove(q.id); refresh(); toast.success("O'chirildi"); }}>
@@ -285,25 +323,78 @@ function QuestionsTab() {
   );
 }
 
+function subjectNameFor(kind: ExamKind, subjectId: string, block?: DtmBlock | null) {
+  const pool =
+    kind === "milliy"
+      ? ADMIN_SUBJECTS.milliy
+      : block === "mandatory"
+      ? ADMIN_SUBJECTS.dtmMandatory
+      : ADMIN_SUBJECTS.dtmMain;
+  return pool.find((s) => s.id === subjectId)?.name ?? subjectId;
+}
+
 function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
-  const [text, setText] = useState("");
-  const [subjectId, setSubjectId] = useState(SUBJECTS[0].id);
   const [kind, setKind] = useState<ExamKind>("dtm");
-  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
+  const [block, setBlock] = useState<DtmBlock>("mandatory");
+  const subjectPool =
+    kind === "milliy"
+      ? ADMIN_SUBJECTS.milliy
+      : block === "mandatory"
+      ? ADMIN_SUBJECTS.dtmMandatory
+      : ADMIN_SUBJECTS.dtmMain;
+  const [subjectId, setSubjectId] = useState(subjectPool[0].id);
+  const [text, setText] = useState("");
   const [opts, setOpts] = useState<string[]>(["", "", "", ""]);
   const [correctIndex, setCorrectIndex] = useState<0 | 1 | 2 | 3>(0);
-  const [category, setCategory] = useState("");
+  const [points, setPoints] = useState<number>(defaultPointsFor("dtm", "mandatory"));
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [explanation, setExplanation] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // When kind/block changes, sync subject and default points.
+  const onKindChange = (v: ExamKind) => {
+    setKind(v);
+    const pool = v === "milliy" ? ADMIN_SUBJECTS.milliy : ADMIN_SUBJECTS.dtmMandatory;
+    setSubjectId(pool[0].id);
+    if (v === "milliy") setPoints(1);
+    else {
+      setBlock("mandatory");
+      setPoints(defaultPointsFor("dtm", "mandatory"));
+    }
+  };
+  const onBlockChange = (v: DtmBlock) => {
+    setBlock(v);
+    const pool = v === "mandatory" ? ADMIN_SUBJECTS.dtmMandatory : ADMIN_SUBJECTS.dtmMain;
+    setSubjectId(pool[0].id);
+    setPoints(defaultPointsFor("dtm", v));
+  };
+
+  const onPickImage = (file: File | null) => {
+    if (!file) return;
+    if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+      toast.error("Faqat PNG, JPG yoki WEBP rasm");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Rasm hajmi 2MB dan oshmasin");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setImageUrl(String(reader.result));
+    reader.readAsDataURL(file);
+  };
 
   const submit = () => {
     if (!text.trim()) return toast.error("Savol matnini kiriting");
     if (opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
+    if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
     questionsRepo.add({
       text: text.trim(),
       subjectId,
       kind,
-      difficulty,
-      category: category.trim() || undefined,
+      block: kind === "dtm" ? block : null,
+      points,
+      imageUrl,
       options: opts as [string, string, string, string],
       correctIndex,
       explanation: explanation.trim() || undefined,
@@ -315,15 +406,11 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
   return (
     <DialogContent className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl">
       <DialogHeader><DialogTitle>Yangi savol qo'shish</DialogTitle></DialogHeader>
-      <div className="space-y-3">
-        <div>
-          <label className="text-xs text-muted-foreground">Savol matni</label>
-          <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <label className="text-xs text-muted-foreground">Imtihon turi</label>
-            <Select value={kind} onValueChange={(v) => setKind(v as ExamKind)}>
+            <Select value={kind} onValueChange={(v) => onKindChange(v as ExamKind)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="dtm">DTM</SelectItem>
@@ -331,31 +418,92 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
               </SelectContent>
             </Select>
           </div>
+          {kind === "dtm" && (
+            <div>
+              <label className="text-xs text-muted-foreground">DTM blok</label>
+              <Select value={block} onValueChange={(v) => onBlockChange(v as DtmBlock)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mandatory">Majburiy blok (1.1)</SelectItem>
+                  <SelectItem value="main1">1-asosiy fan (3.1)</SelectItem>
+                  <SelectItem value="main2">2-asosiy fan (2.1)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <label className="text-xs text-muted-foreground">Fan</label>
             <Select value={subjectId} onValueChange={setSubjectId}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {SUBJECTS.filter((s) => s.kinds.includes(kind)).map((s) => (
+                {subjectPool.map((s) => (
                   <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs text-muted-foreground">Darajasi</label>
-            <Select value={difficulty} onValueChange={(v) => setDifficulty(v as Difficulty)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {DIFFICULTIES.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Kategoriya (ixtiyoriy)</label>
-            <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Mavzu" />
+            <label className="text-xs text-muted-foreground">Ball</label>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              value={points}
+              onChange={(e) => setPoints(Number(e.target.value))}
+            />
           </div>
         </div>
+
+        <div>
+          <label className="text-xs text-muted-foreground">Savol matni</label>
+          <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} />
+        </div>
+
+        <div>
+          <label className="text-xs text-muted-foreground">Rasm (PNG/JPG/WEBP, ixtiyoriy)</label>
+          <div className="mt-2 flex items-center gap-3">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              hidden
+              onChange={(e) => onPickImage(e.target.files?.[0] ?? null)}
+            />
+            {imageUrl ? (
+              <div className="relative">
+                <img src={imageUrl} alt="Preview" className="h-24 rounded-lg border border-white/10" />
+                <button
+                  type="button"
+                  onClick={() => { setImageUrl(undefined); if (fileRef.current) fileRef.current.value = ""; }}
+                  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-white shadow"
+                  aria-label="Rasmni o'chirish"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileRef.current?.click()}
+                className="glass border-white/15 hover:bg-white/10"
+              >
+                <ImagePlus className="mr-2 h-4 w-4" /> Rasm yuklash
+              </Button>
+            )}
+            {imageUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => fileRef.current?.click()}
+                className="hover:bg-white/10"
+              >
+                Almashtirish
+              </Button>
+            )}
+          </div>
+        </div>
+
         <div className="space-y-2">
           <label className="text-xs text-muted-foreground">Variantlar (to'g'risini belgilang)</label>
           {(["A", "B", "C", "D"] as const).map((l, i) => (

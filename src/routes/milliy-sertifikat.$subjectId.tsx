@@ -89,8 +89,15 @@ function MilliyExamPage() {
 
       <ExamRunner
         title={`Milliy Sertifikat · ${subject.name}`}
+        kind="milliy"
         subjects={[
-          { id: subjectId, name: subject.name, icon: subject.icon, questions: 0 },
+          {
+            id: subjectId,
+            name: subject.name,
+            icon: subject.icon,
+            pointsPerQuestion: 1,
+            questionCount: 30,
+          },
         ]}
         durationMinutes={90}
         onExit={() => navigate({ to: "/milliy-sertifikat" })}

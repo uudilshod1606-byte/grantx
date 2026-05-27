@@ -28,6 +28,21 @@ import {
 
 export type Difficulty = "easy" | "medium" | "hard";
 export type ExamKind = "dtm" | "milliy";
+export type DtmBlock = "mandatory" | "main1" | "main2";
+
+/** DTM scoring constants (real Uzbekistan DTM format). */
+export const DTM_POINTS = {
+  mandatory: 1.1,
+  main1: 3.1,
+  main2: 2.1,
+} as const;
+export const DTM_QUESTIONS_PER_SUBJECT = {
+  mandatory: 10,
+  main1: 30,
+  main2: 30,
+} as const;
+export const DTM_MAX_SCORE = 189; // 3*10*1.1 + 30*3.1 + 30*2.1
+export const DTM_DURATION_MINUTES = 180;
 
 export type Subject = {
   id: string;
@@ -61,8 +76,14 @@ export type Question = {
   id: string;
   subjectId: string;
   kind: ExamKind;
+  /** For DTM only — which block this question belongs to. */
+  block?: DtmBlock | null;
   category?: string;
-  difficulty: Difficulty;
+  difficulty?: Difficulty;
+  /** Admin-defined points awarded for a correct answer. */
+  points?: number;
+  /** Optional image (data URL or remote URL). */
+  imageUrl?: string;
   text: string;
   options: [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
@@ -278,7 +299,7 @@ export const attemptsRepo = {
 /*  Admin allowlist                                                           */
 /* -------------------------------------------------------------------------- */
 
-export const DEFAULT_ADMINS = ["admin@grantx.uz"];
+export const DEFAULT_ADMINS = ["dilshoduktamov34@gmail.com"];
 
 export function getAdminEmails(): string[] {
   if (typeof window === "undefined") return DEFAULT_ADMINS;
@@ -301,3 +322,47 @@ export const DIFFICULTIES: { id: Difficulty; name: string }[] = [
   { id: "medium", name: "O'rtacha" },
   { id: "hard", name: "Qiyin" },
 ];
+
+/* -------------------------------------------------------------------------- */
+/*  Admin subject catalog — segregated by kind + DTM block                    */
+/* -------------------------------------------------------------------------- */
+
+export type AdminSubject = { id: string; name: string };
+
+export const ADMIN_SUBJECTS: {
+  dtmMandatory: AdminSubject[];
+  dtmMain: AdminSubject[];
+  milliy: AdminSubject[];
+} = {
+  dtmMandatory: [
+    { id: "ona-tili", name: "Ona tili" },
+    { id: "matematika-m", name: "Matematika (majburiy)" },
+    { id: "tarix-m", name: "Tarix (majburiy)" },
+  ],
+  dtmMain: [
+    { id: "matematika", name: "Matematika" },
+    { id: "fizika", name: "Fizika" },
+    { id: "kimyo", name: "Kimyo" },
+    { id: "biologiya", name: "Biologiya" },
+    { id: "geografiya", name: "Geografiya" },
+    { id: "ingliz", name: "Ingliz tili" },
+    { id: "adabiyot", name: "Adabiyot" },
+    { id: "tarix", name: "Tarix" },
+    { id: "huquq", name: "Huquq" },
+    { id: "informatika", name: "Informatika" },
+  ],
+  milliy: [
+    { id: "cefr-english", name: "CEFR English" },
+    { id: "matematika", name: "Matematika" },
+    { id: "ona-tili-adabiyot", name: "Ona tili va adabiyot" },
+    { id: "tarix", name: "Tarix" },
+    { id: "fizika", name: "Fizika" },
+    { id: "biologiya", name: "Biologiya" },
+    { id: "kimyo", name: "Kimyo" },
+  ],
+};
+
+export function defaultPointsFor(kind: ExamKind, block?: DtmBlock | null): number {
+  if (kind === "dtm" && block) return DTM_POINTS[block];
+  return 1;
+}
