@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Users,
   FileQuestion,
@@ -12,6 +12,8 @@ import {
   ShieldCheck,
   Inbox,
   ArrowLeft,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,13 +37,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import {
+  ADMIN_SUBJECTS,
   SUBJECTS,
-  DIFFICULTIES,
+  defaultPointsFor,
   questionsRepo,
   examsRepo,
   attemptsRepo,
   isAdminEmail,
-  type Difficulty,
+  type DtmBlock,
   type ExamKind,
   type Question,
 } from "@/lib/domain";
