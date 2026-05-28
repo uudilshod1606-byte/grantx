@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Navigate } from "@tanstack/react-router";
 
 /**
  * Lightweight auth context for GrantX.
@@ -165,4 +166,25 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
+}
+
+export function AuthLoadingScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+      <div className="glass flex items-center gap-3 rounded-2xl px-5 py-4 text-sm text-muted-foreground">
+        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" />
+        Sessiya tekshirilmoqda...
+      </div>
+    </div>
+  );
+}
+
+export function ProtectedRoute({ children, adminOnly = false }: { children: ReactNode; adminOnly?: boolean }) {
+  const { loading, isAuthenticated, isAdmin } = useAuth();
+
+  if (loading) return <AuthLoadingScreen />;
+  if (!isAuthenticated) return <Navigate to="/login" />;
+  if (adminOnly && !isAdmin) return <Navigate to="/dashboard" />;
+
+  return <>{children}</>;
 }
