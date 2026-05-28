@@ -132,11 +132,13 @@ function Logo() {
   );
 }
 
-function Navbar() {
+type DashboardUser = ReturnType<typeof getDisplayUser>;
+
+function Navbar({ user, isAdmin, onSignOut }: { user: DashboardUser; isAdmin: boolean; onSignOut: () => Promise<void> }) {
   return (
     <header className="sticky top-0 z-50 px-4 pt-4">
-      <nav className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-5 py-3">
-        <Link to="/"><Logo /></Link>
+      <nav className="glass mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3">
+        <Link to="/dashboard"><Logo /></Link>
         <div className="hidden items-center gap-8 md:flex">
           <Link to="/dashboard" className="text-sm text-foreground transition">Dashboard</Link>
           <Link to="/dtm" className="text-sm text-muted-foreground transition hover:text-foreground">DTM</Link>
@@ -144,21 +146,32 @@ function Navbar() {
           <Link to="/leaderboard" className="text-sm text-muted-foreground transition hover:text-foreground">Reyting</Link>
           <Link to="/achievements" className="text-sm text-muted-foreground transition hover:text-foreground">Yutuqlar</Link>
           <Link to="/history" className="text-sm text-muted-foreground transition hover:text-foreground">Tarix</Link>
+          {isAdmin && <Link to="/admin" className="text-sm text-primary transition hover:text-foreground">Admin Panel</Link>}
         </div>
         <div className="hidden items-center gap-2 md:flex">
           <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-bg text-sm font-semibold text-primary-foreground">
             {user.avatarInitials}
           </div>
+          <Button variant="ghost" size="sm" onClick={onSignOut} className="text-muted-foreground hover:bg-white/10 hover:text-foreground">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
-        <button className="md:hidden rounded-lg p-2 hover:bg-white/10" aria-label="Menu">
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          {isAdmin && (
+            <Link to="/admin" aria-label="Admin Panel" className="rounded-lg p-2 text-primary hover:bg-white/10">
+              <ShieldCheck className="h-5 w-5" />
+            </Link>
+          )}
+          <button className="rounded-lg p-2 hover:bg-white/10" aria-label="Menu">
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </nav>
     </header>
   );
 }
 
-function ProfileCard() {
+function ProfileCard({ user }: { user: DashboardUser }) {
   return (
     <div className="glass animate-fade-up mt-6 rounded-3xl p-6 md:p-8">
       <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
