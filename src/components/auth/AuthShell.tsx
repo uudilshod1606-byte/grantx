@@ -17,7 +17,7 @@ export function AuthShell({
   footer?: ReactNode;
 }) {
   const { isAuthenticated } = useAuth();
-  const logoTarget = isAuthenticated ? "/dashboard" : "/";
+  const logoTarget: "/" | "/dashboard" = isAuthenticated ? "/dashboard" : "/";
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 text-foreground">
