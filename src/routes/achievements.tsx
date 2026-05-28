@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Award, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth";
+import { ProtectedRoute, useAuth } from "@/lib/auth";
 import { ACHIEVEMENTS, RANKS, attemptsRepo, computeStats, nextRank, rankForXp } from "@/lib/domain";
 
 export const Route = createFileRoute("/achievements")({
@@ -15,6 +15,14 @@ export const Route = createFileRoute("/achievements")({
 });
 
 function AchievementsPage() {
+  return (
+    <ProtectedRoute>
+      <AchievementsContent />
+    </ProtectedRoute>
+  );
+}
+
+function AchievementsContent() {
   const { user } = useAuth();
   const attempts = user ? attemptsRepo.list(user.id) : [];
   const stats = computeStats(attempts);
