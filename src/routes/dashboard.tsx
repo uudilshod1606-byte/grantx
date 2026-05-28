@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   GraduationCap,
   Menu,
+  LogOut,
   BookOpen,
   Trophy,
   Target,
@@ -17,8 +18,10 @@ import {
   ArrowRight,
   Inbox,
   Crown,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ProtectedRoute, useAuth, type AuthUser } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -48,6 +51,17 @@ const stats = {
 
 function Dashboard() {
   return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
+  );
+}
+
+function DashboardContent() {
+  const { user, isAdmin, signOut } = useAuth();
+  const displayUser = getDisplayUser(user);
+
+  return (
     <div className="relative min-h-screen overflow-hidden text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-32 -left-20 h-96 w-96 rounded-full bg-primary/30 blur-3xl animate-blob" />
@@ -55,10 +69,10 @@ function Dashboard() {
         <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-primary/20 blur-3xl animate-blob" style={{ animationDelay: "6s" }} />
       </div>
 
-      <Navbar />
+      <Navbar user={displayUser} isAdmin={isAdmin} onSignOut={signOut} />
 
       <main className="mx-auto max-w-6xl px-4 pt-8 pb-24">
-        <ProfileCard />
+        <ProfileCard user={displayUser} />
 
         <section className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           <StatCard icon={<BookOpen className="h-5 w-5" />} label="Ishlangan testlar" value={stats.totalTests} />
@@ -84,6 +98,25 @@ function Dashboard() {
       </main>
     </div>
   );
+}
+
+function getDisplayUser(authUser: AuthUser | null) {
+  const name = authUser?.fullName || "GrantX foydalanuvchi";
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "GX";
+
+  return {
+    name,
+    username: authUser?.email ? `@${authUser.email.split("@")[0]}` : "@student",
+    joined: authUser?.createdAt
+      ? `${new Date(authUser.createdAt).toLocaleDateString("uz-UZ")} qo'shildi`
+      : "Bugun qo'shildi",
+    avatarInitials: initials,
+  };
 }
 
 function Logo() {
