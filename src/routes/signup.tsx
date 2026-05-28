@@ -1,11 +1,11 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Eye, EyeOff, Loader2, Mail, User, Lock, ArrowRight } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AuthShell } from "@/components/auth/AuthShell";
-import { useAuth } from "@/lib/auth";
+import { AuthLoadingScreen, useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/signup")({
   component: SignUpPage,
@@ -24,7 +24,7 @@ const schema = z.object({
 });
 
 function SignUpPage() {
-  const { signUp } = useAuth();
+  const { signUp, loading: authLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -60,6 +60,9 @@ function SignUpPage() {
       setLoading(false);
     }
   };
+
+  if (authLoading) return <AuthLoadingScreen />;
+  if (isAuthenticated) return <Navigate to="/dashboard" />;
 
   return (
     <AuthShell

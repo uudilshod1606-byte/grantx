@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { GraduationCap, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
+import { useAuth } from "@/lib/auth";
 
 export function AuthShell({
   title,
@@ -15,6 +16,9 @@ export function AuthShell({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const { isAuthenticated } = useAuth();
+  const logoTarget: "/" | "/dashboard" = isAuthenticated ? "/dashboard" : "/";
+
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -24,7 +28,7 @@ export function AuthShell({
       </div>
 
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 flex items-center justify-center gap-2">
+        <Link to={logoTarget} className="mb-8 flex items-center justify-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-bg glow">
             <GraduationCap className="h-5 w-5 text-primary-foreground" />
           </div>

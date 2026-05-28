@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Inbox, History as HistoryIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth";
+import { ProtectedRoute, useAuth } from "@/lib/auth";
 import { SUBJECTS, attemptsRepo, computeStats } from "@/lib/domain";
 
 export const Route = createFileRoute("/history")({
@@ -15,6 +15,14 @@ export const Route = createFileRoute("/history")({
 });
 
 function HistoryPage() {
+  return (
+    <ProtectedRoute>
+      <HistoryContent />
+    </ProtectedRoute>
+  );
+}
+
+function HistoryContent() {
   const { user } = useAuth();
   const attempts = user ? attemptsRepo.list(user.id) : [];
   const stats = computeStats(attempts);

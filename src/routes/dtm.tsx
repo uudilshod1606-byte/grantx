@@ -22,6 +22,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExamRunner } from "@/components/exam/ExamRunner";
+import { ProtectedRoute } from "@/lib/auth";
 import {
   DTM_DURATION_MINUTES,
   DTM_MAX_SCORE,
@@ -70,6 +71,14 @@ const MAIN_POOL: PickSubject[] = [
 ];
 
 function DtmPage() {
+  return (
+    <ProtectedRoute>
+      <DtmContent />
+    </ProtectedRoute>
+  );
+}
+
+function DtmContent() {
   const [step, setStep] = useState<"select" | "exam">("select");
   // Ordered picks: index 0 = 1st main (3.1 ball), index 1 = 2nd main (2.1 ball).
   const [picked, setPicked] = useState<string[]>([]);
@@ -145,7 +154,7 @@ function TopBar() {
   return (
     <header className="sticky top-0 z-50 px-4 pt-4">
       <nav className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-5 py-3">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-bg glow">
             <GraduationCap className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -153,9 +162,9 @@ function TopBar() {
             Grant<span className="gradient-text">X</span>
           </span>
         </Link>
-        <Link to="/">
+        <Link to="/dashboard">
           <Button variant="ghost" className="text-foreground hover:bg-white/10">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Bosh sahifa
+            <ArrowLeft className="mr-2 h-4 w-4" /> Dashboard
           </Button>
         </Link>
       </nav>

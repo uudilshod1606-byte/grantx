@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { GraduationCap, Sparkles, BookOpen, Trophy, Target, Menu, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AuthLoadingScreen, useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -13,6 +14,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { loading, isAuthenticated } = useAuth();
+
+  if (loading) return <AuthLoadingScreen />;
+  if (isAuthenticated) return <Navigate to="/dashboard" />;
+
   return (
     <div className="relative min-h-screen overflow-hidden text-foreground">
       {/* Decorative blobs */}
@@ -49,7 +55,7 @@ function Navbar() {
   return (
     <header className="sticky top-0 z-50 px-4 pt-4">
       <nav className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-5 py-3">
-        <Logo />
+        <Link to="/"><Logo /></Link>
         <div className="hidden items-center gap-8 md:flex">
           <a href="#dasturlar" className="text-sm text-muted-foreground transition hover:text-foreground">Dasturlar</a>
           <a href="#imkoniyatlar" className="text-sm text-muted-foreground transition hover:text-foreground">Imkoniyatlar</a>
@@ -88,8 +94,8 @@ function Hero() {
         GrantX — DTM va Milliy Sertifikat imtihonlariga zamonaviy va samarali tayyorlanish uchun barcha kerakli vositalar bir joyda.
       </p>
       <div className="animate-fade-up mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row" style={{ animationDelay: "0.3s" }}>
-        <Button size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 glow">
-          Bepul boshlash <ArrowRight className="ml-2 h-4 w-4" />
+        <Button asChild size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 glow">
+          <Link to="/signup">Bepul boshlash <ArrowRight className="ml-2 h-4 w-4" /></Link>
         </Button>
         <Button size="lg" variant="outline" className="glass border-white/15 hover:bg-white/10">
           Demoni ko'rish
@@ -219,8 +225,8 @@ function CTA() {
         <p className="mx-auto mt-4 max-w-xl text-primary-foreground/80">
           Birinchi 7 kun mutlaqo bepul. Karta ma'lumotlari talab qilinmaydi.
         </p>
-        <Button size="lg" className="mt-8 bg-background text-foreground hover:bg-background/90">
-          Hozir ro'yxatdan o'tish <ArrowRight className="ml-2 h-4 w-4" />
+        <Button asChild size="lg" className="mt-8 bg-background text-foreground hover:bg-background/90">
+          <Link to="/signup">Hozir ro'yxatdan o'tish <ArrowRight className="ml-2 h-4 w-4" /></Link>
         </Button>
       </div>
     </section>

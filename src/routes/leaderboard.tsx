@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowLeft, Crown, Inbox, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProtectedRoute } from "@/lib/auth";
 import { SUBJECTS, attemptsRepo, computeStats, rankForXp } from "@/lib/domain";
 
 export const Route = createFileRoute("/leaderboard")({
@@ -25,6 +26,14 @@ function readUsersStorage() {
 }
 
 function LeaderboardPage() {
+  return (
+    <ProtectedRoute>
+      <LeaderboardContent />
+    </ProtectedRoute>
+  );
+}
+
+function LeaderboardContent() {
   const users = readUsersStorage();
   const attempts = attemptsRepo.list();
 

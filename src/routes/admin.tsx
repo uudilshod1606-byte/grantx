@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import {
   Users,
@@ -35,7 +35,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth";
+import { ProtectedRoute, useAuth } from "@/lib/auth";
 import {
   ADMIN_SUBJECTS,
   SUBJECTS,
@@ -59,18 +59,21 @@ export const Route = createFileRoute("/admin")({
     ],
   }),
   beforeLoad: () => {
-    // We can't read auth context in beforeLoad without router context wiring,
-    // so the component re-checks and renders a gate UI if not admin.
+    // Guarded in component after persistent auth state restores.
   },
 });
 
 function AdminPage() {
+  return (
+    <ProtectedRoute adminOnly>
+      <AdminContent />
+    </ProtectedRoute>
+  );
+}
+
+function AdminContent() {
   const { user } = useAuth();
   const admin = isAdminEmail(user?.email);
-
-  if (!user) {
-    throw redirect({ to: "/login" });
-  }
 
   return (
     <div className="relative min-h-screen text-foreground">
@@ -84,7 +87,7 @@ function AdminPage() {
             <ShieldCheck className="h-5 w-5 text-accent" />
             <span className="font-semibold">GrantX Admin</span>
           </div>
-          <div className="text-xs text-muted-foreground">{user.email}</div>
+          <div className="text-xs text-muted-foreground">{user?.email}</div>
         </div>
       </header>
 
@@ -126,9 +129,7 @@ function NotAdmin() {
       <ShieldCheck className="mx-auto h-10 w-10 text-accent" />
       <h1 className="mt-3 text-xl font-semibold">Ruxsat yo'q</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Bu sahifa faqat administratorlar uchun. Admin huquqi olish uchun
-        <code className="mx-1 rounded bg-white/5 px-1.5 py-0.5 text-xs">admin@grantx.uz</code>
-        bilan tizimga kiring.
+        Bu sahifa faqat administratorlar uchun. Admin panel faqat ruxsat berilgan GrantX hisobida ochiladi.
       </p>
       <Button asChild className="gradient-bg mt-5 text-primary-foreground">
         <Link to="/dashboard">Dashboard'ga qaytish</Link>
