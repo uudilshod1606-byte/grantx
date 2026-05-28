@@ -34,7 +34,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 // New users start with zero data. Real data will be wired up later.
-const user = {
+const fallbackUser = {
   name: "Yangi foydalanuvchi",
   username: "@student",
   joined: "Bugun qo'shildi",
