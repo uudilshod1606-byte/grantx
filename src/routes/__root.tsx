@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "sonner";
 
 function NotFoundComponent() {
@@ -115,10 +116,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster theme="dark" position="top-center" richColors />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Outlet />
+          <Toaster theme="system" position="top-center" richColors />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
