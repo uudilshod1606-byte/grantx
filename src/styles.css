@@ -186,3 +186,73 @@
 .animate-float { animation: float 6s ease-in-out infinite; }
 .animate-fade-up { animation: fade-up 0.8s ease-out both; }
 .animate-blob { animation: blob 18s ease-in-out infinite; }
+
+/* ------------------------------------------------------------------ */
+/*  Light theme overrides                                              */
+/* ------------------------------------------------------------------ */
+:root.light {
+  --background: oklch(0.98 0.012 270);
+  --foreground: oklch(0.22 0.04 270);
+  --card: oklch(1 0 0 / 75%);
+  --card-foreground: oklch(0.22 0.04 270);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.04 270);
+  --primary: oklch(0.55 0.22 270);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.93 0.025 270);
+  --secondary-foreground: oklch(0.22 0.04 270);
+  --muted: oklch(0.95 0.015 270);
+  --muted-foreground: oklch(0.45 0.04 270);
+  --accent: oklch(0.6 0.2 250);
+  --accent-foreground: oklch(0.99 0 0);
+  --border: oklch(0.22 0.04 270 / 12%);
+  --input: oklch(0.22 0.04 270 / 10%);
+  --ring: oklch(0.55 0.22 270);
+  --gradient-primary: linear-gradient(135deg, oklch(0.6 0.24 265), oklch(0.65 0.22 295));
+  --gradient-hero: radial-gradient(60% 60% at 50% 0%, oklch(0.88 0.1 270 / 55%) 0%, transparent 70%), linear-gradient(180deg, oklch(0.99 0.01 270) 0%, oklch(0.95 0.02 285) 100%);
+  --shadow-glow: 0 20px 80px -20px oklch(0.6 0.24 270 / 30%);
+}
+
+html, body {
+  transition: background-color 600ms ease, color 600ms ease;
+}
+
+/* ------------------------------------------------------------------ */
+/*  MathLive editor + renderer styling (matches GrantX glass UI)       */
+/* ------------------------------------------------------------------ */
+math-field.grantx-mathfield {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 60%, transparent);
+  color: var(--foreground);
+  font-size: 1rem;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+  --primary: var(--color-primary);
+  --selection-background-color: color-mix(in oklab, var(--primary) 30%, transparent);
+  --selection-color: var(--foreground);
+  --caret-color: var(--primary);
+  --placeholder-color: var(--muted-foreground);
+  --smart-fence-color: var(--primary);
+}
+math-field.grantx-mathfield:focus,
+math-field.grantx-mathfield:focus-within {
+  border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
+}
+math-field.grantx-mathfield::part(virtual-keyboard-toggle),
+math-field.grantx-mathfield::part(menu-toggle) {
+  color: var(--muted-foreground);
+}
+
+.grantx-math {
+  color: inherit;
+  font-size: 1em;
+}
+.grantx-math.block { display: block; }
+.grantx-math.inline { display: inline-block; vertical-align: middle; }
+.grantx-math .ML__base { color: inherit; }

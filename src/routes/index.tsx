@@ -2,6 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { GraduationCap, Sparkles, BookOpen, Trophy, Target, Menu, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuthLoadingScreen, useAuth } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -63,6 +64,7 @@ function Navbar() {
           <a href="#aloqa" className="text-sm text-muted-foreground transition hover:text-foreground">Aloqa</a>
         </div>
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           <Link to="/login">
             <Button variant="ghost" className="text-foreground hover:bg-white/10">Kirish</Button>
           </Link>
@@ -70,30 +72,70 @@ function Navbar() {
             <Button className="gradient-bg text-primary-foreground hover:opacity-90">Boshlash</Button>
           </Link>
         </div>
-        <button className="md:hidden rounded-lg p-2 hover:bg-white/10" aria-label="Menu">
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button className="rounded-lg p-2 hover:bg-white/10" aria-label="Menu">
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </nav>
     </header>
   );
 }
 
 function Hero() {
+  const universities = [
+    { name: "UWED", subtitle: "Jahon iqtisodiyoti", accent: "#3b82f6", glow: "rgba(59,130,246,0.55)", pos: "top-0 left-0", delay: "0s" },
+    { name: "TDYU", subtitle: "Yuridik universitet", accent: "#ef4444", glow: "rgba(239,68,68,0.5)", pos: "top-0 right-0", delay: "0.6s" },
+    { name: "O‘zMU", subtitle: "Milliy universitet", accent: "#10b981", glow: "rgba(16,185,129,0.5)", pos: "top-1/2 -translate-y-1/2 left-0", delay: "1.2s" },
+    { name: "UzDJTU", subtitle: "Jahon tillari", accent: "#a855f7", glow: "rgba(168,85,247,0.55)", pos: "top-1/2 -translate-y-1/2 right-0", delay: "1.8s" },
+    { name: "TDIU", subtitle: "Iqtisodiyot universiteti", accent: "#f97316", glow: "rgba(249,115,22,0.5)", pos: "bottom-0 left-0", delay: "2.4s" },
+    { name: "TATU", subtitle: "Axborot texnologiyalari", accent: "#06b6d4", glow: "rgba(6,182,212,0.55)", pos: "bottom-0 right-0", delay: "3s" },
+  ];
   return (
-    <section className="relative mx-auto max-w-6xl px-4 pt-20 pb-24 text-center md:pt-28">
+    <section className="relative mx-auto max-w-7xl px-4 pt-16 pb-24 text-center md:pt-24">
       <div className="animate-fade-up inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs text-muted-foreground">
         <Sparkles className="h-3.5 w-3.5 text-accent" />
         O'zbekistonning №1 ta'lim platformasi
       </div>
-      <h1 className="animate-fade-up mt-6 text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl" style={{ animationDelay: "0.1s" }}>
+      <h1 className="animate-fade-up mt-6 text-4xl font-bold tracking-tight md:text-6xl" style={{ animationDelay: "0.1s" }}>
         Orzudagi grantga{" "}
         <span className="gradient-text">bir qadam</span>{" "}
         yaqin
       </h1>
-      <p className="animate-fade-up mx-auto mt-6 max-w-2xl text-lg text-muted-foreground" style={{ animationDelay: "0.2s" }}>
+      <p className="animate-fade-up mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg" style={{ animationDelay: "0.2s" }}>
         GrantX — DTM va Milliy Sertifikat imtihonlariga zamonaviy va samarali tayyorlanish uchun barcha kerakli vositalar bir joyda.
       </p>
-      <div className="animate-fade-up mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row" style={{ animationDelay: "0.3s" }}>
+
+      {/* Premium 189 stage with floating university cards */}
+      <div className="relative mx-auto mt-14 h-[640px] w-full max-w-5xl md:h-[560px]">
+        {/* Ambient radial glows */}
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: "radial-gradient(closest-side, color-mix(in oklab, var(--primary) 35%, transparent), transparent 70%)" }} />
+          <div className="absolute left-1/2 top-1/2 h-[260px] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl" style={{ background: "radial-gradient(closest-side, color-mix(in oklab, var(--accent) 45%, transparent), transparent 70%)" }} />
+          <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "linear-gradient(var(--foreground) 1px, transparent 1px), linear-gradient(90deg, var(--foreground) 1px, transparent 1px)", backgroundSize: "48px 48px", maskImage: "radial-gradient(closest-side, black, transparent 70%)" }} />
+        </div>
+
+        {/* Central 189 */}
+        <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 animate-float">
+          <div className="relative">
+            <div className="absolute inset-0 -z-10 rounded-full blur-3xl" style={{ background: "radial-gradient(closest-side, color-mix(in oklab, var(--primary) 60%, transparent), transparent 70%)" }} />
+            <div className="text-[7rem] font-black leading-none tracking-tighter gradient-text drop-shadow-[0_10px_40px_rgba(120,80,255,0.45)] md:text-[12rem]">
+              189
+            </div>
+            <div className="mt-3 text-xs uppercase tracking-[0.4em] text-muted-foreground md:text-sm">
+              Maksimal DTM ball
+            </div>
+          </div>
+        </div>
+
+        {/* Floating university cards arranged around center */}
+        {universities.map((u, i) => (
+          <UniversityCard key={u.name} {...u} index={i} />
+        ))}
+      </div>
+
+      <div className="animate-fade-up mt-4 flex flex-col items-center justify-center gap-3 sm:flex-row" style={{ animationDelay: "0.3s" }}>
         <Button asChild size="lg" className="gradient-bg text-primary-foreground hover:opacity-90 glow">
           <Link to="/signup">Bepul boshlash <ArrowRight className="ml-2 h-4 w-4" /></Link>
         </Button>
@@ -102,7 +144,7 @@ function Hero() {
         </Button>
       </div>
 
-      <div className="animate-fade-up mt-16 grid grid-cols-3 gap-4 sm:gap-8" style={{ animationDelay: "0.4s" }}>
+      <div className="animate-fade-up mt-12 grid grid-cols-3 gap-4 sm:gap-8" style={{ animationDelay: "0.4s" }}>
         {[
           { v: "50K+", l: "O'quvchilar" },
           { v: "10K+", l: "Testlar" },
@@ -115,6 +157,53 @@ function Hero() {
         ))}
       </div>
     </section>
+  );
+}
+
+function UniversityCard({
+  name,
+  subtitle,
+  accent,
+  glow,
+  pos,
+  delay,
+  index,
+}: {
+  name: string;
+  subtitle: string;
+  accent: string;
+  glow: string;
+  pos: string;
+  delay: string;
+  index: number;
+}) {
+  return (
+    <div
+      className={`absolute ${pos} animate-float`}
+      style={{ animationDelay: delay, animationDuration: `${6 + (index % 3)}s` }}
+    >
+      <div
+        className="group relative w-[155px] cursor-default overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1.5 hover:scale-[1.04] hover:border-white/25 md:w-[185px] md:p-5"
+        style={{ boxShadow: `0 18px 60px -20px ${glow}, inset 0 1px 0 rgba(255,255,255,0.08)` }}
+      >
+        <div
+          className="pointer-events-none absolute -inset-px rounded-2xl opacity-60 transition-opacity duration-500 group-hover:opacity-100"
+          style={{ background: `radial-gradient(120% 80% at 0% 0%, ${glow}, transparent 60%)` }}
+        />
+        <div className="relative flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full" style={{ background: accent, boxShadow: `0 0 12px ${accent}` }} />
+          <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">University</span>
+        </div>
+        <div className="relative mt-2 text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+          {name}
+        </div>
+        <div className="relative mt-1 text-xs text-muted-foreground">{subtitle}</div>
+        <div
+          className="relative mt-3 h-[2px] w-10 rounded-full transition-all duration-500 group-hover:w-20"
+          style={{ background: `linear-gradient(90deg, ${accent}, transparent)` }}
+        />
+      </div>
+    </div>
   );
 }
 

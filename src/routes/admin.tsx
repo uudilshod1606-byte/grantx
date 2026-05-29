@@ -32,10 +32,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
+import { MathField } from "@/components/math/MathField";
+import { MathContent } from "@/components/math/MathContent";
 import {
   ADMIN_SUBJECTS,
   SUBJECTS,
@@ -295,7 +296,7 @@ function QuestionsTab() {
                     <td className="max-w-md truncate px-4 py-3">
                       <div className="flex items-center gap-2">
                         {q.imageUrl && <ImagePlus className="h-3.5 w-3.5 text-accent" />}
-                        <span className="truncate">{q.text}</span>
+                        <span className="truncate"><MathContent latex={q.text} inline /></span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -457,7 +458,18 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
 
         <div>
           <label className="text-xs text-muted-foreground">Savol matni</label>
-          <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} />
+          <MathField
+            value={text}
+            onChange={setText}
+            placeholder="Savol matnini kiriting (matn + formula)"
+            minHeight="5rem"
+          />
+          {text && (
+            <div className="mt-2 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-sm">
+              <div className="mb-1 text-[10px] uppercase text-muted-foreground">Ko'rinishi</div>
+              <MathContent latex={text} />
+            </div>
+          )}
         </div>
 
         <div>
@@ -508,19 +520,30 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
         <div className="space-y-2">
           <label className="text-xs text-muted-foreground">Variantlar (to'g'risini belgilang)</label>
           {(["A", "B", "C", "D"] as const).map((l, i) => (
-            <div key={l} className="flex items-center gap-2">
+            <div key={l} className="flex items-start gap-2">
               <button
                 type="button"
                 onClick={() => setCorrectIndex(i as 0 | 1 | 2 | 3)}
-                className={`flex h-8 w-8 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-white/5"}`}
+                className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-white/5"}`}
               >{l}</button>
-              <Input value={opts[i]} onChange={(e) => { const n = [...opts]; n[i] = e.target.value; setOpts(n); }} placeholder={`Variant ${l}`} />
+              <div className="flex-1">
+                <MathField
+                  value={opts[i]}
+                  onChange={(v) => { const n = [...opts]; n[i] = v; setOpts(n); }}
+                  placeholder={`Variant ${l}`}
+                />
+              </div>
             </div>
           ))}
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Izoh (ixtiyoriy)</label>
-          <Textarea value={explanation} onChange={(e) => setExplanation(e.target.value)} rows={2} />
+          <MathField
+            value={explanation}
+            onChange={setExplanation}
+            placeholder="To'g'ri javob izohi (ixtiyoriy)"
+            minHeight="4rem"
+          />
         </div>
       </div>
       <DialogFooter>

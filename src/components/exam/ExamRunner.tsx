@@ -29,6 +29,7 @@ import {
   type ExamKind,
   type Question,
 } from "@/lib/domain";
+import { MathContent } from "@/components/math/MathContent";
 
 export type ExamSubject = {
   id: string;
@@ -331,9 +332,10 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
                   className="mx-auto mb-4 max-h-72 rounded-lg border border-white/10"
                 />
               )}
-              <p className="whitespace-pre-wrap text-base leading-relaxed">
-                {currentQuestion.text}
-              </p>
+              <MathContent
+                latex={currentQuestion.text}
+                className="text-base leading-relaxed"
+              />
             </div>
           ) : (
             <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
@@ -373,7 +375,11 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
                     {label}
                   </span>
                   <span className={`text-sm ${optionText ? "text-foreground" : "text-muted-foreground"}`}>
-                    {optionText ?? `Variant ${label} — matn keyinroq qo'shiladi`}
+                    {optionText ? (
+                      <MathContent latex={optionText} inline />
+                    ) : (
+                      `Variant ${label} — matn keyinroq qo'shiladi`
+                    )}
                   </span>
                 </button>
               );
