@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProtectedRoute, useAuth, type AuthUser } from "@/lib/auth";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -149,6 +150,7 @@ function Navbar({ user, isAdmin, onSignOut }: { user: DashboardUser; isAdmin: bo
           {isAdmin && <Link to="/admin" className="text-sm text-primary transition hover:text-foreground">Admin Panel</Link>}
         </div>
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-bg text-sm font-semibold text-primary-foreground">
             {user.avatarInitials}
           </div>
@@ -157,6 +159,7 @@ function Navbar({ user, isAdmin, onSignOut }: { user: DashboardUser; isAdmin: bo
           </Button>
         </div>
         <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
           {isAdmin && (
             <Link to="/admin" aria-label="Admin Panel" className="rounded-lg p-2 text-primary hover:bg-white/10">
               <ShieldCheck className="h-5 w-5" />
