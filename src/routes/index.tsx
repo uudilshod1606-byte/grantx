@@ -146,8 +146,8 @@ function HeroScene() {
       </div>
 
       {/* Floating university cards */}
-      {universities.map((u, i) => (
-        <UniversityCard key={u.name} {...u} index={i} />
+      {universities.map((u) => (
+        <UniversityCard key={u.name} {...u} />
       ))}
     </section>
   );
@@ -169,7 +169,6 @@ function UniversityCard({
   pos: { top?: string; bottom?: string; left?: string; right?: string };
   delay: string;
   duration: string;
-  index: number;
 }) {
   return (
     <div
