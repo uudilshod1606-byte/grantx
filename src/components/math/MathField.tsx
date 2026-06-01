@@ -24,6 +24,9 @@ export function MathField({
   minHeight = "3rem",
 }: Props) {
   const ref = useRef<HTMLElement | null>(null);
+  // Track the latest value we emitted, so external resets sync without
+  // clobbering the caret on every keystroke.
+  const lastEmitted = useRef<string>(value);
 
   useEffect(() => {
     let mounted = true;
@@ -37,16 +40,28 @@ export function MathField({
           /* ignore */
         }
       }
+      // Initialize the field value once mathlive is registered.
+      const el = ref.current as (HTMLElement & { value?: string }) | null;
+      if (el && el.value !== value) {
+        el.value = value;
+        lastEmitted.current = value;
+      }
     });
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const el = ref.current as (HTMLElement & { value?: string }) | null;
     if (!el) return;
-    if (el.value !== value) el.value = value;
+    // Only sync when the change came from outside (e.g. form reset).
+    // Skip when this is the value we just emitted, so caret/selection stay put.
+    if (value !== lastEmitted.current && el.value !== value) {
+      el.value = value;
+      lastEmitted.current = value;
+    }
   }, [value]);
 
   return (
@@ -55,13 +70,15 @@ export function MathField({
       ref={ref}
       placeholder={placeholder}
       math-virtual-keyboard-policy="auto"
-      default-mode="math"
+      default-mode="text"
       aria-label={ariaLabel}
       class={cn("grantx-mathfield", className)}
       style={{ minHeight }}
       onInput={(e: React.FormEvent<HTMLElement>) => {
         const t = e.target as HTMLElement & { value?: string };
-        onChange(t.value ?? "");
+        const next = t.value ?? "";
+        lastEmitted.current = next;
+        onChange(next);
       }}
     />
   );
