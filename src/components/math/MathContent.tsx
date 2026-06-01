@@ -30,7 +30,10 @@ export function MathContent({ latex, className, inline = false }: Props) {
     void import("mathlive").then(({ convertLatexToMarkup }) => {
       if (!mounted) return;
       try {
-        setHtml(convertLatexToMarkup(latex, { defaultMode: "math" }));
+        // Render in text mode so natural-language content (with spaces,
+        // punctuation, Uzbek characters like o', g', etc.) is preserved.
+        // Math segments still render when wrapped in $...$ inside the LaTeX.
+        setHtml(convertLatexToMarkup(latex, { defaultMode: "text" }));
       } catch {
         setHtml(escapeHtml(latex));
       }
