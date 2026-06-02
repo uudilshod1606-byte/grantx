@@ -35,7 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
-import { MathField } from "@/components/math/MathField";
+import { RichTextField } from "@/components/math/RichTextField";
 import { MathContent } from "@/components/math/MathContent";
 import {
   ADMIN_SUBJECTS,
@@ -458,18 +458,12 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
 
         <div>
           <label className="text-xs text-muted-foreground">Savol matni</label>
-          <MathField
+          <RichTextField
             value={text}
             onChange={setText}
-            placeholder="Savol matnini kiriting (matn + formula)"
-            minHeight="5rem"
+            placeholder={"Savol matnini kiriting.\nEnter — yangi qator. Uzun matn, paragraflar va o'qish parchalari qo'llab-quvvatlanadi."}
+            minRows={6}
           />
-          {text && (
-            <div className="mt-2 rounded-lg border border-white/10 bg-white/[0.02] p-3 text-sm">
-              <div className="mb-1 text-[10px] uppercase text-muted-foreground">Ko'rinishi</div>
-              <MathContent latex={text} />
-            </div>
-          )}
         </div>
 
         <div>
@@ -527,10 +521,12 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
                 className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-white/5"}`}
               >{l}</button>
               <div className="flex-1">
-                <MathField
+                <RichTextField
                   value={opts[i]}
                   onChange={(v) => { const n = [...opts]; n[i] = v; setOpts(n); }}
                   placeholder={`Variant ${l}`}
+                  minRows={2}
+                  preview={false}
                 />
               </div>
             </div>
@@ -538,11 +534,11 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Izoh (ixtiyoriy)</label>
-          <MathField
+          <RichTextField
             value={explanation}
             onChange={setExplanation}
-            placeholder="To'g'ri javob izohi (ixtiyoriy)"
-            minHeight="4rem"
+            placeholder={"To'g'ri javob izohi.\nBir nechta paragraf qo'llab-quvvatlanadi."}
+            minRows={4}
           />
         </div>
       </div>

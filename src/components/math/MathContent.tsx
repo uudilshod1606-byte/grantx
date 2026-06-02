@@ -14,12 +14,49 @@ function escapeHtml(s: string) {
     .replace(/>/g, "&gt;");
 }
 
+type Convert = (latex: string, opts?: Record<string, unknown>) => string;
+
 /**
- * Beautifully renders LaTeX (stored from the MathField) into typeset math.
- * Falls back to plain text while mathlive is loading.
+ * Render plain text exactly as authored (spaces, line breaks, blank lines)
+ * with inline math segments wrapped in $...$ rendered via MathLive.
+ */
+function buildHtml(source: string, convert: Convert | null): string {
+  if (!source) return "";
+  // Split text from inline math: $...$ (single-dollar) — non-greedy, no
+  // newlines inside math. Escaped \$ stays literal.
+  const parts: Array<{ type: "text" | "math"; value: string }> = [];
+  const regex = /(?<!\\)\$([^$\n]+?)(?<!\\)\$/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(source)) !== null) {
+    if (m.index > last) parts.push({ type: "text", value: source.slice(last, m.index) });
+    parts.push({ type: "math", value: m[1] });
+    last = m.index + m[0].length;
+  }
+  if (last < source.length) parts.push({ type: "text", value: source.slice(last) });
+
+  return parts
+    .map((p) => {
+      if (p.type === "text") {
+        // Escape, unescape literal \$ back to $, preserve newlines as <br/>.
+        return escapeHtml(p.value).replace(/\\\$/g, "$").replace(/\n/g, "<br/>");
+      }
+      if (!convert) return escapeHtml(`$${p.value}$`);
+      try {
+        return convert(p.value, { defaultMode: "math" });
+      } catch {
+        return escapeHtml(`$${p.value}$`);
+      }
+    })
+    .join("");
+}
+
+/**
+ * Beautifully renders text + inline LaTeX into typeset math while preserving
+ * the author's spacing, line breaks and paragraphs.
  */
 export function MathContent({ latex, className, inline = false }: Props) {
-  const [html, setHtml] = useState<string>("");
+  const [html, setHtml] = useState<string>(() => buildHtml(latex, null));
 
   useEffect(() => {
     let mounted = true;
@@ -27,16 +64,11 @@ export function MathContent({ latex, className, inline = false }: Props) {
       setHtml("");
       return;
     }
+    // Initial paint with plain text, then upgrade once mathlive is loaded.
+    setHtml(buildHtml(latex, null));
     void import("mathlive").then(({ convertLatexToMarkup }) => {
       if (!mounted) return;
-      try {
-        // Render in text mode so natural-language content (with spaces,
-        // punctuation, Uzbek characters like o', g', etc.) is preserved.
-        // Math segments still render when wrapped in $...$ inside the LaTeX.
-        setHtml(convertLatexToMarkup(latex, { defaultMode: "text" }));
-      } catch {
-        setHtml(escapeHtml(latex));
-      }
+      setHtml(buildHtml(latex, convertLatexToMarkup));
     });
     return () => {
       mounted = false;
@@ -48,9 +80,13 @@ export function MathContent({ latex, className, inline = false }: Props) {
   const Tag = inline ? "span" : "div";
   return (
     <Tag
-      className={cn("grantx-math", inline ? "inline" : "block", className)}
+      className={cn(
+        "grantx-math whitespace-pre-wrap break-words",
+        inline ? "inline" : "block",
+        className,
+      )}
       // mathlive output is trusted (we generated it). LaTeX itself can't inject script.
-      dangerouslySetInnerHTML={{ __html: html || escapeHtml(latex) }}
+      dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }
