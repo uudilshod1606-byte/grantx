@@ -412,7 +412,7 @@ function QuestionFormDialog({ onCancel, onSaved }: { onCancel: () => void; onSav
 
   return (
     <DialogContent
-      className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl"
+      className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl [&>button]:hidden"
       onPointerDownOutside={(e) => e.preventDefault()}
       onInteractOutside={(e) => e.preventDefault()}
       onEscapeKeyDown={(e) => e.preventDefault()}
