@@ -1,15 +1,7 @@
-import { useRef, useState } from "react";
+import { useDeferredValue, useRef, useState } from "react";
 import { Sigma } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { MathField } from "./MathField";
 import { MathContent } from "./MathContent";
 import { cn } from "@/lib/utils";
@@ -42,6 +34,7 @@ export function RichTextField({
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const [open, setOpen] = useState(false);
   const [latex, setLatex] = useState("");
+  const previewValue = useDeferredValue(value);
 
   const insertFormula = () => {
     const expr = latex.trim();
@@ -77,56 +70,44 @@ export function RichTextField({
         className="resize-y whitespace-pre-wrap font-sans text-sm leading-relaxed"
       />
       <div className="flex items-center justify-between gap-2">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="glass border-white/15 hover:bg-white/10"
-            >
-              <Sigma className="mr-1.5 h-3.5 w-3.5" /> Formula qo'shish
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="glass border-white/10 sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Matematik formula</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <MathField
-                value={latex}
-                onChange={setLatex}
-                placeholder="Misol: \\frac{a}{b} = \\sqrt{x^2 + 1}"
-                minHeight="4rem"
-              />
-              <p className="text-xs text-muted-foreground">
-                Klaviaturadan kasr, ildiz, daraja, π va boshqa belgilarni
-                kiritishingiz mumkin. Formula matn ichiga{" "}
-                <code className="rounded bg-white/10 px-1">$...$</code> sifatida
-                joylashtiriladi.
-              </p>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                onClick={insertFormula}
-                className="gradient-bg text-primary-foreground"
-              >
-                Joylashtirish
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen((v) => !v)}
+          className="glass border-white/15 hover:bg-white/10"
+        >
+          <Sigma className="mr-1.5 h-3.5 w-3.5" /> Formula qo'shish
+        </Button>
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
           Enter — yangi qator · $formula$ — matematik ifoda
         </span>
       </div>
-      {preview && value.trim() && (
+      {open && (
+        <div className="space-y-3 rounded-lg border border-white/10 bg-white/[0.03] p-3">
+          <MathField
+            value={latex}
+            onChange={setLatex}
+            placeholder="Misol: \\frac{a}{b} = \\sqrt{x^2 + 1}"
+            minHeight="4rem"
+          />
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={insertFormula}
+              className="gradient-bg text-primary-foreground"
+            >
+              Joylashtirish
+            </Button>
+          </div>
+        </div>
+      )}
+      {preview && previewValue.trim() && (
         <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
           <div className="mb-1 text-[10px] uppercase text-muted-foreground">
             Ko'rinishi
           </div>
-          <MathContent latex={value} />
+          <MathContent latex={previewValue} />
         </div>
       )}
     </div>
