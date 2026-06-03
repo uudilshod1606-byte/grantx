@@ -146,11 +146,12 @@ function UniversityCard({
   return (
     <div
       className="absolute z-20 h-[112px] w-[246px] animate-float"
-      style={{ ...pos, animationDelay: delay, animationDuration: "7.5s", transform: `rotate(${rotate})` }}
+      style={{ ...pos, animationDelay: delay, animationDuration: "7.5s" }}
     >
       <div
         className="relative flex h-full w-full cursor-default items-center gap-4 overflow-hidden rounded-[18px] border border-white/80 bg-white/82 px-6 py-5 backdrop-blur-2xl"
         style={{
+          transform: `rotate(${rotate})`,
           boxShadow: `0 19px 34px -18px ${glow}, 0 12px 28px -20px rgba(27,38,75,0.42), 0 2px 0 ${soft}, inset 0 1px 0 rgba(255,255,255,0.96)`,
         }}
       >
