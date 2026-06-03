@@ -210,11 +210,6 @@ function QuestionsTab() {
   const [open, setOpen] = useState(false);
 
   const refresh = () => setQuestions(questionsRepo.list());
-  const handleQuestionDialogOpenChange = (nextOpen: boolean) => {
-    // Keep the add-question editor stable while typing long passages. It closes
-    // only from the explicit Saqlash or Bekor qilish buttons.
-    if (nextOpen) setOpen(true);
-  };
 
   const filtered = useMemo(() => {
     return questions.filter((q) => {
@@ -256,11 +251,11 @@ function QuestionsTab() {
             </SelectContent>
           </Select>
         )}
-        <Dialog open={open} onOpenChange={handleQuestionDialogOpenChange}>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="gradient-bg text-primary-foreground"><Plus className="mr-2 h-4 w-4" /> Yangi savol</Button>
           </DialogTrigger>
-          <QuestionFormDialog onCancel={() => setOpen(false)} onSaved={() => { refresh(); setOpen(false); }} />
+          <QuestionFormDialog onSaved={() => { refresh(); setOpen(false); }} />
         </Dialog>
       </div>
 
@@ -340,7 +335,7 @@ function subjectNameFor(kind: ExamKind, subjectId: string, block?: DtmBlock | nu
   return pool.find((s) => s.id === subjectId)?.name ?? subjectId;
 }
 
-function QuestionFormDialog({ onCancel, onSaved }: { onCancel: () => void; onSaved: () => void }) {
+function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
   const [kind, setKind] = useState<ExamKind>("dtm");
   const [block, setBlock] = useState<DtmBlock>("mandatory");
   const subjectPool =
@@ -396,7 +391,7 @@ function QuestionFormDialog({ onCancel, onSaved }: { onCancel: () => void; onSav
     if (opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
     if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
     questionsRepo.add({
-      text,
+      text: text.trim(),
       subjectId,
       kind,
       block: kind === "dtm" ? block : null,
@@ -404,19 +399,14 @@ function QuestionFormDialog({ onCancel, onSaved }: { onCancel: () => void; onSav
       imageUrl,
       options: opts as [string, string, string, string],
       correctIndex,
-      explanation: explanation.trim() ? explanation : undefined,
+      explanation: explanation.trim() || undefined,
     });
     toast.success("Savol qo'shildi");
     onSaved();
   };
 
   return (
-    <DialogContent
-      className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl [&>button]:hidden"
-      onPointerDownOutside={(e) => e.preventDefault()}
-      onInteractOutside={(e) => e.preventDefault()}
-      onEscapeKeyDown={(e) => e.preventDefault()}
-    >
+    <DialogContent className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl">
       <DialogHeader><DialogTitle>Yangi savol qo'shish</DialogTitle></DialogHeader>
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3">
@@ -553,10 +543,7 @@ function QuestionFormDialog({ onCancel, onSaved }: { onCancel: () => void; onSav
         </div>
       </div>
       <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel} className="glass border-white/15 hover:bg-white/10">
-          Bekor qilish
-        </Button>
-        <Button type="button" onClick={submit} className="gradient-bg text-primary-foreground">Saqlash</Button>
+        <Button onClick={submit} className="gradient-bg text-primary-foreground">Saqlash</Button>
       </DialogFooter>
     </DialogContent>
   );

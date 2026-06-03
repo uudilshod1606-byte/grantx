@@ -374,9 +374,9 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
                   >
                     {label}
                   </span>
-                  <span className={`min-w-0 flex-1 text-sm ${optionText ? "text-foreground" : "text-muted-foreground"}`}>
+                  <span className={`text-sm ${optionText ? "text-foreground" : "text-muted-foreground"}`}>
                     {optionText ? (
-                      <MathContent latex={optionText} />
+                      <MathContent latex={optionText} inline />
                     ) : (
                       `Variant ${label} — matn keyinroq qo'shiladi`
                     )}
