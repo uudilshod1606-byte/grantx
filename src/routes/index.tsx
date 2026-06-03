@@ -1,8 +1,6 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { GraduationCap, Trophy, Target } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { Trophy, Target } from "lucide-react";
 import { AuthLoadingScreen, useAuth } from "@/lib/auth";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -21,9 +19,8 @@ function Index() {
   if (isAuthenticated) return <Navigate to="/dashboard" />;
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-white text-slate-900">
+    <div className="relative h-screen w-screen overflow-hidden bg-white text-[#17254a]">
       <AmbientBackground />
-      <Navbar />
       <HeroScene />
     </div>
   );
@@ -33,148 +30,94 @@ function AmbientBackground() {
   return (
     <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
       <div className="absolute inset-0 bg-white" />
-      <div className="absolute left-1/2 top-1/2 h-[60vmin] w-[60vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(139,92,246,0.18),transparent_70%)] blur-2xl" />
-      <div
-        className="absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(15,23,42,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.5) 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-          maskImage: "radial-gradient(closest-side at 50% 50%, black, transparent 78%)",
-        }}
-      />
+      <div className="absolute left-[-8%] top-[12%] h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle,rgba(93,151,255,0.16),transparent_68%)] blur-3xl" />
+      <div className="absolute right-[-8%] top-[12%] h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(circle,rgba(255,93,177,0.12),transparent_68%)] blur-3xl" />
+      <div className="absolute left-1/2 top-[50%] h-[34rem] w-[46rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(121,92,255,0.105),transparent_70%)] blur-2xl" />
+      <div className="absolute inset-x-0 bottom-0 h-44 bg-[radial-gradient(ellipse_at_bottom,rgba(239,246,255,0.9),transparent_65%)]" />
     </div>
-  );
-}
-
-function Logo() {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-bg glow">
-        <GraduationCap className="h-5 w-5 text-primary-foreground" />
-      </div>
-      <span className="text-xl font-bold tracking-tight text-slate-900">
-        Grant<span className="gradient-text">X</span>
-      </span>
-    </div>
-  );
-}
-
-function Navbar() {
-  return (
-    <header className="absolute top-0 left-0 right-0 z-50 px-4 pt-4">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between rounded-2xl border border-slate-200 bg-white/80 px-5 py-3 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.15)] backdrop-blur-xl">
-        <Link to="/"><Logo /></Link>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <Link to="/login">
-            <Button variant="ghost" className="text-slate-700 hover:bg-slate-100">
-              Kirish
-            </Button>
-          </Link>
-          <Link to="/signup">
-            <Button className="gradient-bg text-primary-foreground hover:opacity-90 glow">
-              Boshlash
-            </Button>
-          </Link>
-        </div>
-      </nav>
-    </header>
   );
 }
 
 function HeroScene() {
   const universities = [
-    { name: "UWED",  subtitle: "Jahon iqtisodiyoti va diplomatiya universiteti", accent: "#3b82f6", glow: "rgba(59,130,246,0.45)", pos: { top: "16%", left: "16%" },   rotate: "-8deg", delay: "0s",   duration: "7s" },
-    { name: "TDYU",  subtitle: "Toshkent davlat yuridik universiteti",           accent: "#ef4444", glow: "rgba(239,68,68,0.40)",  pos: { top: "16%", right: "16%" },  rotate: "8deg",  delay: "0.6s", duration: "8s" },
-    { name: "O‘zMU", subtitle: "O‘zbekiston Milliy universiteti",                accent: "#10b981", glow: "rgba(16,185,129,0.40)", pos: { top: "46%", left: "8%" },    rotate: "-10deg",delay: "1.2s", duration: "9s" },
-    { name: "TATU",  subtitle: "Toshkent axborot texnologiyalari universiteti",  accent: "#06b6d4", glow: "rgba(6,182,212,0.45)",  pos: { top: "46%", right: "8%" },   rotate: "10deg", delay: "1.8s", duration: "7.5s" },
-    { name: "UzDJTU",subtitle: "O‘zbekiston davlat jahon tillari universiteti",  accent: "#a855f7", glow: "rgba(168,85,247,0.45)", pos: { bottom: "14%", left: "16%" },rotate: "9deg",  delay: "2.4s", duration: "8.5s" },
-    { name: "TDIU",  subtitle: "Toshkent davlat iqtisodiyot universiteti",       accent: "#f97316", glow: "rgba(249,115,22,0.40)", pos: { bottom: "14%", right: "16%" },rotate: "-9deg",delay: "3s",   duration: "9.5s" },
+    { name: "UWED", subtitle: "Jahon iqtisodiyoti va\ndiplomatiya universiteti", accent: "#1554b7", soft: "#dbeafe", glow: "rgba(37,99,235,0.34)", pos: { left: "14.6%", top: "8.8%" }, rotate: "-8deg", seal: "✦", delay: "0s" },
+    { name: "TDYU", subtitle: "Toshkent davlat\nyuridik universiteti", accent: "#d51b36", soft: "#ffe4e8", glow: "rgba(220,38,38,0.28)", pos: { left: "65.9%", top: "9.8%" }, rotate: "5deg", seal: "♜", delay: "0.4s" },
+    { name: "O‘ZMU", subtitle: "O‘zbekiston\nMilliy universiteti", accent: "#10a04f", soft: "#dcfce7", glow: "rgba(34,197,94,0.35)", pos: { left: "4.2%", top: "37.6%" }, rotate: "-5deg", seal: "◉", delay: "0.8s" },
+    { name: "TATU", subtitle: "Toshkent axborot\ntexnologiyalari universiteti", accent: "#18b7c8", soft: "#cffafe", glow: "rgba(6,182,212,0.32)", pos: { left: "76%", top: "38.3%" }, rotate: "3deg", seal: "T", delay: "1.2s" },
+    { name: "UzDJTU", subtitle: "O‘zbekiston davlat\njahon tillari universiteti", accent: "#8b5cf6", soft: "#ede9fe", glow: "rgba(139,92,246,0.34)", pos: { left: "15.2%", top: "70.3%" }, rotate: "-4deg", seal: "◎", delay: "1.6s" },
+    { name: "TDIU", subtitle: "Toshkent davlat\niqtisodiyot universiteti", accent: "#ff8a12", soft: "#ffedd5", glow: "rgba(249,115,22,0.34)", pos: { left: "65.2%", top: "70.6%" }, rotate: "4deg", seal: "▥", delay: "2s" },
+  ];
+  const dots = [
+    { left: "39.1%", top: "17.2%", color: "#4d73ff" },
+    { left: "61.6%", top: "18.5%", color: "#ff4bb1" },
+    { left: "10.5%", top: "50.2%", color: "#c084fc" },
+    { left: "27.9%", top: "47.2%", color: "#22e58a" },
+    { left: "72.4%", top: "47.3%", color: "#26d9ee" },
+    { left: "90.6%", top: "49.3%", color: "#c084fc" },
+    { left: "13%", top: "78.3%", color: "#70c2ff" },
+    { left: "39.1%", top: "83.8%", color: "#8b5cf6" },
+    { left: "61.4%", top: "83.8%", color: "#ff7a1a" },
+    { left: "88%", top: "78.6%", color: "#38bdf8" },
   ];
 
-  const orbitDots = Array.from({ length: 16 });
-
   return (
-    <section className="relative h-full w-full">
-      {/* Orbit rings */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="relative h-[58vmin] w-[58vmin]">
-          <div className="absolute inset-0 rounded-full border border-dashed border-violet-300/60" />
-          <div className="absolute -inset-[6vmin] rounded-full border border-violet-200/50" />
-          <div className="absolute -inset-[12vmin] rounded-full border border-violet-100/60" />
-          {orbitDots.map((_, i) => {
-            const angle = (i / orbitDots.length) * Math.PI * 2;
-            const r = 29; // vmin (half of 58)
-            const x = 50 + Math.cos(angle) * r;
-            const y = 50 + Math.sin(angle) * r;
-            return (
-              <span
-                key={i}
-                className="absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500"
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                  boxShadow: "0 0 10px rgba(139,92,246,0.9), 0 0 20px rgba(139,92,246,0.5)",
-                }}
-              />
-            );
-          })}
-        </div>
-      </div>
+    <section className="relative flex h-full w-full items-center justify-center overflow-hidden bg-white">
+      <div className="relative aspect-[1240/626] w-[min(1240px,100vw)] min-w-[760px] max-w-[1240px]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,243,255,0.85),rgba(255,255,255,0)_58%)]" />
 
-      {/* Ambient radial glow behind 189 */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[55vmin] w-[55vmin] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-        style={{
-          background:
-            "radial-gradient(closest-side, rgba(139,92,246,0.45), rgba(168,85,247,0.18) 50%, transparent 75%)",
-        }}
-      />
+        <div className="pointer-events-none absolute left-[5.7%] top-[11.8%] h-[75%] w-[88.6%] rounded-[50%] border border-dashed border-[#8b5cf6]/14" />
+        <div className="pointer-events-none absolute left-[28.8%] top-[12.2%] h-[72%] w-[42.4%] rounded-[50%] border border-dashed border-[#8b5cf6]/10" />
+        <div className="pointer-events-none absolute left-[50%] top-[17.3%] h-[67%] border-l border-dashed border-[#8b5cf6]/8" />
+        <div className="pointer-events-none absolute left-[10%] right-[10%] top-[47.9%] border-t border-dashed border-[#8b5cf6]/10" />
 
-      {/* Center stage */}
-      <div className="absolute left-1/2 top-1/2 z-10 w-full -translate-x-1/2 -translate-y-1/2 px-4 text-center">
-        <div className="animate-fade-up inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-[11px] font-medium text-violet-700 shadow-sm backdrop-blur">
-          <Trophy className="h-3 w-3 text-violet-600" /> DTM maksimal ball
+        {dots.map((dot, index) => (
+          <span
+            key={index}
+            className="absolute z-[3] h-[5px] w-[5px] rounded-full"
+            style={{
+              left: dot.left,
+              top: dot.top,
+              background: dot.color,
+              boxShadow: `0 0 9px ${dot.color}, 0 0 22px ${dot.color}`,
+            }}
+          />
+        ))}
+
+        <div className="absolute left-1/2 top-[48.8%] z-[2] h-[43%] w-[43%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(125,102,255,0.18),rgba(255,255,255,0)_68%)] blur-2xl" />
+
+        <div className="absolute left-1/2 top-[26.2%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#ddd8ff] bg-white/78 px-5 py-2 text-[13px] font-bold text-[#5d55d9] shadow-[0_8px_24px_rgba(92,86,216,0.10)] backdrop-blur-xl">
+          <Trophy className="h-4 w-4 fill-[#6860ee]/15 text-[#635cf0]" /> DTM maksimal ball
         </div>
-        <div
-          className="animate-fade-up relative mt-4 select-none leading-[0.85] tracking-tighter"
-          style={{
-            fontSize: "clamp(10rem, 38vmin, 26rem)",
-            fontWeight: 900,
-            background:
-              "linear-gradient(180deg, #a78bfa 0%, #7c3aed 45%, #6d28d9 100%)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            color: "transparent",
-            filter:
-              "drop-shadow(0 6px 0 rgba(109,40,217,0.25)) drop-shadow(0 18px 30px rgba(124,58,237,0.45)) drop-shadow(0 40px 80px rgba(124,58,237,0.35))",
-            animationDelay: "0.1s",
-          }}
-        >
-          189
+
+        <div className="absolute left-1/2 top-[48.5%] z-10 -translate-x-1/2 -translate-y-1/2 select-none text-[clamp(10rem,18.8vw,14.7rem)] font-black leading-none tracking-[-0.065em] text-[#151d3a]">
+          <span
+            className="block"
+            style={{
+              textShadow:
+                "0 5px 0 rgba(44,61,130,0.10), 0 18px 28px rgba(18,31,72,0.30), 0 38px 64px rgba(59,88,183,0.22), -12px 0 26px rgba(72,105,255,0.18), 14px 7px 22px rgba(255,138,43,0.15)",
+            }}
+          >
+            189
+          </span>
         </div>
-        <div className="animate-fade-up mt-5 space-y-1" style={{ animationDelay: "0.25s" }}>
-          <p className="text-base font-semibold text-slate-800 md:text-lg">
+
+        <div className="absolute left-1/2 top-[68.8%] z-10 w-full -translate-x-1/2 text-center">
+          <p className="text-[18px] font-extrabold tracking-[-0.01em] text-[#2a3d72]">
             Orzular sari bir qadam yaqinroq!
           </p>
-          <p className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-sm font-semibold text-transparent md:text-base">
-            Bilimingga ishon, kelajagingni yarAT!
+          <p className="mt-2 text-[14px] font-semibold text-[#607095]">
+            Bilimingga ishon, kelajagingni <span className="text-[#5f5af4]">yarAT!</span>
           </p>
         </div>
-        <div
-          className="animate-fade-up mt-4 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-[11px] font-medium text-violet-700 shadow-sm backdrop-blur"
-          style={{ animationDelay: "0.35s" }}
-        >
-          <Target className="h-3 w-3 text-violet-600" /> Maqsad aniq, yo‘l ochiq
-        </div>
-      </div>
 
-      {/* Floating university cards */}
-      {universities.map((u) => (
-        <UniversityCard key={u.name} {...u} />
-      ))}
+        <div className="absolute left-1/2 top-[83.8%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#ddd8ff] bg-white/78 px-5 py-2 text-[13px] font-bold text-[#5d55d9] shadow-[0_8px_24px_rgba(92,86,216,0.10)] backdrop-blur-xl">
+          <Target className="h-4 w-4 text-[#635cf0]" /> Maqsad aniq, yo‘l ochiq!
+        </div>
+
+        {universities.map((u) => (
+          <UniversityCard key={u.name} {...u} />
+        ))}
+      </div>
     </section>
   );
 }
@@ -183,55 +126,53 @@ function UniversityCard({
   name,
   subtitle,
   accent,
+  soft,
   glow,
   pos,
   rotate,
+  seal,
   delay,
-  duration,
 }: {
   name: string;
   subtitle: string;
   accent: string;
+  soft: string;
   glow: string;
-  pos: { top?: string; bottom?: string; left?: string; right?: string };
+  pos: { top: string; left: string };
   rotate: string;
+  seal: string;
   delay: string;
-  duration: string;
 }) {
   return (
     <div
-      className="absolute z-20 animate-float"
-      style={{ ...pos, animationDelay: delay, animationDuration: duration, transform: `rotate(${rotate})` }}
+      className="absolute z-20 h-[112px] w-[246px] animate-float"
+      style={{ ...pos, animationDelay: delay, animationDuration: "7.5s", transform: `rotate(${rotate})` }}
     >
       <div
-        className="group relative w-[140px] cursor-default overflow-hidden rounded-2xl border border-white/70 bg-white/80 p-4 backdrop-blur-xl transition-all duration-500 hover:-translate-y-1.5 hover:scale-[1.04] md:w-[190px] md:p-5"
+        className="relative flex h-full w-full cursor-default items-center gap-4 overflow-hidden rounded-[18px] border border-white/80 bg-white/82 px-6 py-5 backdrop-blur-2xl"
         style={{
-          boxShadow: `0 24px 60px -20px ${glow}, 0 10px 30px -15px rgba(15,23,42,0.25), inset 0 1px 0 rgba(255,255,255,0.9)`,
+          boxShadow: `0 19px 34px -18px ${glow}, 0 12px 28px -20px rgba(27,38,75,0.42), 0 2px 0 ${soft}, inset 0 1px 0 rgba(255,255,255,0.96)`,
         }}
       >
         <div
-          className="pointer-events-none absolute -inset-px rounded-2xl opacity-70 transition-opacity duration-500 group-hover:opacity-100"
-          style={{ background: `radial-gradient(120% 80% at 0% 0%, ${glow}, transparent 65%)` }}
+          className="pointer-events-none absolute inset-0 opacity-75"
+          style={{ background: `radial-gradient(90% 120% at 0% 100%, ${soft}, transparent 58%)` }}
         />
-        <div className="relative flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: accent, boxShadow: `0 0 12px ${accent}` }} />
-          <span className="text-[10px] uppercase tracking-[0.25em] text-slate-500">
-            University
-          </span>
-        </div>
         <div
-          className="relative mt-2 text-2xl font-extrabold tracking-tight md:text-3xl"
-          style={{ color: accent }}
+          className="relative flex h-[61px] w-[61px] shrink-0 items-center justify-center rounded-full border-[3px] text-[22px] font-black"
+          style={{ color: accent, borderColor: accent, background: `radial-gradient(circle, white 42%, ${soft})` }}
         >
-          {name}
+          <span className="absolute inset-[6px] rounded-full border border-current opacity-45" />
+          {seal}
         </div>
-        <div className="relative mt-1 text-[11px] leading-snug text-slate-600 md:text-xs">
-          {subtitle}
+        <div className="relative min-w-0">
+          <div className="text-[25px] font-black leading-none tracking-[-0.035em]" style={{ color: accent }}>
+            {name}
+          </div>
+          <div className="mt-3 whitespace-pre-line text-[12px] font-semibold leading-[1.45] text-[#43516e]">
+            {subtitle}
+          </div>
         </div>
-        <div
-          className="relative mt-3 h-[2px] w-10 rounded-full transition-all duration-500 group-hover:w-20"
-          style={{ background: `linear-gradient(90deg, ${accent}, transparent)` }}
-        />
       </div>
     </div>
   );
