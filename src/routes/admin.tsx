@@ -396,7 +396,7 @@ function QuestionFormDialog({ onCancel, onSaved }: { onCancel: () => void; onSav
     if (opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
     if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
     questionsRepo.add({
-      text: text.trimEnd(),
+      text,
       subjectId,
       kind,
       block: kind === "dtm" ? block : null,
@@ -404,7 +404,7 @@ function QuestionFormDialog({ onCancel, onSaved }: { onCancel: () => void; onSav
       imageUrl,
       options: opts as [string, string, string, string],
       correctIndex,
-      explanation: explanation.trimEnd() || undefined,
+      explanation: explanation.trim() ? explanation : undefined,
     });
     toast.success("Savol qo'shildi");
     onSaved();
