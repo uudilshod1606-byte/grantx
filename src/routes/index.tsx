@@ -85,11 +85,11 @@ function HeroScene() {
 
         <div className="absolute left-1/2 top-[48.8%] z-[2] h-[43%] w-[43%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(125,102,255,0.18),rgba(255,255,255,0)_68%)] blur-2xl" />
 
-        <div className="absolute left-1/2 top-[26.2%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#ddd8ff] bg-white/78 px-5 py-2 text-[13px] font-bold text-[#5d55d9] shadow-[0_8px_24px_rgba(92,86,216,0.10)] backdrop-blur-xl">
+        <div className="absolute left-1/2 top-[25.9%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#ddd8ff] bg-white/78 px-5 py-2 text-[13px] font-bold text-[#5d55d9] shadow-[0_8px_24px_rgba(92,86,216,0.10)] backdrop-blur-xl">
           <Trophy className="h-4 w-4 fill-[#6860ee]/15 text-[#635cf0]" /> DTM maksimal ball
         </div>
 
-        <div className="absolute left-1/2 top-[48.5%] z-10 -translate-x-1/2 -translate-y-1/2 select-none text-[clamp(10rem,18.8vw,14.7rem)] font-black leading-none tracking-[-0.065em] text-[#151d3a]">
+        <div className="absolute left-1/2 top-[48.4%] z-10 -translate-x-1/2 -translate-y-1/2 select-none text-[clamp(10rem,18.2vw,14.1rem)] font-black leading-none tracking-[-0.065em] text-[#151d3a]">
           <span
             className="block"
             style={{
@@ -101,7 +101,7 @@ function HeroScene() {
           </span>
         </div>
 
-        <div className="absolute left-1/2 top-[68.8%] z-10 w-full -translate-x-1/2 text-center">
+        <div className="absolute left-1/2 top-[68.5%] z-10 w-full -translate-x-1/2 text-center">
           <p className="text-[18px] font-extrabold tracking-[-0.01em] text-[#2a3d72]">
             Orzular sari bir qadam yaqinroq!
           </p>
@@ -110,7 +110,7 @@ function HeroScene() {
           </p>
         </div>
 
-        <div className="absolute left-1/2 top-[83.8%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#ddd8ff] bg-white/78 px-5 py-2 text-[13px] font-bold text-[#5d55d9] shadow-[0_8px_24px_rgba(92,86,216,0.10)] backdrop-blur-xl">
+        <div className="absolute left-1/2 top-[83.9%] z-10 flex -translate-x-1/2 items-center gap-2 rounded-full border border-[#ddd8ff] bg-white/78 px-5 py-2 text-[13px] font-bold text-[#5d55d9] shadow-[0_8px_24px_rgba(92,86,216,0.10)] backdrop-blur-xl">
           <Target className="h-4 w-4 text-[#635cf0]" /> Maqsad aniq, yo‘l ochiq!
         </div>
 
