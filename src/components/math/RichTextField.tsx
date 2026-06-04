@@ -1,15 +1,7 @@
 import { useRef, useState } from "react";
-import { Sigma } from "lucide-react";
+import { Sigma, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { MathField } from "./MathField";
 import { MathContent } from "./MathContent";
 import { cn } from "@/lib/utils";
@@ -40,29 +32,40 @@ export function RichTextField({
   preview = true,
 }: Props) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
+  const caretRef = useRef<{ start: number; end: number } | null>(null);
   const [open, setOpen] = useState(false);
   const [latex, setLatex] = useState("");
 
+  const rememberCaret = () => {
+    const el = ref.current;
+    if (!el) return;
+    caretRef.current = {
+      start: el.selectionStart ?? value.length,
+      end: el.selectionEnd ?? value.length,
+    };
+  };
+
   const insertFormula = () => {
     const expr = latex.trim();
-    setOpen(false);
-    setLatex("");
-    if (!expr) return;
-    const el = ref.current;
-    const snippet = `$${expr}$`;
-    if (!el) {
-      onChange(`${value}${snippet}`);
+    if (!expr) {
+      setOpen(false);
+      setLatex("");
       return;
     }
-    const start = el.selectionStart ?? value.length;
-    const end = el.selectionEnd ?? value.length;
-    const next = value.slice(0, start) + snippet + value.slice(end);
+    const el = ref.current;
+    const snippet = `$${expr}$`;
+    const caret = caretRef.current ?? { start: value.length, end: value.length };
+    const next = value.slice(0, caret.start) + snippet + value.slice(caret.end);
     onChange(next);
-    requestAnimationFrame(() => {
-      el.focus();
-      const caret = start + snippet.length;
-      el.setSelectionRange(caret, caret);
-    });
+    setOpen(false);
+    setLatex("");
+    if (el) {
+      requestAnimationFrame(() => {
+        el.focus();
+        const c = caret.start + snippet.length;
+        el.setSelectionRange(c, c);
+      });
+    }
   };
 
   return (
@@ -71,56 +74,77 @@ export function RichTextField({
         ref={ref}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onSelect={rememberCaret}
+        onKeyUp={rememberCaret}
+        onMouseUp={rememberCaret}
+        onBlur={rememberCaret}
         placeholder={placeholder}
         aria-label={ariaLabel}
         rows={minRows}
         className="resize-y whitespace-pre-wrap font-sans text-sm leading-relaxed"
       />
       <div className="flex items-center justify-between gap-2">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="glass border-white/15 hover:bg-white/10"
-            >
-              <Sigma className="mr-1.5 h-3.5 w-3.5" /> Formula qo'shish
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="glass border-white/10 sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Matematik formula</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <MathField
-                value={latex}
-                onChange={setLatex}
-                placeholder="Misol: \\frac{a}{b} = \\sqrt{x^2 + 1}"
-                minHeight="4rem"
-              />
-              <p className="text-xs text-muted-foreground">
-                Klaviaturadan kasr, ildiz, daraja, π va boshqa belgilarni
-                kiritishingiz mumkin. Formula matn ichiga{" "}
-                <code className="rounded bg-white/10 px-1">$...$</code> sifatida
-                joylashtiriladi.
-              </p>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                onClick={insertFormula}
-                className="gradient-bg text-primary-foreground"
-              >
-                Joylashtirish
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="glass border-white/15 hover:bg-white/10"
+          onMouseDown={(e) => {
+            // Preserve caret position in the textarea before focus shifts.
+            rememberCaret();
+            e.preventDefault();
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
+        >
+          <Sigma className="mr-1.5 h-3.5 w-3.5" /> Formula qo'shish
+        </Button>
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
           Enter — yangi qator · $formula$ — matematik ifoda
         </span>
       </div>
+      {open && (
+        <div
+          className="rounded-lg border border-white/10 bg-white/[0.03] p-3 space-y-3"
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between">
+            <div className="text-xs font-semibold">Matematik formula</div>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); setLatex(""); }}
+              className="rounded p-1 hover:bg-white/10"
+              aria-label="Yopish"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <MathField
+            value={latex}
+            onChange={setLatex}
+            placeholder="Misol: \frac{a}{b} = \sqrt{x^2 + 1}"
+            minHeight="4rem"
+          />
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              Matn ichiga{" "}
+              <code className="rounded bg-white/10 px-1">$...$</code> sifatida joylashtiriladi.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); insertFormula(); }}
+              className="gradient-bg text-primary-foreground"
+            >
+              Joylashtirish
+            </Button>
+          </div>
+        </div>
+      )}
       {preview && value.trim() && (
         <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
           <div className="mb-1 text-[10px] uppercase text-muted-foreground">
