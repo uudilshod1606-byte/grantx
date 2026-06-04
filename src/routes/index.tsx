@@ -167,7 +167,7 @@ function HeroScene() {
       {/* Center stage */}
       <div className="absolute left-1/2 top-1/2 z-10 w-full -translate-x-1/2 -translate-y-1/2 px-4 text-center">
         <div className="animate-fade-up inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-[11px] font-medium text-violet-700 shadow-sm backdrop-blur">
-          <Trophy className="h-3 w-3 text-violet-600" /> DTM maksimal ball
+          <TrophyIcon className="h-3 w-3 text-violet-600" /> DTM maksimal ball
         </div>
         <div
           className="animate-fade-up relative mt-4 select-none leading-[0.85] tracking-tighter"
