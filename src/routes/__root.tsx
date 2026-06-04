@@ -75,14 +75,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "GrantX — DTM va Milliy Sertifikat Platformasi" },
+      { name: "description", content: "O'zbekiston abituriyentlari uchun DTM va Milliy Sertifikat imtihonlariga tayyorlovchi zamonaviy platforma." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "GrantX — DTM va Milliy Sertifikat Platformasi" },
+      { property: "og:description", content: "O'zbekiston abituriyentlari uchun DTM va Milliy Sertifikat imtihonlariga tayyorlovchi zamonaviy platforma." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "GrantX — DTM va Milliy Sertifikat Platformasi" },
+      { name: "twitter:description", content: "O'zbekiston abituriyentlari uchun DTM va Milliy Sertifikat imtihonlariga tayyorlovchi zamonaviy platforma." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ec8b7960-e2f6-4823-891b-d21bb0aadddc/id-preview-1eb837fb--237a5cec-c80c-4adc-8924-3bd6e8551819.lovable.app-1780540202052.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ec8b7960-e2f6-4823-891b-d21bb0aadddc/id-preview-1eb837fb--237a5cec-c80c-4adc-8924-3bd6e8551819.lovable.app-1780540202052.png" },
     ],
     links: [
       {
