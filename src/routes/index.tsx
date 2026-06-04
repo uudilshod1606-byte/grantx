@@ -1,7 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import {
   GraduationCap,
-  Trophy,
   Target,
   Brain,
   BarChart3,
