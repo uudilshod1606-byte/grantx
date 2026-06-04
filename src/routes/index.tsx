@@ -1,5 +1,25 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { GraduationCap, Trophy, Target } from "lucide-react";
+import {
+  GraduationCap,
+  Trophy,
+  Target,
+  Brain,
+  BarChart3,
+  Timer,
+  Trophy as TrophyIcon,
+  User,
+  Sparkles,
+  BookOpen,
+  LineChart,
+  Smartphone,
+  Building2,
+  CheckCircle2,
+  ArrowRight,
+  Rocket,
+  ClipboardList,
+  Layers,
+  PieChart,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuthLoadingScreen, useAuth } from "@/lib/auth";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -21,10 +41,23 @@ function Index() {
   if (isAuthenticated) return <Navigate to="/dashboard" />;
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-white text-slate-900">
-      <AmbientBackground />
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-white text-slate-900">
       <Navbar />
-      <HeroScene />
+      {/* Desktop hero (immersive) */}
+      <div className="relative hidden h-screen w-full overflow-hidden md:block">
+        <AmbientBackground />
+        <HeroScene />
+      </div>
+      {/* Mobile hero (clean & simple) */}
+      <MobileHero />
+
+      <WhyGrantX />
+      <Features />
+      <HowItWorks />
+      <Stats />
+      <FuturePlans />
+      <FinalCTA />
+      <Footer />
     </div>
   );
 }
