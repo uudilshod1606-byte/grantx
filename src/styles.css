@@ -249,6 +249,39 @@ math-field.grantx-mathfield::part(menu-toggle) {
   color: var(--muted-foreground);
 }
 
+.grantx-rich-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-foreground);
+  pointer-events: none;
+  white-space: pre-wrap;
+}
+
+math-field.grantx-inline-mathfield {
+  display: inline-block;
+  min-width: 2.75rem;
+  margin: 0 0.15rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in oklab, var(--primary) 28%, transparent);
+  background: color-mix(in oklab, var(--primary) 9%, transparent);
+  color: var(--foreground);
+  vertical-align: middle;
+  --caret-color: var(--primary);
+  --selection-background-color: color-mix(in oklab, var(--primary) 25%, transparent);
+}
+
+math-field.grantx-inline-mathfield:focus,
+math-field.grantx-inline-mathfield:focus-within {
+  border-color: color-mix(in oklab, var(--primary) 55%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 16%, transparent);
+  outline: none;
+}
+
+math-field.grantx-inline-mathfield::part(virtual-keyboard-toggle),
+math-field.grantx-inline-mathfield::part(menu-toggle) {
+  display: none;
+}
+
 .grantx-math {
   color: inherit;
   font-size: 1em;
