@@ -81,7 +81,11 @@ export function RichTextField({
       if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
       if (!(node instanceof HTMLElement)) return "";
       if (node.matches("math-field[data-grantx-inline-math='true']")) {
-        const latex = ((node as HTMLElement & { value?: string }).value ?? node.dataset.latex ?? "").trim();
+        const latex = (
+          (node as HTMLElement & { value?: string }).value ??
+          node.dataset.latex ??
+          ""
+        ).trim();
         return latex ? `$${latex}$` : "";
       }
       if (node.tagName === "BR") return "\n";
@@ -154,11 +158,17 @@ export function RichTextField({
     let last = 0;
     let match: RegExpExecArray | null;
     while ((match = regex.exec(source)) !== null) {
-      if (match.index > last) editor.append(document.createTextNode(source.slice(last, match.index).replace(/\\\$/g, "$")));
+      if (match.index > last) {
+        editor.append(
+          document.createTextNode(source.slice(last, match.index).replace(/\\\$/g, "$")),
+        );
+      }
       editor.append(createMathElement(match[1]));
       last = match.index + match[0].length;
     }
-    if (last < source.length) editor.append(document.createTextNode(source.slice(last).replace(/\\\$/g, "$")));
+    if (last < source.length) {
+      editor.append(document.createTextNode(source.slice(last).replace(/\\\$/g, "$")));
+    }
   };
 
   const insertPlainText = (text: string) => {
@@ -265,9 +275,7 @@ export function RichTextField({
       </div>
       {preview && value.trim() && (
         <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-          <div className="mb-1 text-[10px] uppercase text-muted-foreground">
-            Ko'rinishi
-          </div>
+          <div className="mb-1 text-[10px] uppercase text-muted-foreground">Ko'rinishi</div>
           <MathContent latex={value} />
         </div>
       )}
