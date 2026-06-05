@@ -1,8 +1,6 @@
-import { useRef, useState } from "react";
-import { Sigma, X } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { useEffect, useRef } from "react";
+import { Sigma } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MathField } from "./MathField";
 import { MathContent } from "./MathContent";
 import { cn } from "@/lib/utils";
 
@@ -31,57 +29,226 @@ export function RichTextField({
   ariaLabel,
   preview = true,
 }: Props) {
-  const ref = useRef<HTMLTextAreaElement | null>(null);
-  const caretRef = useRef<{ start: number; end: number } | null>(null);
-  const [open, setOpen] = useState(false);
-  const [latex, setLatex] = useState("");
+  const ref = useRef<HTMLDivElement | null>(null);
+  const savedRange = useRef<Range | null>(null);
+  const lastEmitted = useRef(value);
 
-  const rememberCaret = () => {
-    const el = ref.current;
-    if (!el) return;
-    caretRef.current = {
-      start: el.selectionStart ?? value.length,
-      end: el.selectionEnd ?? value.length,
+  const saveSelection = () => {
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    if (editor.contains(range.startContainer) && editor.contains(range.endContainer)) {
+      savedRange.current = range.cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection) return false;
+    const range = savedRange.current;
+    if (range && editor.contains(range.startContainer) && editor.contains(range.endContainer)) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return true;
+    }
+    const fallback = document.createRange();
+    fallback.selectNodeContents(editor);
+    fallback.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(fallback);
+    savedRange.current = fallback.cloneRange();
+    return true;
+  };
+
+  const focusAfterMath = (math: HTMLElement) => {
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection) return;
+    if (!math.nextSibling) math.after(document.createTextNode(""));
+    editor.focus();
+    const range = document.createRange();
+    range.setStartAfter(math);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    savedRange.current = range.cloneRange();
+  };
+
+  const serializeEditor = () => {
+    const serializeNode = (node: ChildNode): string => {
+      if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
+      if (!(node instanceof HTMLElement)) return "";
+      if (node.matches("math-field[data-grantx-inline-math='true']")) {
+        const latex = (
+          (node as HTMLElement & { value?: string }).value ??
+          node.dataset.latex ??
+          ""
+        ).trim();
+        return latex ? `$${latex}$` : "";
+      }
+      if (node.tagName === "BR") return "\n";
+      const isBlock = ["DIV", "P", "LI"].includes(node.tagName);
+      let text = "";
+      node.childNodes.forEach((child) => {
+        text += serializeNode(child);
+      });
+      return isBlock ? `\n${text}` : text;
     };
+
+    const editor = ref.current;
+    if (!editor) return value;
+    let next = "";
+    editor.childNodes.forEach((child) => {
+      next += serializeNode(child);
+    });
+    return next.replace(/\u200b/g, "");
+  };
+
+  const emitChange = () => {
+    const next = serializeEditor();
+    lastEmitted.current = next;
+    onChange(next);
+    saveSelection();
+  };
+
+  const configureMathElement = (el: HTMLElement, latex: string) => {
+    const math = el as HTMLElement & { value?: string };
+    math.className = "grantx-inline-mathfield";
+    math.dataset.grantxInlineMath = "true";
+    math.dataset.latex = latex;
+    math.setAttribute("contenteditable", "false");
+    math.setAttribute("default-mode", "math");
+    math.setAttribute("math-virtual-keyboard-policy", "manual");
+    math.setAttribute("aria-label", "Matematik formula");
+    math.value = latex;
+    math.addEventListener("input", () => {
+      math.dataset.latex = math.value ?? "";
+      emitChange();
+    });
+    math.addEventListener("pointerdown", (event) => event.stopPropagation());
+    math.addEventListener("mousedown", (event) => event.stopPropagation());
+    math.addEventListener("before-virtual-keyboard-toggle", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    math.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === "Tab") {
+        event.preventDefault();
+        event.stopPropagation();
+        math.dataset.latex = math.value ?? "";
+        emitChange();
+        focusAfterMath(math);
+      }
+    });
+    return math;
+  };
+
+  const createMathElement = (latex = "") => {
+    const math = document.createElement("math-field");
+    return configureMathElement(math, latex);
+  };
+
+  const renderValueIntoEditor = (source: string) => {
+    const editor = ref.current;
+    if (!editor) return;
+    editor.replaceChildren();
+    const regex = /(?<!\\)\$([^$\n]+?)(?<!\\)\$/g;
+    let last = 0;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(source)) !== null) {
+      if (match.index > last) {
+        editor.append(
+          document.createTextNode(source.slice(last, match.index).replace(/\\\$/g, "$")),
+        );
+      }
+      editor.append(createMathElement(match[1]));
+      last = match.index + match[0].length;
+    }
+    if (last < source.length) {
+      editor.append(document.createTextNode(source.slice(last).replace(/\\\$/g, "$")));
+    }
+  };
+
+  const insertPlainText = (text: string) => {
+    const selection = window.getSelection();
+    if (!ref.current || !selection) return;
+    restoreSelection();
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    const node = document.createTextNode(text);
+    range.insertNode(node);
+    range.setStart(node, text.length);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    savedRange.current = range.cloneRange();
+    emitChange();
   };
 
   const insertFormula = () => {
-    const expr = latex.trim();
-    if (!expr) {
-      setOpen(false);
-      setLatex("");
-      return;
-    }
-    const el = ref.current;
-    const snippet = `$${expr}$`;
-    const caret = caretRef.current ?? { start: value.length, end: value.length };
-    const next = value.slice(0, caret.start) + snippet + value.slice(caret.end);
-    onChange(next);
-    setOpen(false);
-    setLatex("");
-    if (el) {
-      requestAnimationFrame(() => {
-        el.focus();
-        const c = caret.start + snippet.length;
-        el.setSelectionRange(c, c);
-      });
-    }
+    const editor = ref.current;
+    const selection = window.getSelection();
+    if (!editor || !selection) return;
+    editor.focus();
+    restoreSelection();
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+    const math = createMathElement("");
+    const after = document.createTextNode("");
+    range.insertNode(after);
+    range.insertNode(math);
+    requestAnimationFrame(() => math.focus());
+    emitChange();
   };
+
+  useEffect(() => {
+    void import("mathlive").then(() => {
+      window.mathVirtualKeyboard?.hide?.();
+    });
+  }, []);
+
+  useEffect(() => {
+    if (value === lastEmitted.current) return;
+    renderValueIntoEditor(value);
+    lastEmitted.current = value;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  useEffect(() => {
+    renderValueIntoEditor(value);
+    lastEmitted.current = value;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Textarea
+      <div
         ref={ref}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onSelect={rememberCaret}
-        onKeyUp={rememberCaret}
-        onMouseUp={rememberCaret}
-        onBlur={rememberCaret}
-        placeholder={placeholder}
+        role="textbox"
+        aria-multiline="true"
         aria-label={ariaLabel}
-        rows={minRows}
-        className="resize-y whitespace-pre-wrap font-sans text-sm leading-relaxed"
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder={placeholder}
+        className="grantx-rich-editor resize-y overflow-auto whitespace-pre-wrap break-words rounded-md border border-input bg-transparent px-3 py-2 font-sans text-sm leading-relaxed shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        style={{ minHeight: `${Math.max(minRows, 1) * 1.5 + 1.2}rem` }}
+        onInput={emitChange}
+        onFocus={saveSelection}
+        onKeyUp={saveSelection}
+        onMouseUp={saveSelection}
+        onBlur={saveSelection}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            insertPlainText("\n");
+          }
+        }}
+        onPaste={(e) => {
+          e.preventDefault();
+          insertPlainText(e.clipboardData.getData("text/plain"));
+        }}
       />
       <div className="flex items-center justify-between gap-2">
         <Button
@@ -90,14 +257,14 @@ export function RichTextField({
           size="sm"
           className="glass border-white/15 hover:bg-white/10"
           onMouseDown={(e) => {
-            // Preserve caret position in the textarea before focus shifts.
-            rememberCaret();
+            saveSelection();
             e.preventDefault();
+            e.stopPropagation();
           }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setOpen((v) => !v);
+            insertFormula();
           }}
         >
           <Sigma className="mr-1.5 h-3.5 w-3.5" /> Formula qo'shish
@@ -106,50 +273,9 @@ export function RichTextField({
           Enter — yangi qator · $formula$ — matematik ifoda
         </span>
       </div>
-      {open && (
-        <div
-          className="rounded-lg border border-white/10 bg-white/[0.03] p-3 space-y-3"
-          onMouseDown={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between">
-            <div className="text-xs font-semibold">Matematik formula</div>
-            <button
-              type="button"
-              onClick={() => { setOpen(false); setLatex(""); }}
-              className="rounded p-1 hover:bg-white/10"
-              aria-label="Yopish"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-          <MathField
-            value={latex}
-            onChange={setLatex}
-            placeholder="Misol: \frac{a}{b} = \sqrt{x^2 + 1}"
-            minHeight="4rem"
-          />
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground">
-              Matn ichiga{" "}
-              <code className="rounded bg-white/10 px-1">$...$</code> sifatida joylashtiriladi.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); insertFormula(); }}
-              className="gradient-bg text-primary-foreground"
-            >
-              Joylashtirish
-            </Button>
-          </div>
-        </div>
-      )}
       {preview && value.trim() && (
         <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-          <div className="mb-1 text-[10px] uppercase text-muted-foreground">
-            Ko'rinishi
-          </div>
+          <div className="mb-1 text-[10px] uppercase text-muted-foreground">Ko'rinishi</div>
           <MathContent latex={value} />
         </div>
       )}
