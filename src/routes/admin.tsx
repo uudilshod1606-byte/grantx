@@ -405,24 +405,8 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
     onSaved();
   };
 
-  const keepQuestionFormOpenForMathLive = (event: Event) => {
-    const target = event.target as Element | null;
-    if (
-      target?.closest(
-        "math-field, .ML__keyboard, .ML__keyboard-sink, .ML__virtual-keyboard-toggle, [data-grantx-inline-math='true']",
-      )
-    ) {
-      event.preventDefault();
-    }
-  };
-
   return (
-    <DialogContent
-      className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl"
-      onInteractOutside={keepQuestionFormOpenForMathLive}
-      onPointerDownOutside={keepQuestionFormOpenForMathLive}
-      onFocusOutside={keepQuestionFormOpenForMathLive}
-    >
+    <DialogContent className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl">
       <DialogHeader><DialogTitle>Yangi savol qo'shish</DialogTitle></DialogHeader>
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3">
