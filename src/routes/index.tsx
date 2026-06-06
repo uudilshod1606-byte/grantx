@@ -42,14 +42,7 @@ function Index() {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-white text-slate-900">
       <Navbar />
-      {/* Desktop hero (immersive) */}
-      <div className="relative hidden h-screen w-full overflow-hidden md:block">
-        <AmbientBackground />
-        <HeroScene />
-      </div>
-      {/* Mobile hero (clean & simple) */}
-      <MobileHero />
-
+      <Hero />
       <WhyGrantX />
       <Features />
       <HowItWorks />
@@ -57,24 +50,6 @@ function Index() {
       <FuturePlans />
       <FinalCTA />
       <Footer />
-    </div>
-  );
-}
-
-function AmbientBackground() {
-  return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0 bg-white" />
-      <div className="absolute left-1/2 top-1/2 h-[60vmin] w-[60vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(139,92,246,0.18),transparent_70%)] blur-2xl" />
-      <div
-        className="absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(15,23,42,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.5) 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-          maskImage: "radial-gradient(closest-side at 50% 50%, black, transparent 78%)",
-        }}
-      />
     </div>
   );
 }
