@@ -35,7 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
-import { RichTextField } from "@/components/math/RichTextField";
+import { MathField } from "@/components/math/MathField";
 import { MathContent } from "@/components/math/MathContent";
 import {
   ADMIN_SUBJECTS,
@@ -458,11 +458,12 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
 
         <div>
           <label className="text-xs text-muted-foreground">Savol matni</label>
-          <RichTextField
+          <MathField
             value={text}
             onChange={setText}
-            placeholder={"Savol matnini kiriting.\nEnter — yangi qator. Uzun matn, paragraflar va o'qish parchalari qo'llab-quvvatlanadi."}
-            minRows={6}
+            placeholder="Savol matnini kiriting…"
+            minHeight={140}
+            ariaLabel="Savol matni"
           />
         </div>
 
@@ -521,12 +522,12 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
                 className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-white/5"}`}
               >{l}</button>
               <div className="flex-1">
-                <RichTextField
+                <MathField
                   value={opts[i]}
                   onChange={(v) => { const n = [...opts]; n[i] = v; setOpts(n); }}
                   placeholder={`Variant ${l}`}
-                  minRows={2}
-                  preview={false}
+                  minHeight={56}
+                  ariaLabel={`Variant ${l}`}
                 />
               </div>
             </div>
@@ -534,11 +535,12 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Izoh (ixtiyoriy)</label>
-          <RichTextField
+          <MathField
             value={explanation}
             onChange={setExplanation}
-            placeholder={"To'g'ri javob izohi.\nBir nechta paragraf qo'llab-quvvatlanadi."}
-            minRows={4}
+            placeholder="To'g'ri javob izohi…"
+            minHeight={100}
+            ariaLabel="Izoh"
           />
         </div>
       </div>

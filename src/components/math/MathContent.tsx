@@ -1,3 +1,4 @@
+import { MathField } from "./MathField";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -7,25 +8,18 @@ type Props = {
 };
 
 /**
- * Renders plain text exactly as authored — preserving spaces, line breaks
- * and blank paragraphs. Math symbols inserted from the toolbar are just
- * regular unicode characters, so no special handling is required.
- *
- * The `latex` prop name is retained for backwards-compatibility with
- * existing call sites.
+ * Read-only renderer for admin-authored MathLive content. Uses the same
+ * MathLive engine as the editor so what the admin writes is exactly what
+ * the student sees.
  */
 export function MathContent({ latex, className, inline = false }: Props) {
   if (!latex) return null;
-  const Tag = inline ? "span" : "div";
   return (
-    <Tag
-      className={cn(
-        "whitespace-pre-wrap break-words",
-        inline ? "inline" : "block",
-        className,
-      )}
-    >
-      {latex}
-    </Tag>
+    <MathField
+      value={latex}
+      readOnly
+      minHeight={0}
+      className={cn(inline ? "inline-block align-middle" : "block", className)}
+    />
   );
 }
