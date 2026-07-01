@@ -1,6 +1,4 @@
-import "mathlive";
-// MathLive injects its own styles when the <math-field> element is defined.
-
-// Register once. Importing "mathlive" defines the <math-field> custom element.
-// This module has no runtime code beyond side-effect imports.
+// MathLive temporarily disabled to keep the build stable. This module is a
+// no-op placeholder so existing imports continue to resolve. Re-enable by
+// restoring `import "mathlive";` after the integration is stable.
 export {};
