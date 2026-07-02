@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
 import { MathField } from "@/components/math/MathField";
+import { MathQuestionField } from "@/components/math/MathQuestionField";
 import { MathContent } from "@/components/math/MathContent";
 import {
   ADMIN_SUBJECTS,
@@ -458,7 +459,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
 
         <div>
           <label className="text-xs text-muted-foreground">Savol matni</label>
-          <MathField
+          <MathQuestionField
             value={text}
             onChange={setText}
             placeholder="Savol matnini kiriting…"
