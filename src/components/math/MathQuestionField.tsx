@@ -62,6 +62,8 @@ export function MathQuestionField({
       mf.setAttribute("default-mode", "text");
       mf.setAttribute("math-virtual-keyboard-policy", "manual");
       mf.setAttribute("smart-mode", "false");
+      mf.setAttribute("math-mode-space", " ");
+      mf.setAttribute("inline-shortcut-timeout", "0");
       if (ariaLabel) mf.setAttribute("aria-label", ariaLabel);
       if (placeholder) mf.setAttribute("placeholder", placeholder);
       mf.style.width = "100%";
@@ -73,6 +75,18 @@ export function MathQuestionField({
       mf.style.font = "inherit";
       mf.style.color = "inherit";
       mf.value = valueRef.current ?? "";
+      // Force text mode so spacebar and Uzbek text behave like a normal editor.
+      queueMicrotask(() => {
+        try {
+          if (typeof mf.executeCommand === "function") {
+            mf.executeCommand(["switchMode", "text"]);
+          } else {
+            mf.mode = "text";
+          }
+        } catch {
+          /* ignore */
+        }
+      });
       const handleInput = () => {
         const v = mf.value ?? "";
         valueRef.current = v;
