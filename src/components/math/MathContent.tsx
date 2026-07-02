@@ -1,4 +1,4 @@
-import { MathField } from "./MathField";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -8,18 +8,34 @@ type Props = {
 };
 
 /**
- * Read-only renderer for admin-authored MathLive content. Uses the same
- * MathLive engine as the editor so what the admin writes is exactly what
- * the student sees.
+ * Renders admin-authored rich text (HTML with optional embedded MathLive
+ * formulas). Prop is still named `latex` for backwards compatibility with
+ * existing call sites — the value is treated as an HTML string.
  */
 export function MathContent({ latex, className, inline = false }: Props) {
+  // Ensure MathLive stylesheet is present so any embedded formula markup
+  // renders correctly for students.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!latex || !latex.includes("formula-embed")) return;
+    import("mathlive").catch(() => {
+      /* non-fatal — text still renders */
+    });
+  }, [latex]);
+
   if (!latex) return null;
+  if (inline) {
+    return (
+      <span
+        className={cn("rich-content inline align-middle", className)}
+        dangerouslySetInnerHTML={{ __html: latex }}
+      />
+    );
+  }
   return (
-    <MathField
-      value={latex}
-      readOnly
-      minHeight={0}
-      className={cn(inline ? "inline-block align-middle" : "block", className)}
+    <div
+      className={cn("rich-content block whitespace-pre-wrap break-words", className)}
+      dangerouslySetInnerHTML={{ __html: latex }}
     />
   );
 }
