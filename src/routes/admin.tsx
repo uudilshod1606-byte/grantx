@@ -407,7 +407,39 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
   };
 
   return (
-    <DialogContent className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl">
+    <DialogContent
+      className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl"
+      onPointerDownOutside={(e) => {
+        const t = e.target as HTMLElement | null;
+        if (
+          t &&
+          (t.closest(".ML__keyboard") ||
+            t.closest(".ML__virtual-keyboard") ||
+            t.closest("[part='container']") ||
+            t.tagName?.toLowerCase() === "math-field")
+        ) {
+          e.preventDefault();
+        }
+      }}
+      onInteractOutside={(e) => {
+        const t = e.target as HTMLElement | null;
+        if (
+          t &&
+          (t.closest(".ML__keyboard") ||
+            t.closest(".ML__virtual-keyboard") ||
+            t.closest("[part='container']") ||
+            t.tagName?.toLowerCase() === "math-field")
+        ) {
+          e.preventDefault();
+        }
+      }}
+      onFocusOutside={(e) => {
+        const t = e.target as HTMLElement | null;
+        if (t && (t.closest(".ML__keyboard") || t.tagName?.toLowerCase() === "math-field")) {
+          e.preventDefault();
+        }
+      }}
+    >
       <DialogHeader><DialogTitle>Yangi savol qo'shish</DialogTitle></DialogHeader>
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3">
