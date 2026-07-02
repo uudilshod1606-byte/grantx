@@ -35,8 +35,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
-import { MathField } from "@/components/math/MathField";
-import { MathQuestionField } from "@/components/math/MathQuestionField";
+import { RichEditor } from "@/components/math/RichEditor";
 import { MathContent } from "@/components/math/MathContent";
 import {
   ADMIN_SUBJECTS,
@@ -491,7 +490,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
 
         <div>
           <label className="text-xs text-muted-foreground">Savol matni</label>
-          <MathQuestionField
+          <RichEditor
             value={text}
             onChange={setText}
             placeholder="Savol matnini kiriting…"
@@ -555,7 +554,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
                 className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-white/5"}`}
               >{l}</button>
               <div className="flex-1">
-                <MathField
+                <RichEditor
                   value={opts[i]}
                   onChange={(v) => { const n = [...opts]; n[i] = v; setOpts(n); }}
                   placeholder={`Variant ${l}`}
@@ -568,7 +567,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground">Izoh (ixtiyoriy)</label>
-          <MathField
+          <RichEditor
             value={explanation}
             onChange={setExplanation}
             placeholder="To'g'ri javob izohi…"
