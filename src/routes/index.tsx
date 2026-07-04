@@ -150,25 +150,25 @@ function Section({
 }) {
   return (
     <section
-      className={`relative w-full px-5 py-16 md:py-24 ${
-        tone === "tint" ? "bg-violet-50/60" : "bg-white"
+      className={`relative w-full px-5 py-24 md:py-32 ${
+        tone === "tint" ? "bg-[#F8FAFF]" : "bg-white"
       }`}
     >
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           {eyebrow && (
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-violet-700">
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-violet-600">
               {eyebrow}
             </div>
           )}
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl">
             {title}
           </h2>
           {subtitle && (
-            <p className="mt-3 text-base text-slate-600 md:text-lg">{subtitle}</p>
+            <p className="mt-4 text-base leading-relaxed text-[#6B7280] md:text-lg">{subtitle}</p>
           )}
         </div>
-        <div className="mt-10 md:mt-14">{children}</div>
+        <div className="mt-14 md:mt-16">{children}</div>
       </div>
     </section>
   );
@@ -187,21 +187,12 @@ function FeatureCard({
   accent?: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_20px_40px_-16px_rgba(124,58,237,0.25)]">
-      <div
-        className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-30 blur-2xl transition-opacity group-hover:opacity-60"
-        style={{ background: accent }}
-      />
-      <div
-        className="relative mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-white"
-        style={{ background: `linear-gradient(135deg, ${accent}, #a855f7)` }}
-      >
+    <div className="group relative rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_10px_30px_-12px_rgba(124,58,237,0.15)]">
+      <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-lg border border-violet-100 bg-violet-50 text-violet-600">
         <Icon className="h-5 w-5" />
       </div>
-      <h3 className="relative text-lg font-bold text-slate-900">{title}</h3>
-      <p className="relative mt-2 text-sm leading-relaxed text-slate-600">
-        {description}
-      </p>
+      <h3 className="text-[15px] font-semibold text-[#111827]">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">{description}</p>
     </div>
   );
 }
