@@ -150,29 +150,30 @@ function Section({
 }) {
   return (
     <section
-      className={`relative w-full px-5 py-16 md:py-24 ${
-        tone === "tint" ? "bg-violet-50/60" : "bg-white"
+      className={`relative w-full px-5 py-24 md:py-32 ${
+        tone === "tint" ? "bg-[#F8FAFF]" : "bg-white"
       }`}
     >
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           {eyebrow && (
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-violet-700">
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-violet-600">
               {eyebrow}
             </div>
           )}
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl">
             {title}
           </h2>
           {subtitle && (
-            <p className="mt-3 text-base text-slate-600 md:text-lg">{subtitle}</p>
+            <p className="mt-4 text-base leading-relaxed text-[#6B7280] md:text-lg">{subtitle}</p>
           )}
         </div>
-        <div className="mt-10 md:mt-14">{children}</div>
+        <div className="mt-14 md:mt-16">{children}</div>
       </div>
     </section>
   );
 }
+
 
 function FeatureCard({
   icon: Icon,
@@ -186,21 +187,12 @@ function FeatureCard({
   accent?: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-1 hover:shadow-[0_20px_40px_-16px_rgba(124,58,237,0.25)]">
-      <div
-        className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-30 blur-2xl transition-opacity group-hover:opacity-60"
-        style={{ background: accent }}
-      />
-      <div
-        className="relative mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-white"
-        style={{ background: `linear-gradient(135deg, ${accent}, #a855f7)` }}
-      >
+    <div className="group relative rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_10px_30px_-12px_rgba(124,58,237,0.15)]">
+      <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-lg border border-violet-100 bg-violet-50 text-violet-600">
         <Icon className="h-5 w-5" />
       </div>
-      <h3 className="relative text-lg font-bold text-slate-900">{title}</h3>
-      <p className="relative mt-2 text-sm leading-relaxed text-slate-600">
-        {description}
-      </p>
+      <h3 className="text-[15px] font-semibold text-[#111827]">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-[#6B7280]">{description}</p>
     </div>
   );
 }
@@ -275,15 +267,15 @@ function HowItWorks() {
         {steps.map((s) => (
           <div
             key={s.n}
-            className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.08)]"
+            className="relative rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_10px_30px_-12px_rgba(124,58,237,0.15)]"
           >
             <div className="flex items-start gap-4">
-              <div className="text-4xl font-black leading-none text-transparent" style={{ WebkitTextStroke: "1.5px #7c3aed" }}>
+              <div className="text-3xl font-semibold leading-none text-violet-600">
                 {s.n}
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-900">{s.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{s.description}</p>
+                <h3 className="text-[15px] font-semibold text-[#111827]">{s.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-[#6B7280]">{s.description}</p>
               </div>
             </div>
           </div>
@@ -302,28 +294,23 @@ function Stats() {
     { value: "189",     label: "Maksimal DTM ball" },
   ];
   return (
-    <section className="relative w-full overflow-hidden px-5 py-16 md:py-24">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-x-0 top-1/2 h-64 -translate-y-1/2 bg-[radial-gradient(closest-side,rgba(139,92,246,0.18),transparent_70%)]" />
-      </div>
+    <section className="relative w-full bg-white px-5 py-24 md:py-32">
       <div className="mx-auto max-w-6xl">
-        <div className="rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-600 to-fuchsia-600 p-8 text-white shadow-[0_30px_60px_-20px_rgba(124,58,237,0.45)] md:p-12">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
-              Raqamlarda GrantX
-            </h2>
-            <p className="mt-2 text-violet-100 md:text-lg">
-              Minglab abituriyentlar bizga ishonib, orzularini ro'yobga chiqarmoqda.
-            </p>
-          </div>
-          <div className="mt-10 grid grid-cols-2 gap-6 md:grid-cols-4">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="text-3xl font-black tracking-tight md:text-5xl">{s.value}</div>
-                <div className="mt-1 text-sm text-violet-100 md:text-base">{s.label}</div>
-              </div>
-            ))}
-          </div>
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#111827] md:text-4xl">
+            Raqamlarda GrantX
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-[#6B7280] md:text-lg">
+            Minglab abituriyentlar bizga ishonib, orzularini ro'yobga chiqarmoqda.
+          </p>
+        </div>
+        <div className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-200/80 md:grid-cols-4">
+          {stats.map((s) => (
+            <div key={s.label} className="bg-white p-8 text-center">
+              <div className="text-3xl font-semibold tracking-tight text-violet-600 md:text-4xl">{s.value}</div>
+              <div className="mt-2 text-sm text-[#6B7280]">{s.label}</div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -356,33 +343,52 @@ function FuturePlans() {
 
 /* ---------------- Final CTA ---------------- */
 function FinalCTA() {
+  const highlights = [
+    { icon: CheckCircle2, title: "Bepul boshlash",    description: "Ro'yxatdan o'tish va asosiy testlar to'liq bepul." },
+    { icon: Target,       title: "Real DTM formati",   description: "Haqiqiy imtihonga eng yaqin savollar va vaqt nazorati." },
+    { icon: BarChart3,    title: "Batafsil tahlil",    description: "Har bir urinishdan keyin natija va tavsiyalar." },
+    { icon: TrophyIcon,   title: "Reyting va yutuqlar", description: "Boshqa abituriyentlar orasidagi o'rningizni ko'ring." },
+  ];
   return (
-    <section className="relative w-full overflow-hidden px-5 py-20 md:py-28">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-1/2 top-1/2 h-[60vmin] w-[60vmin] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(139,92,246,0.25),transparent_70%)] blur-2xl" />
-      </div>
-      <div className="mx-auto max-w-3xl text-center">
-        <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-violet-700">
-          <Rocket className="h-3 w-3" /> Bugun boshlang
+    <section className="relative w-full bg-white px-5 py-24 md:py-32">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
+        <div>
+          <div className="mb-5 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-violet-600">
+            <Rocket className="h-3 w-3" /> Bugun boshlang
+          </div>
+          <h2 className="text-4xl font-semibold tracking-tight text-[#111827] md:text-5xl">
+            Orzularingiz sari birinchi qadamni qo'ying
+          </h2>
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-[#6B7280] md:text-lg">
+            GrantX bilan DTM va Milliy Sertifikat imtihonlariga professional darajada
+            tayyorlanishni boshlang. Ro'yxatdan o'tish — bepul.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link to="/signup" className="w-full sm:w-auto">
+              <Button className="h-12 w-full bg-violet-600 px-8 text-base text-white hover:bg-violet-700 sm:w-auto">
+                Boshlash <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link to="/login" className="w-full sm:w-auto">
+              <Button variant="outline" className="h-12 w-full border-slate-200 bg-white px-8 text-base text-slate-800 sm:w-auto">
+                Kirish
+              </Button>
+            </Link>
+          </div>
         </div>
-        <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 md:text-5xl">
-          Orzularingiz sari birinchi qadamni qo'ying
-        </h2>
-        <p className="mt-4 text-base text-slate-600 md:text-lg">
-          GrantX bilan DTM va Milliy Sertifikat imtihonlariga professional darajada
-          tayyorlanishni boshlang. Ro'yxatdan o'tish — bepul.
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link to="/signup" className="w-full sm:w-auto">
-            <Button className="h-14 w-full gradient-bg px-8 text-base text-primary-foreground glow sm:w-auto">
-              Boshlash <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to="/login" className="w-full sm:w-auto">
-            <Button variant="outline" className="h-14 w-full border-slate-200 bg-white px-8 text-base text-slate-800 sm:w-auto">
-              Kirish
-            </Button>
-          </Link>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {highlights.map((h) => (
+            <div
+              key={h.title}
+              className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:border-violet-300 hover:shadow-[0_10px_30px_-12px_rgba(124,58,237,0.15)]"
+            >
+              <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg border border-violet-100 bg-violet-50 text-violet-600">
+                <h.icon className="h-4 w-4" />
+              </div>
+              <h3 className="text-sm font-semibold text-[#111827]">{h.title}</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-[#6B7280]">{h.description}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -392,17 +398,17 @@ function FinalCTA() {
 /* ---------------- Footer ---------------- */
 function Footer() {
   return (
-    <footer className="w-full border-t border-slate-200 bg-white px-5 py-10">
+    <footer className="w-full border-t border-slate-200 bg-white px-5 py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 text-center md:flex-row md:text-left">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-bg">
-            <GraduationCap className="h-4 w-4 text-primary-foreground" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600">
+            <GraduationCap className="h-4 w-4 text-white" />
           </div>
-          <span className="text-base font-bold text-slate-900">
-            Grant<span className="gradient-text">X</span>
+          <span className="text-base font-semibold text-[#111827]">
+            Grant<span className="text-violet-600">X</span>
           </span>
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[#6B7280]">
           © {new Date().getFullYear()} GrantX. Barcha huquqlar himoyalangan.
         </p>
       </div>
