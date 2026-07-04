@@ -267,15 +267,15 @@ function HowItWorks() {
         {steps.map((s) => (
           <div
             key={s.n}
-            className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.08)]"
+            className="relative rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-[0_10px_30px_-12px_rgba(124,58,237,0.15)]"
           >
             <div className="flex items-start gap-4">
-              <div className="text-4xl font-black leading-none text-transparent" style={{ WebkitTextStroke: "1.5px #7c3aed" }}>
+              <div className="text-3xl font-semibold leading-none text-violet-600">
                 {s.n}
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-900">{s.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{s.description}</p>
+                <h3 className="text-[15px] font-semibold text-[#111827]">{s.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-[#6B7280]">{s.description}</p>
               </div>
             </div>
           </div>
