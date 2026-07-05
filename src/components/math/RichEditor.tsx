@@ -205,10 +205,7 @@ export function RichEditor({
             <button
               type="button"
               className="rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground"
-              onClick={() => {
-                setTimeout(() => console.log("DELAYED Qo'shish clicked"), 100);
-                insertFormula();
-              }}
+              onClick={insertFormula}
             >
               Qo'shish
             </button>
