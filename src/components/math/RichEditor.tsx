@@ -151,6 +151,8 @@ export function RichEditor({
     setFormulaOpen(false);
     emitChange();
     saveSelection();
+    // Return focus to the editor so the admin can keep typing.
+    setTimeout(() => editorRef.current?.focus(), 0);
   };
 
   return (
@@ -160,6 +162,30 @@ export function RichEditor({
         className,
       )}
     >
+      {formulaOpen && (
+        <div className="space-y-2 border-b border-input/70 bg-black/20 p-2">
+          <div className="text-xs text-muted-foreground">
+            Formula muharriri (MathLive)
+          </div>
+          <div ref={mfHostRef} />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded-md px-3 py-1 text-xs hover:bg-white/10"
+              onClick={() => setFormulaOpen(false)}
+            >
+              Bekor qilish
+            </button>
+            <button
+              type="button"
+              className="rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground"
+              onClick={insertFormula}
+            >
+              Qo'shish
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-1 border-b border-input/70 px-2 py-1">
         <ToolbarBtn onClick={() => runCommand("bold")} title="Bold">
           <Bold className="h-3.5 w-3.5" />
@@ -194,7 +220,10 @@ export function RichEditor({
           <ListOrdered className="h-3.5 w-3.5" />
         </ToolbarBtn>
         <span className="mx-1 h-4 w-px bg-white/10" />
-        <ToolbarBtn onClick={openFormula} title="Insert Formula">
+        <ToolbarBtn
+          onClick={() => (formulaOpen ? setFormulaOpen(false) : openFormula())}
+          title="Insert Formula"
+        >
           <Sigma className="h-3.5 w-3.5" />
           <span className="ml-1 text-xs">Formula</span>
         </ToolbarBtn>
@@ -216,30 +245,6 @@ export function RichEditor({
         onKeyUp={saveSelection}
         onMouseUp={saveSelection}
       />
-      {formulaOpen && (
-        <div className="space-y-2 border-t border-input/70 bg-black/20 p-2">
-          <div className="text-xs text-muted-foreground">
-            Formula muharriri (MathLive)
-          </div>
-          <div ref={mfHostRef} />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="rounded-md px-3 py-1 text-xs hover:bg-white/10"
-              onClick={() => setFormulaOpen(false)}
-            >
-              Bekor qilish
-            </button>
-            <button
-              type="button"
-              className="rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground"
-              onClick={insertFormula}
-            >
-              Qo'shish
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
