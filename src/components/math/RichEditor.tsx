@@ -206,7 +206,10 @@ export function RichEditor({
             <button
               type="button"
               className="rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground"
-              onClick={insertFormula}
+              onClick={() => {
+                console.log("Qo'shish button clicked");
+                insertFormula();
+              }}
             >
               Qo'shish
             </button>
