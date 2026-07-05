@@ -129,7 +129,9 @@ export function RichEditor({
   }, [formulaOpen]);
 
   const insertFormula = async () => {
-    const latex = (mfRef.current?.value ?? "").trim();
+    const rawLatex = mfRef.current?.value ?? "";
+    const latex = rawLatex.trim();
+    console.error("[insertFormula] START rawLatex:", JSON.stringify(rawLatex), "latex:", JSON.stringify(latex), "mfRef:", mfRef.current);
     if (!latex) {
       setFormulaOpen(false);
       return;
