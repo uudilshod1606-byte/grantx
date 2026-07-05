@@ -158,22 +158,18 @@ export function RichEditor({
     editorRef.current?.focus();
     const range = savedRangeRef.current;
     const sel = window.getSelection();
-    console.log("[insertFormula] latex:", latex, "range:", range, "editor contains range:", editorRef.current?.contains(range?.commonAncestorContainer ?? null));
     if (range && editorRef.current?.contains(range.commonAncestorContainer)) {
       if (!range.collapsed) {
         range.deleteContents();
       }
       const fragment = range.createContextualFragment(html);
-      console.log("[insertFormula] fragment:", fragment);
       range.insertNode(fragment);
-      console.log("[insertFormula] inserted");
       range.collapse(false);
       if (sel) {
         sel.removeAllRanges();
         sel.addRange(range);
       }
     } else {
-      console.log("[insertFormula] fallback to execCommand");
       restoreSelection();
       document.execCommand("insertHTML", false, html);
     }
