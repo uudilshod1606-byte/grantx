@@ -129,7 +129,10 @@ export function RichEditor({
   }, [formulaOpen]);
 
   const insertFormula = async () => {
-    const latex = (mfRef.current?.value ?? "").trim();
+    const mf = mfRef.current;
+    const rawLatex =
+      mf && typeof mf.getValue === "function" ? mf.getValue() : (mf?.value ?? "");
+    const latex = rawLatex.trim();
     if (!latex) {
       setFormulaOpen(false);
       return;
@@ -143,11 +146,34 @@ export function RichEditor({
     } catch (e) {
       console.error(e);
     }
-    restoreSelection();
+
     const html = `<span class="formula-embed" data-latex="${escapeAttr(
       latex,
     )}" contenteditable="false">${markup}</span>&nbsp;`;
-    document.execCommand("insertHTML", false, html);
+
+    // Focus the editor and insert at the saved caret/selection position.
+    // Using the saved Range directly is more reliable than execCommand,
+    // especially inside a dialog where focus transitions can reset the
+    // active selection before execCommand runs.
+    editorRef.current?.focus();
+    const range = savedRangeRef.current;
+    const sel = window.getSelection();
+    if (range && editorRef.current?.contains(range.commonAncestorContainer)) {
+      if (!range.collapsed) {
+        range.deleteContents();
+      }
+      const fragment = range.createContextualFragment(html);
+      range.insertNode(fragment);
+      range.collapse(false);
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    } else {
+      restoreSelection();
+      document.execCommand("insertHTML", false, html);
+    }
+
     setFormulaOpen(false);
     emitChange();
     saveSelection();
