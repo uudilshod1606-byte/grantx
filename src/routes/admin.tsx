@@ -581,9 +581,6 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
           />
         </div>
       </div>
-      <DialogFooter>
-        <Button onClick={submit} className="gradient-bg text-primary-foreground">Saqlash</Button>
-      </DialogFooter>
     </DialogContent>
   );
 }
