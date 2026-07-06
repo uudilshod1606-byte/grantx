@@ -439,7 +439,12 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
         }
       }}
     >
-      <DialogHeader><DialogTitle>Yangi savol qo'shish</DialogTitle></DialogHeader>
+      <div className="flex items-center justify-between">
+        <DialogHeader className="flex-1">
+          <DialogTitle>Yangi savol qo'shish</DialogTitle>
+        </DialogHeader>
+        <Button onClick={submit} className="gradient-bg text-primary-foreground">Saqlash</Button>
+      </div>
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
@@ -576,9 +581,6 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
           />
         </div>
       </div>
-      <DialogFooter>
-        <Button onClick={submit} className="gradient-bg text-primary-foreground">Saqlash</Button>
-      </DialogFooter>
     </DialogContent>
   );
 }
