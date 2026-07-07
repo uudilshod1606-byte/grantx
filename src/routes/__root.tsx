@@ -9,8 +9,6 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import mathliveStaticCss from "mathlive/mathlive-static.css?url";
-import mathliveFontsCss from "mathlive/mathlive-fonts.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "sonner";
