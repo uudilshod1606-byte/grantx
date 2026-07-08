@@ -1,5 +1,15 @@
 import { useEffect } from "react";
 import { cn } from "@/lib/utils";
+// Ensure MathLive's static stylesheet + web fonts are loaded persistently.
+// The markup produced by `convertLatexToMarkup` (stored in the DB and
+// rendered below via dangerouslySetInnerHTML) depends on these styles.
+// Without them, formulas visually collapse to plain text whenever no
+// <math-field> element is mounted in the DOM. Importing the CSS here as
+// side-effects makes Vite bundle them into the app stylesheet, so they
+// stay loaded for the lifetime of the page regardless of the MathLive
+// virtual keyboard / editor state.
+import "mathlive/static.css";
+import "mathlive/fonts.css";
 
 type Props = {
   latex: string;
