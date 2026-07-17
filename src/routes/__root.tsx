@@ -85,8 +85,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "GrantX — DTM va Milliy Sertifikatga tayyorlov" },
       { name: "twitter:description", content: "GrantX — O'zbek talabalari uchun zamonaviy ta'lim platformasi. DTM va Milliy Sertifikat imtihonlariga onlayn tayyorlanish." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/88woffn9L9cypmjPGsJ0eVbLN7j1/social-images/social-1784289183620-grantx_social_image.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/88woffn9L9cypmjPGsJ0eVbLN7j1/social-images/social-1784289183620-grantx_social_image.webp" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/88woffn9L9cypmjPGsJ0eVbLN7j1/social-images/social-1784289426644-grantx_social_image.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/88woffn9L9cypmjPGsJ0eVbLN7j1/social-images/social-1784289426644-grantx_social_image.webp" },
     ],
     links: [
       {
