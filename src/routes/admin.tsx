@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Users,
   FileQuestion,
@@ -142,15 +142,30 @@ function NotAdmin() {
 /* ----------------------------- Overview ----------------------------- */
 
 function Overview() {
-  const questions = questionsRepo.list();
+  const [questionCount, setQuestionCount] = useState<number | null>(null);
   const exams = examsRepo.list();
   const attempts = attemptsRepo.list();
   const users = readUsersStorage();
 
+  useEffect(() => {
+    let cancelled = false;
+    questionsRepo
+      .list()
+      .then((qs) => {
+        if (!cancelled) setQuestionCount(qs.length);
+      })
+      .catch(() => {
+        if (!cancelled) setQuestionCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const cards = [
     { label: "Foydalanuvchilar", value: users.length, icon: Users },
     { label: "Imtihonlar", value: exams.length, icon: ClipboardList },
-    { label: "Savollar", value: questions.length, icon: FileQuestion },
+    { label: "Savollar", value: questionCount ?? "…", icon: FileQuestion },
     { label: "Faol imtihonlar", value: attempts.length, icon: Activity },
   ];
 
@@ -203,13 +218,28 @@ function EmptyBox({ icon: Icon, title, description, action }: { icon: any; title
 /* ----------------------------- Questions ----------------------------- */
 
 function QuestionsTab() {
-  const [questions, setQuestions] = useState<Question[]>(() => questionsRepo.list());
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [kindFilter, setKindFilter] = useState<"all" | ExamKind>("all");
   const [blockFilter, setBlockFilter] = useState<"all" | DtmBlock>("all");
   const [open, setOpen] = useState(false);
 
-  const refresh = () => setQuestions(questionsRepo.list());
+  const refresh = () => {
+    setLoading(true);
+    questionsRepo
+      .list()
+      .then(setQuestions)
+      .catch((err) => {
+        toast.error("Savollarni yuklab bo'lmadi: " + (err instanceof Error ? err.message : String(err)));
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = useMemo(() => {
     return questions.filter((q) => {
@@ -259,7 +289,11 @@ function QuestionsTab() {
         </Dialog>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="glass rounded-2xl p-10 text-center text-sm text-muted-foreground">
+          Yuklanmoqda...
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyBox
           icon={FileQuestion}
           title="Savollar yo'q"
@@ -310,7 +344,21 @@ function QuestionsTab() {
                       {(q.points ?? defaultPointsFor(q.kind, q.block ?? null)).toFixed(1)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button size="sm" variant="ghost" onClick={() => { questionsRepo.remove(q.id); refresh(); toast.success("O'chirildi"); }}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          questionsRepo
+                            .remove(q.id)
+                            .then(() => {
+                              refresh();
+                              toast.success("O'chirildi");
+                            })
+                            .catch((err) => {
+                              toast.error("O'chirishda xatolik: " + (err instanceof Error ? err.message : String(err)));
+                            });
+                        }}
+                      >
                         <Trash2 className="h-4 w-4 text-rose-400" />
                       </Button>
                     </td>
@@ -351,6 +399,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
   const [points, setPoints] = useState<number>(defaultPointsFor("dtm", "mandatory"));
   const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
   const [explanation, setExplanation] = useState("");
+  const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // When kind/block changes, sync subject and default points.
@@ -390,19 +439,27 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
     if (!text.trim()) return toast.error("Savol matnini kiriting");
     if (opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
     if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
-    questionsRepo.add({
-      text: text.trim(),
-      subjectId,
-      kind,
-      block: kind === "dtm" ? block : null,
-      points,
-      imageUrl,
-      options: opts as [string, string, string, string],
-      correctIndex,
-      explanation: explanation.trim() || undefined,
-    });
-    toast.success("Savol qo'shildi");
-    onSaved();
+    setSaving(true);
+    questionsRepo
+      .add({
+        text: text.trim(),
+        subjectId,
+        kind,
+        block: kind === "dtm" ? block : null,
+        points,
+        imageUrl,
+        options: opts as [string, string, string, string],
+        correctIndex,
+        explanation: explanation.trim() || undefined,
+      })
+      .then(() => {
+        toast.success("Savol qo'shildi");
+        onSaved();
+      })
+      .catch((err) => {
+        toast.error("Saqlashda xatolik: " + (err instanceof Error ? err.message : String(err)));
+      })
+      .finally(() => setSaving(false));
   };
 
   return (
@@ -443,7 +500,9 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
         <DialogHeader className="flex-1">
           <DialogTitle>Yangi savol qo'shish</DialogTitle>
         </DialogHeader>
-        <Button onClick={submit} className="gradient-bg text-primary-foreground">Saqlash</Button>
+        <Button onClick={submit} disabled={saving} className="gradient-bg text-primary-foreground">
+          {saving ? "Saqlanmoqda..." : "Saqlash"}
+        </Button>
       </div>
       <div className="space-y-4">
         <div className="grid gap-3 sm:grid-cols-3">
