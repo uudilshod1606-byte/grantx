@@ -52,9 +52,28 @@ type Props = {
 };
 
 export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: Props) {
-  // Pull real questions for each subject from the repo (filtered by kind + block).
+  // Pull real questions from Supabase once, on mount.
+  const [allQuestions, setAllQuestions] = useState<Question[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    questionsRepo
+      .list()
+      .then((qs) => {
+        if (!cancelled) setAllQuestions(qs);
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : String(err));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Group loaded questions by subject (filtered by kind + block).
   const subjectQuestions = useMemo(() => {
-    const all = questionsRepo.list();
+    const all = allQuestions ?? [];
     const map: Record<string, Question[]> = {};
     for (const s of subjects) {
       map[s.id] = all.filter(
@@ -66,7 +85,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
     }
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [allQuestions]);
 
   // Per-subject question count — real questions if any, otherwise planned count.
   const subjectSlots = useMemo(() => {
@@ -76,7 +95,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
       return { ...s, count };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [subjectQuestions]);
 
   const [activeSubject, setActiveSubject] = useState(0);
   const [activeQ, setActiveQ] = useState(0);
@@ -99,6 +118,16 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
     }, 1000);
     return () => clearInterval(t);
   }, [submitted]);
+
+  if (allQuestions === null) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 pb-10 pt-6">
+        <div className="glass rounded-2xl p-10 text-center text-sm text-muted-foreground">
+          {loadError ? `Savollarni yuklashda xatolik: ${loadError}` : "Savollar yuklanmoqda..."}
+        </div>
+      </section>
+    );
+  }
 
   const current = subjectSlots[activeSubject];
   const currentReal = subjectQuestions[current.id] ?? [];
