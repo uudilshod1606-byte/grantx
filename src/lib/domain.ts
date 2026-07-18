@@ -21,9 +21,9 @@ import {
 /**
  * GrantX domain model.
  *
- * Pure types + catalogs + tiny localStorage repositories. The shapes match
- * what we'll store in Supabase later — repositories can be swapped one-for-one
- * with supabase-js calls without touching the UI.
+ * Types + catalogs. Questions are stored in Supabase (Postgres via the REST
+ * API) so every visitor sees the same question bank. Exams, attempts and the
+ * admin allowlist still use tiny localStorage repositories for now.
  */
 
 export type Difficulty = "easy" | "medium" | "hard";
@@ -71,7 +71,7 @@ export function subjectsByKind(kind: ExamKind) {
   return SUBJECTS.filter((s) => s.kinds.includes(kind));
 }
 
-/** Question record — Supabase-ready. */
+/** Question record — stored in the Supabase `questions` table. */
 export type Question = {
   id: string;
   subjectId: string;
@@ -233,10 +233,99 @@ export function computeStats(attempts: ExamAttempt[]): UserStats {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  LocalStorage repositories (Supabase-ready interface)                      */
+/*  Supabase REST client (no SDK dependency — plain fetch)                    */
 /* -------------------------------------------------------------------------- */
 
-const KEY_QUESTIONS = "grantx.questions";
+const SUPABASE_URL = "https://efwsoextaegfwsincixv.supabase.co";
+const SUPABASE_KEY = "sb_publishable_WUB_zqK97f1CJITpI96omg_3vNBPHiK";
+
+async function supabaseFetch(path: string, init: RequestInit = {}): Promise<unknown> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
+    ...init,
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      ...(init.headers ?? {}),
+    },
+  });
+  if (!res.ok) {
+    const bodyText = await res.text().catch(() => "");
+    throw new Error(`Supabase ${res.status}: ${bodyText || res.statusText}`);
+  }
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+/** Row shape as stored in Postgres (snake_case) → app shape (camelCase). */
+function rowToQuestion(row: Record<string, unknown>): Question {
+  return {
+    id: String(row.id),
+    subjectId: String(row.subject_id),
+    kind: row.kind as ExamKind,
+    block: (row.block as DtmBlock | null) ?? null,
+    category: (row.category as string | undefined) ?? undefined,
+    difficulty: (row.difficulty as Difficulty | undefined) ?? undefined,
+    points: row.points != null ? Number(row.points) : undefined,
+    imageUrl: (row.image_url as string | undefined) ?? undefined,
+    text: String(row.text),
+    options: row.options as [string, string, string, string],
+    correctIndex: Number(row.correct_index) as 0 | 1 | 2 | 3,
+    explanation: (row.explanation as string | undefined) ?? undefined,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+function questionToRow(q: Partial<Question>): Record<string, unknown> {
+  const row: Record<string, unknown> = {};
+  if (q.subjectId !== undefined) row.subject_id = q.subjectId;
+  if (q.kind !== undefined) row.kind = q.kind;
+  if (q.block !== undefined) row.block = q.block;
+  if (q.category !== undefined) row.category = q.category;
+  if (q.difficulty !== undefined) row.difficulty = q.difficulty;
+  if (q.points !== undefined) row.points = q.points;
+  if (q.imageUrl !== undefined) row.image_url = q.imageUrl;
+  if (q.text !== undefined) row.text = q.text;
+  if (q.options !== undefined) row.options = q.options;
+  if (q.correctIndex !== undefined) row.correct_index = q.correctIndex;
+  if (q.explanation !== undefined) row.explanation = q.explanation;
+  return row;
+}
+
+export const questionsRepo = {
+  list: async (): Promise<Question[]> => {
+    const rows = (await supabaseFetch(`/questions?select=*&order=created_at.desc`)) as Record<string, unknown>[] | null;
+    return (rows ?? []).map(rowToQuestion);
+  },
+  add: async (q: Omit<Question, "id" | "createdAt" | "updatedAt">): Promise<Question> => {
+    const rows = (await supabaseFetch(`/questions`, {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify(questionToRow(q)),
+    })) as Record<string, unknown>[];
+    return rowToQuestion(rows[0]);
+  },
+  update: async (id: string, patch: Partial<Question>): Promise<void> => {
+    await supabaseFetch(`/questions?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify(questionToRow(patch)),
+    });
+  },
+  remove: async (id: string): Promise<void> => {
+    await supabaseFetch(`/questions?id=eq.${id}`, {
+      method: "DELETE",
+      headers: { Prefer: "return=minimal" },
+    });
+  },
+};
+
+/* -------------------------------------------------------------------------- */
+/*  LocalStorage repositories (exams, attempts, admin allowlist)              */
+/* -------------------------------------------------------------------------- */
+
 const KEY_EXAMS = "grantx.exams";
 const KEY_ATTEMPTS = "grantx.attempts";
 const KEY_ADMINS = "grantx.admins";
@@ -253,25 +342,6 @@ function write<T>(key: string, value: T[]) {
   if (typeof window === "undefined") return;
   localStorage.setItem(key, JSON.stringify(value));
 }
-
-export const questionsRepo = {
-  list: () => read<Question>(KEY_QUESTIONS),
-  add: (q: Omit<Question, "id" | "createdAt" | "updatedAt">) => {
-    const all = read<Question>(KEY_QUESTIONS);
-    const now = new Date().toISOString();
-    const created: Question = { ...q, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
-    write(KEY_QUESTIONS, [created, ...all]);
-    return created;
-  },
-  update: (id: string, patch: Partial<Question>) => {
-    const all = read<Question>(KEY_QUESTIONS);
-    const next = all.map((q) => (q.id === id ? { ...q, ...patch, updatedAt: new Date().toISOString() } : q));
-    write(KEY_QUESTIONS, next);
-  },
-  remove: (id: string) => {
-    write(KEY_QUESTIONS, read<Question>(KEY_QUESTIONS).filter((q) => q.id !== id));
-  },
-};
 
 export const examsRepo = {
   list: () => read<ExamTemplate>(KEY_EXAMS),
