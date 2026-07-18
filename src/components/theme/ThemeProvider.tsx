@@ -1,7 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 
 export type Theme = "light" | "dark";
-const STORAGE_KEY = "grantx.theme";
 
 type Ctx = {
   theme: Theme;
@@ -11,49 +10,39 @@ type Ctx = {
 
 const ThemeContext = createContext<Ctx | null>(null);
 
-function applyTheme(t: Theme) {
+function applyLight() {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.classList.remove("light", "dark");
-  root.classList.add(t);
-  root.dataset.theme = t;
+  root.classList.remove("dark");
+  root.classList.add("light");
+  root.dataset.theme = "light";
 }
 
+/**
+ * GrantX currently ships light mode only. Dark mode has been intentionally
+ * disabled — the provider always forces "light" and ignores any previously
+ * saved preference, so every visitor sees the same look regardless of what
+ * they may have toggled before this change shipped.
+ */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
-
   useEffect(() => {
-    try {
-      const saved = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? "light";
-      const next: Theme = saved === "dark" ? "dark" : "light";
-      setThemeState(next);
-      applyTheme(next);
-    } catch {
-      applyTheme("light");
-    }
+    applyLight();
   }, []);
 
-  const setTheme = useCallback((t: Theme) => {
-    setThemeState(t);
-    applyTheme(t);
-    try {
-      localStorage.setItem(STORAGE_KEY, t);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const toggle = useCallback(() => {
-    setTheme(theme === "dark" ? "light" : "dark");
-  }, [theme, setTheme]);
-
-  const value = useMemo(() => ({ theme, toggle, setTheme }), [theme, toggle, setTheme]);
+  const value = useMemo<Ctx>(
+    () => ({
+      theme: "light",
+      toggle: () => {},
+      setTheme: () => {},
+    }),
+    []
+  );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) return { theme: "dark" as Theme, toggle: () => {}, setTheme: () => {} };
+  if (!ctx) return { theme: "light" as Theme, toggle: () => {}, setTheme: () => {} };
   return ctx;
 }
