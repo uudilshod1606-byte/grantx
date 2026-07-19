@@ -246,7 +246,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
             variant="ghost"
             size="sm"
             onClick={() => setConfirmOpen(true)}
-            className="hover:bg-white/10"
+            className="hover:bg-muted"
           >
             <X className="mr-1 h-4 w-4" /> Chiqish
           </Button>
@@ -259,7 +259,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
             "flex items-center gap-2 rounded-xl border px-3 py-1.5 font-mono text-sm tabular-nums",
             lowTime
               ? "border-destructive/40 bg-destructive/10 text-destructive"
-              : "border-white/10 bg-white/5",
+              : "border-border bg-muted",
           ].join(" ")}
         >
           <Clock className="h-4 w-4" />
@@ -282,7 +282,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
           </span>
           <span>{progress}%</span>
         </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
             className="h-full gradient-bg transition-[width] duration-300"
             style={{ width: `${progress}%` }}
@@ -316,20 +316,20 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
                   "flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition",
                   active
                     ? "gradient-bg text-primary-foreground"
-                    : "glass hover:bg-white/10",
+                    : "glass hover:bg-muted",
                 ].join(" ")}
               >
                 <Icon className="h-4 w-4" />
                 <span>{s.name}</span>
                 {blockLabel && (
-                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] uppercase ${active ? "bg-white/20" : "bg-white/10 text-muted-foreground"}`}>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] uppercase ${active ? "bg-white/20" : "bg-muted text-muted-foreground"}`}>
                     {blockLabel}
                   </span>
                 )}
                 <span
                   className={[
                     "rounded-full px-2 py-0.5 text-[10px]",
-                    active ? "bg-white/20" : "bg-white/10 text-muted-foreground",
+                    active ? "bg-white/20" : "bg-muted text-muted-foreground",
                   ].join(" ")}
                 >
                   {ans}/{s.count}
@@ -353,12 +353,12 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
           </div>
 
           {currentQuestion ? (
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-6">
+            <div className="rounded-xl border border-border bg-muted/40 p-6">
               {currentQuestion.imageUrl && (
                 <img
                   src={currentQuestion.imageUrl}
                   alt="Savol rasmi"
-                  className="mx-auto mb-4 max-h-72 rounded-lg border border-white/10"
+                  className="mx-auto mb-4 max-h-72 rounded-lg border-border"
                 />
               )}
               <MathContent
@@ -367,7 +367,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
               />
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
+            <div className="rounded-xl border border-dashed border-border bg-muted/40 p-6 text-center">
               <Sparkles className="mx-auto h-5 w-5 text-accent" />
               <p className="mt-3 text-sm text-muted-foreground">
                 Savol matni tez orada qo'shiladi.
@@ -390,7 +390,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
                     "flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition",
                     selected
                       ? "border-primary bg-primary/10"
-                      : "border-white/10 bg-white/[0.02] hover:bg-white/5",
+                      : "border-border bg-muted/40 hover:bg-muted",
                   ].join(" ")}
                 >
                   <span
@@ -398,7 +398,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
                       "flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold transition",
                       selected
                         ? "gradient-bg text-primary-foreground"
-                        : "bg-white/5",
+                        : "bg-muted",
                     ].join(" ")}
                   >
                     {label}
@@ -419,7 +419,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
             <Button
               variant="outline"
               onClick={goPrev}
-              className="glass border-white/15 hover:bg-white/10"
+              className="glass border-border hover:bg-muted"
               disabled={activeSubject === 0 && activeQ === 0}
             >
               <ArrowLeft className="mr-2 h-4 w-4" /> Oldingi
@@ -459,7 +459,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
                       ? "gradient-bg text-primary-foreground glow"
                       : answered
                       ? "bg-primary/20 text-foreground"
-                      : "bg-white/5 text-muted-foreground hover:bg-white/10",
+                      : "bg-muted text-muted-foreground hover:bg-accent",
                   ].join(" ")}
                 >
                   {i + 1}
@@ -470,13 +470,13 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
           <div className="mt-4 space-y-1.5 text-xs text-muted-foreground">
             <Legend color="gradient-bg" label="Joriy savol" />
             <Legend color="bg-primary/20" label="Javob berilgan" />
-            <Legend color="bg-white/5" label="Javobsiz" />
+            <Legend color="bg-muted" label="Javobsiz" />
           </div>
         </aside>
       </div>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="glass border-white/10">
+        <DialogContent className="glass border-border">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-accent" />
@@ -490,7 +490,7 @@ export function ExamRunner({ title, kind, subjects, durationMinutes, onExit }: P
           <DialogFooter className="gap-2 sm:gap-2">
             <Button
               variant="outline"
-              className="glass border-white/15 hover:bg-white/10"
+              className="glass border-border hover:bg-muted"
               onClick={() => setConfirmOpen(false)}
             >
               Davom etish
@@ -586,7 +586,7 @@ function ResultView({
 
           {/* Summary */}
           <div className="text-center md:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs text-muted-foreground">
+            <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
               <Trophy className="h-3.5 w-3.5 text-accent" />
               {kind === "dtm" ? "DTM natija" : "Natija tayyor"}
             </div>
@@ -608,7 +608,7 @@ function ResultView({
                 size="lg"
                 variant="outline"
                 onClick={onExit}
-                className="glass border-white/15 hover:bg-white/10"
+                className="glass border-border hover:bg-muted"
               >
                 <Home className="mr-2 h-4 w-4" /> Bosh menuga
               </Button>
@@ -661,14 +661,14 @@ function ResultView({
           return (
             <div key={s.id} className="glass rounded-2xl p-4">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted">
                   <Icon className="h-5 w-5 text-accent" />
                 </div>
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold">{s.name}</span>
                     {blockLabel && (
-                      <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground">
                         {blockLabel} · {s.pointsPerQuestion} ball/savol
                       </span>
                     )}
@@ -686,7 +686,7 @@ function ResultView({
                   </div>
                 </div>
               </div>
-              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full gradient-bg transition-[width] duration-500"
                   style={{ width: `${pct}%` }}
@@ -712,7 +712,7 @@ function StatCard({
   tone: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-2xl border border-border bg-muted/50 p-4">
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted-foreground">{label}</span>
         <Icon className={`h-4 w-4 ${tone}`} />
