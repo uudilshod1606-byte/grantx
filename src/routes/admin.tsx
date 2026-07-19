@@ -79,7 +79,7 @@ function AdminContent() {
   return (
     <div className="relative min-h-screen text-foreground">
       <Backdrop />
-      <header className="glass sticky top-0 z-40 border-b border-white/10">
+      <header className="glass sticky top-0 z-40 border-b border-border">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">
@@ -188,7 +188,7 @@ function Overview() {
         {attempts.length === 0 ? (
           <EmptyBox icon={Inbox} title="Faollik yo'q" description="Foydalanuvchilar imtihon ishlay boshlagach bu yerda paydo bo'ladi." />
         ) : (
-          <ul className="divide-y divide-white/5 text-sm">
+          <ul className="divide-y divide-border text-sm">
             {attempts.slice(0, 10).map((a) => (
               <li key={a.id} className="flex justify-between py-2">
                 <span>{a.examTitle}</span>
@@ -206,7 +206,7 @@ function Overview() {
 
 function EmptyBox({ icon: Icon, title, description, action }: { icon: any; title: string; description: string; action?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
+    <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-10 text-center">
       <Icon className="mx-auto h-8 w-8 text-muted-foreground" />
       <h3 className="mt-3 font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
@@ -302,7 +302,7 @@ function QuestionsTab() {
       ) : (
         <div className="glass overflow-hidden rounded-2xl">
           <table className="w-full text-sm">
-            <thead className="bg-white/5 text-left text-xs uppercase text-muted-foreground">
+            <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Savol</th>
                 <th className="px-4 py-3">Tur</th>
@@ -326,7 +326,7 @@ function QuestionsTab() {
                       : "—"
                     : "—";
                 return (
-                  <tr key={q.id} className="border-t border-white/5">
+                  <tr key={q.id} className="border-t border-border">
                     <td className="max-w-md truncate px-4 py-3">
                       <div className="flex items-center gap-2">
                         {q.imageUrl && <ImagePlus className="h-3.5 w-3.5 text-accent" />}
@@ -334,7 +334,7 @@ function QuestionsTab() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
                         {q.kind === "dtm" ? "DTM" : "Milliy"}
                       </span>
                     </td>
@@ -464,7 +464,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
 
   return (
     <DialogContent
-      className="glass max-h-[90vh] overflow-y-auto border-white/10 sm:max-w-2xl"
+      className="glass max-h-[90vh] overflow-y-auto border-border sm:max-w-2xl"
       onPointerDownOutside={(e) => {
         const t = e.target as HTMLElement | null;
         if (
@@ -575,7 +575,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
             />
             {imageUrl ? (
               <div className="relative">
-                <img src={imageUrl} alt="Preview" className="h-24 rounded-lg border border-white/10" />
+                <img src={imageUrl} alt="Preview" className="h-24 rounded-lg border-border" />
                 <button
                   type="button"
                   onClick={() => { setImageUrl(undefined); if (fileRef.current) fileRef.current.value = ""; }}
@@ -590,7 +590,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
                 type="button"
                 variant="outline"
                 onClick={() => fileRef.current?.click()}
-                className="glass border-white/15 hover:bg-white/10"
+                className="glass border-border hover:bg-muted"
               >
                 <ImagePlus className="mr-2 h-4 w-4" /> Rasm yuklash
               </Button>
@@ -600,7 +600,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
                 type="button"
                 variant="ghost"
                 onClick={() => fileRef.current?.click()}
-                className="hover:bg-white/10"
+                className="hover:bg-muted"
               >
                 Almashtirish
               </Button>
@@ -615,7 +615,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
               <button
                 type="button"
                 onClick={() => setCorrectIndex(i as 0 | 1 | 2 | 3)}
-                className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-white/5"}`}
+                className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-muted"}`}
               >{l}</button>
               <div className="flex-1">
                 <RichEditor
@@ -708,7 +708,7 @@ function ExamFormDialog({ onSaved }: { onSaved: () => void }) {
   const available = SUBJECTS.filter((s) => s.kinds.includes(kind));
 
   return (
-    <DialogContent className="glass border-white/10 sm:max-w-xl">
+    <DialogContent className="glass border-border sm:max-w-xl">
       <DialogHeader><DialogTitle>Yangi imtihon</DialogTitle></DialogHeader>
       <div className="space-y-3">
         <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Imtihon nomi" />
@@ -742,7 +742,7 @@ function ExamFormDialog({ onSaved }: { onSaved: () => void }) {
                   key={s.id}
                   type="button"
                   onClick={() => toggle(s.id)}
-                  className={`rounded-xl px-3 py-1.5 text-sm transition ${active ? "gradient-bg text-primary-foreground" : "glass hover:bg-white/10"}`}
+                  className={`rounded-xl px-3 py-1.5 text-sm transition ${active ? "gradient-bg text-primary-foreground" : "glass hover:bg-muted"}`}
                 >{s.name}</button>
               );
             })}
@@ -789,7 +789,7 @@ function UsersTab() {
       ) : (
         <div className="glass overflow-hidden rounded-2xl">
           <table className="w-full text-sm">
-            <thead className="bg-white/5 text-left text-xs uppercase text-muted-foreground">
+            <thead className="bg-muted text-left text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Foydalanuvchi</th>
                 <th className="px-4 py-3">Email</th>
@@ -801,7 +801,7 @@ function UsersTab() {
               {filtered.map((u) => {
                 const count = attempts.filter((a) => a.userId === u.id).length;
                 return (
-                  <tr key={u.id} className="border-t border-white/5">
+                  <tr key={u.id} className="border-t border-border">
                     <td className="px-4 py-3">{u.fullName}</td>
                     <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                     <td className="px-4 py-3">{count}</td>
