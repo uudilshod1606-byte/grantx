@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuthLoadingScreen, useAuth } from "@/lib/auth";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -54,34 +53,36 @@ function Index() {
   );
 }
 
-function Logo() {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-bg glow">
-        <GraduationCap className="h-5 w-5 text-primary-foreground" />
-      </div>
-      <span className="text-xl font-bold tracking-tight text-slate-900">
-        Grant<span className="gradient-text">X</span>
-      </span>
-    </div>
-  );
-}
-
+/* ---------------- Navbar ---------------- */
 function Navbar() {
   return (
-    <header className="absolute top-0 left-0 right-0 z-50 px-4 pt-4">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between rounded-2xl border border-slate-200 bg-white/80 px-5 py-3 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.15)] backdrop-blur-xl">
-        <Link to="/"><Logo /></Link>
+    <header className="relative z-50 px-4 pt-5">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between rounded-2xl border border-[#E9DFC9] bg-[#FFFDF9] px-5 py-3 shadow-[0_8px_24px_-14px_rgba(46,38,32,0.15)]">
+        <Link to="/" className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2E2620]">
+            <GraduationCap className="h-[18px] w-[18px] text-[#F3E4C4]" />
+          </div>
+          <span className="text-xl font-extrabold tracking-tight text-[#2E2620]">
+            Grant<span className="text-[#C1852F]">X</span>
+          </span>
+        </Link>
+
+        <div className="hidden items-center gap-8 text-[14.5px] font-semibold text-[#6B6058] md:flex">
+          <a href="#natijalar" className="transition hover:text-[#2E2620]">Natijalar</a>
+          <a href="#platforma" className="transition hover:text-[#2E2620]">Platforma</a>
+          <a href="#yonalish" className="transition hover:text-[#2E2620]">Yo'nalish</a>
+          <a href="#reja" className="transition hover:text-[#2E2620]">Reja</a>
+        </div>
+
         <div className="flex items-center gap-2">
-          <ThemeToggle />
           <Link to="/login">
-            <Button variant="ghost" className="text-slate-700 hover:bg-slate-100">
+            <Button variant="ghost" className="text-[#2E2620] hover:bg-[#F1EAD9] hover:text-[#2E2620]">
               Kirish
             </Button>
           </Link>
           <Link to="/signup">
-            <Button className="gradient-bg text-primary-foreground hover:opacity-90 glow">
-              Boshlash
+            <Button className="gap-1.5 bg-[#2E2620] text-[#FAF7EF] hover:bg-[#241D19]">
+              Boshlash <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </div>
@@ -90,44 +91,113 @@ function Navbar() {
   );
 }
 
-/* ---------------- Hero (mobile-first, responsive) ---------------- */
+/* ---------------- University orbit data ---------------- */
+type UniCard = {
+  name: string;
+  tag: string;
+  logo: string;
+  pos: string;
+  glow: string;
+  delay: string;
+};
+
+const UNIVERSITIES: UniCard[] = [
+  { name: "UWED", tag: "Jahon iqtisodiyoti va diplomatiya universiteti", logo: "/universities/uwed.png", pos: "top-[10px] left-0", glow: "#8B7CF0", delay: "0s" },
+  { name: "TDYU", tag: "Toshkent davlat yuridik universiteti", logo: "/universities/tdyu.png", pos: "top-0 right-0", glow: "#F0A24D", delay: "0.7s" },
+  { name: "O'zMU", tag: "O'zbekiston Milliy universiteti", logo: "/universities/ozmu.png", pos: "top-[262px] left-[-40px] lg:left-[-72px]", glow: "#5DCAA5", delay: "1.4s" },
+  { name: "TATU", tag: "Toshkent axborot texnologiyalari universiteti", logo: "/universities/tatu.png", pos: "top-[250px] right-[-40px] lg:right-[-72px]", glow: "#4D8CF0", delay: "2.1s" },
+  { name: "UzDJTU", tag: "O'zbekiston davlat jahon tillari universiteti", logo: "/universities/uzdjtu.png", pos: "top-[512px] left-[14px]", glow: "#B78BF0", delay: "2.8s" },
+  { name: "TDIU", tag: "Toshkent davlat iqtisodiyot universiteti", logo: "/universities/tdiu.png", pos: "top-[502px] right-[6px]", glow: "#F0A24D", delay: "3.5s" },
+];
+
+function UniversityCard({ uni }: { uni: UniCard }) {
+  return (
+    <div className={`animate-float absolute w-[230px] ${uni.pos}`} style={{ animationDelay: uni.delay }}>
+      <div
+        className="absolute -inset-[18px] -z-10 rounded-[30px] opacity-50 blur-2xl"
+        style={{ background: `radial-gradient(circle, ${uni.glow}, transparent 70%)` }}
+      />
+      <div className="flex items-center gap-3.5 rounded-2xl border border-[#E9DFC9] bg-[#FFFDF9] p-4 shadow-[0_16px_36px_-14px_rgba(46,38,32,0.16)]">
+        <img src={uni.logo} alt={uni.name} className="h-[46px] w-[46px] flex-shrink-0 rounded-lg object-contain" />
+        <div>
+          <div className="text-[15px] font-bold text-[#2E2620]">{uni.name}</div>
+          <div className="mt-0.5 text-[11.5px] leading-snug text-[#8A7F72]">{uni.tag}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Hero ---------------- */
 function Hero() {
   return (
-    <section className="relative w-full overflow-hidden px-5 pb-16 pt-28 md:pb-24 md:pt-36">
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-24 top-12 h-72 w-72 rounded-full bg-violet-300/30 blur-3xl" />
-        <div className="absolute -right-20 top-40 h-72 w-72 rounded-full bg-fuchsia-300/30 blur-3xl" />
+    <section className="relative w-full overflow-x-clip bg-[#FAF7EF] px-5 pb-20 pt-14 md:pt-16">
+      {/* Desktop orbit hero */}
+      <div className="relative mx-auto hidden min-h-[660px] max-w-[1180px] md:block">
+        <div
+          className="pointer-events-none absolute left-1/2 top-[38%] h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+          style={{ background: "radial-gradient(circle, rgba(193,133,47,0.13), transparent 70%)" }}
+        />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[660px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-[#2E2620]/[0.14]" />
+
+        {UNIVERSITIES.map((u) => (
+          <UniversityCard key={u.name} uni={u} />
+        ))}
+
+        <div className="absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center text-center">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#E9DFC9] bg-[#FFFDF9] px-[18px] py-2 text-[12.5px] font-bold text-[#C1852F] shadow-sm">
+            🏆 DTM maksimal ball
+          </div>
+          <div className="mt-4 text-[132px] font-extrabold leading-none tracking-[-6px] text-[#2E2620] [text-shadow:0_10px_34px_rgba(46,38,32,0.12)]">
+            189
+          </div>
+          <h1 className="mt-4 text-[21px] font-extrabold text-[#2E2620]">
+            Orzudagi universitet bir qadam yaqin
+          </h1>
+          <p className="mt-1.5 text-[14.5px] font-medium text-[#8A7F72]">
+            Bilimingga ishon, kelajagingni yarAT!
+          </p>
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#F1EAD9] px-5 py-2.5 text-[13px] font-bold text-[#7A4E19]">
+            🎯 Maqsad aniq, yo'l ochiq!
+          </div>
+        </div>
       </div>
-      <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-        <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-[11px] font-medium text-violet-700 shadow-sm backdrop-blur">
-          <Sparkles className="h-3 w-3" /> GrantX — zamonaviy ta'lim platformasi
+
+      <div className="relative z-10 mt-10 flex justify-center gap-3.5 md:mt-16">
+        <Link to="/signup">
+          <Button className="h-[52px] gap-1.5 rounded-xl bg-[#2E2620] px-8 text-[15.5px] font-bold text-[#FAF7EF] hover:bg-[#241D19]">
+            Bepul boshlash <ArrowRight className="h-4 w-4" />
+          </Button>
+        </Link>
+        <a href="#platforma">
+          <Button
+            variant="outline"
+            className="h-[52px] rounded-xl border-[1.5px] border-[#E9DFC9] bg-transparent px-8 text-[15.5px] font-semibold text-[#2E2620] hover:bg-[#F1EAD9]"
+          >
+            Qanday ishlaydi?
+          </Button>
+        </a>
+      </div>
+
+      {/* Mobile fallback: simplified stacked hero (orbit layout doesn't fit small screens) */}
+      <div className="mx-auto max-w-md text-center md:hidden">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-[#E9DFC9] bg-[#FFFDF9] px-4 py-1.5 text-[12px] font-bold text-[#C1852F]">
+          🏆 DTM maksimal ball
         </div>
-        <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl md:text-5xl lg:text-6xl">
-          DTM va Milliy Sertifikatga{" "}
-          <span className="gradient-text">tayyorgarlik platformasi</span>
-        </h1>
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-600 md:text-lg">
-          Real testlar, natijalar tahlili va bilim darajangizni baholash.
-        </p>
-        <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <Link to="/signup" className="w-full sm:w-auto">
-            <Button className="h-12 w-full gradient-bg px-8 text-base text-primary-foreground glow sm:w-auto">
-              Test ishlash <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to="/login" className="w-full sm:w-auto">
-            <Button
-              variant="outline"
-              className="h-12 w-full border-slate-200 bg-white px-8 text-base text-slate-800 sm:w-auto"
-            >
-              Kirish
-            </Button>
-          </Link>
+        <div className="mt-4 text-[84px] font-extrabold leading-none tracking-[-3px] text-[#2E2620]">189</div>
+        <h1 className="mt-3 text-lg font-extrabold text-[#2E2620]">Orzudagi universitet bir qadam yaqin</h1>
+        <p className="mt-1.5 text-sm font-medium text-[#8A7F72]">Bilimingga ishon, kelajagingni yarAT!</p>
+        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#F1EAD9] px-4 py-2 text-[12.5px] font-bold text-[#7A4E19]">
+          🎯 Maqsad aniq, yo'l ochiq!
         </div>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-500">
-          <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-violet-600" /> Bepul ro'yxatdan o'tish</span>
-          <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-violet-600" /> Real DTM formati</span>
-          <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-violet-600" /> Avtomatik natijalar</span>
+
+        <div className="mt-8 grid grid-cols-2 gap-3">
+          {UNIVERSITIES.map((u) => (
+            <div key={u.name} className="flex items-center gap-2.5 rounded-2xl border border-[#E9DFC9] bg-[#FFFDF9] p-3 text-left">
+              <img src={u.logo} alt={u.name} className="h-9 w-9 flex-shrink-0 rounded-md object-contain" />
+              <div className="text-[13px] font-bold text-[#2E2620]">{u.name}</div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
