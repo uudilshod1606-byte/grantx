@@ -20,7 +20,7 @@ function Index() {
   if (isAuthenticated) return <Navigate to="/dashboard" />;
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-black text-white">
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-[#faf7f2] text-black">
       <Navbar />
       <Hero />
     </div>
