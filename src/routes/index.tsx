@@ -56,32 +56,25 @@ function Index() {
 /* ---------------- Navbar ---------------- */
 function Navbar() {
   return (
-    <header className="relative z-50 px-4 pt-5">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between rounded-2xl border border-[#E9DFC9] bg-[#FFFDF9] px-5 py-3 shadow-[0_8px_24px_-14px_rgba(46,38,32,0.15)]">
+    <header className="absolute left-0 right-0 top-0 z-50 px-6 pt-6 md:px-10">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2E2620]">
-            <GraduationCap className="h-[18px] w-[18px] text-[#F3E4C4]" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 backdrop-blur-md">
+            <GraduationCap className="h-[18px] w-[18px] text-white" />
           </div>
-          <span className="text-xl font-extrabold tracking-tight text-[#2E2620]">
-            Grant<span className="text-[#C1852F]">X</span>
+          <span className="text-xl font-extrabold tracking-tight text-white">
+            Grant<span className="text-[#F0A24D]">X</span>
           </span>
         </Link>
 
-        <div className="hidden items-center gap-8 text-[14.5px] font-semibold text-[#6B6058] md:flex">
-          <a href="#natijalar" className="transition hover:text-[#2E2620]">Natijalar</a>
-          <a href="#platforma" className="transition hover:text-[#2E2620]">Platforma</a>
-          <a href="#yonalish" className="transition hover:text-[#2E2620]">Yo'nalish</a>
-          <a href="#reja" className="transition hover:text-[#2E2620]">Reja</a>
-        </div>
-
         <div className="flex items-center gap-2">
           <Link to="/login">
-            <Button variant="ghost" className="text-[#2E2620] hover:bg-[#F1EAD9] hover:text-[#2E2620]">
+            <Button variant="ghost" className="text-white hover:bg-white/15 hover:text-white">
               Kirish
             </Button>
           </Link>
           <Link to="/signup">
-            <Button className="gap-1.5 bg-[#2E2620] text-[#FAF7EF] hover:bg-[#241D19]">
+            <Button className="gap-1.5 bg-white text-[#2E2620] hover:bg-white/90">
               Boshlash <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
@@ -91,123 +84,20 @@ function Navbar() {
   );
 }
 
-/* ---------------- University orbit data ---------------- */
-type UniCard = {
-  name: string;
-  tag: string;
-  logo: string;
-  pos: string;
-  glow: string;
-  delay: string;
-};
-
-const UNIVERSITIES: UniCard[] = [
-  { name: "UWED", tag: "Jahon iqtisodiyoti va diplomatiya universiteti", logo: "/universities/uwed.png", pos: "top-[26px] left-[44px] rotate-[-3deg]", glow: "#8B7CF0", delay: "0s" },
-  { name: "TDYU", tag: "Toshkent davlat yuridik universiteti", logo: "/universities/tdyu.png", pos: "top-[16px] right-[44px] rotate-[3deg]", glow: "#F0A24D", delay: "0.7s" },
-  { name: "O'zMU", tag: "O'zbekiston Milliy universiteti", logo: "/universities/ozmu.png", pos: "top-[216px] left-[-8px] rotate-[-2deg]", glow: "#5DCAA5", delay: "1.4s" },
-  { name: "TATU", tag: "Toshkent axborot texnologiyalari universiteti", logo: "/universities/tatu.png", pos: "top-[206px] right-[-8px] rotate-[2.5deg]", glow: "#4D8CF0", delay: "2.1s" },
-  { name: "UzDJTU", tag: "O'zbekiston davlat jahon tillari universiteti", logo: "/universities/uzdjtu.png", pos: "top-[406px] left-[58px] rotate-[-2.5deg]", glow: "#B78BF0", delay: "2.8s" },
-  { name: "TDIU", tag: "Toshkent davlat iqtisodiyot universiteti", logo: "/universities/tdiu.png", pos: "top-[398px] right-[52px] rotate-[2deg]", glow: "#F0A24D", delay: "3.5s" },
-];
-
-function UniversityCard({ uni }: { uni: UniCard }) {
-  return (
-    <div className={`animate-float absolute w-[230px] ${uni.pos}`} style={{ animationDelay: uni.delay }}>
-      <div
-        className="absolute -inset-[14px] -z-10 rounded-[28px] opacity-75 blur-2xl"
-        style={{ background: `radial-gradient(circle, ${uni.glow}, transparent 70%)` }}
-      />
-      <div className="flex items-center gap-3.5 rounded-2xl border border-[#E9DFC9] bg-[#FFFDF9] p-4 shadow-[0_16px_36px_-14px_rgba(46,38,32,0.16)]">
-        <img src={uni.logo} alt={uni.name} className="h-[46px] w-[46px] flex-shrink-0 rounded-lg object-contain" />
-        <div>
-          <div className="text-[15px] font-bold text-[#2E2620]">{uni.name}</div>
-          <div className="mt-0.5 text-[11.5px] leading-snug text-[#8A7F72]">{uni.tag}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------- Hero ---------------- */
+/* ---------------- Hero (full-bleed video) ---------------- */
 function Hero() {
   return (
-    <section className="relative w-full overflow-x-clip bg-[#FAF7EF] px-5 pb-20 pt-14 md:pt-16">
-      {/* Desktop orbit hero */}
-      <div className="relative mx-auto hidden min-h-[600px] max-w-[980px] md:block">
-        <div
-          className="pointer-events-none absolute left-1/2 top-[38%] h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
-          style={{ background: "radial-gradient(circle, rgba(193,133,47,0.15), transparent 70%)" }}
-        />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-[#2E2620]/[0.14]" />
-
-        {/* connecting accent dots */}
-        <div className="absolute left-[224px] top-[96px] h-[7px] w-[7px] rounded-full bg-[#8B7CF0]" />
-        <div className="absolute right-[236px] top-[88px] h-[7px] w-[7px] rounded-full bg-[#F0A24D]" />
-        <div className="absolute left-[112px] top-[280px] h-[7px] w-[7px] rounded-full bg-[#5DCAA5]" />
-        <div className="absolute right-[120px] top-[270px] h-[7px] w-[7px] rounded-full bg-[#4D8CF0]" />
-        <div className="absolute left-[190px] top-[452px] h-[7px] w-[7px] rounded-full bg-[#D4537E]" />
-        <div className="absolute right-[200px] top-[444px] h-[7px] w-[7px] rounded-full bg-[#F0A24D]" />
-
-        {UNIVERSITIES.map((u) => (
-          <UniversityCard key={u.name} uni={u} />
-        ))}
-
-        <div className="absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#E9DFC9] bg-[#FFFDF9] px-[18px] py-2 text-[12.5px] font-bold text-[#C1852F] shadow-sm">
-            🏆 DTM maksimal ball
-          </div>
-          <div className="mt-4 text-[148px] font-extrabold leading-none tracking-[-7px] text-[#2E2620] [text-shadow:0_10px_34px_rgba(46,38,32,0.12)]">
-            189
-          </div>
-          <h1 className="mt-4 text-[21px] font-extrabold text-[#2E2620]">
-            Orzudagi universitet bir qadam yaqin
-          </h1>
-          <p className="mt-1.5 text-[14.5px] font-medium text-[#8A7F72]">
-            Bilimingga ishon, kelajagingni yarAT!
-          </p>
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#F1EAD9] px-5 py-2.5 text-[13px] font-bold text-[#7A4E19]">
-            🎯 Maqsad aniq, yo'l ochiq!
-          </div>
-        </div>
-      </div>
-
-      <div className="relative z-10 mt-10 flex justify-center gap-3.5 md:mt-16">
-        <Link to="/signup">
-          <Button className="h-[52px] gap-1.5 rounded-xl bg-[#2E2620] px-8 text-[15.5px] font-bold text-[#FAF7EF] hover:bg-[#241D19]">
-            Bepul boshlash <ArrowRight className="h-4 w-4" />
-          </Button>
-        </Link>
-        <a href="#platforma">
-          <Button
-            variant="outline"
-            className="h-[52px] rounded-xl border-[1.5px] border-[#E9DFC9] bg-transparent px-8 text-[15.5px] font-semibold text-[#2E2620] hover:bg-[#F1EAD9]"
-          >
-            Qanday ishlaydi?
-          </Button>
-        </a>
-      </div>
-
-      {/* Mobile fallback: simplified stacked hero (orbit layout doesn't fit small screens) */}
-      <div className="mx-auto max-w-md text-center md:hidden">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-[#E9DFC9] bg-[#FFFDF9] px-4 py-1.5 text-[12px] font-bold text-[#C1852F]">
-          🏆 DTM maksimal ball
-        </div>
-        <div className="mt-4 text-[84px] font-extrabold leading-none tracking-[-3px] text-[#2E2620]">189</div>
-        <h1 className="mt-3 text-lg font-extrabold text-[#2E2620]">Orzudagi universitet bir qadam yaqin</h1>
-        <p className="mt-1.5 text-sm font-medium text-[#8A7F72]">Bilimingga ishon, kelajagingni yarAT!</p>
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#F1EAD9] px-4 py-2 text-[12.5px] font-bold text-[#7A4E19]">
-          🎯 Maqsad aniq, yo'l ochiq!
-        </div>
-
-        <div className="mt-8 grid grid-cols-2 gap-3">
-          {UNIVERSITIES.map((u) => (
-            <div key={u.name} className="flex items-center gap-2.5 rounded-2xl border border-[#E9DFC9] bg-[#FFFDF9] p-3 text-left">
-              <img src={u.logo} alt={u.name} className="h-9 w-9 flex-shrink-0 rounded-md object-contain" />
-              <div className="text-[13px] font-bold text-[#2E2620]">{u.name}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+    <section className="relative h-screen w-full overflow-hidden bg-black">
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 h-full w-full object-cover"
+      >
+        <source src="/hero-bg.mp4" type="video/mp4" />
+      </video>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/15 to-black/50" />
     </section>
   );
 }
