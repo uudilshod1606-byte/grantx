@@ -102,19 +102,19 @@ type UniCard = {
 };
 
 const UNIVERSITIES: UniCard[] = [
-  { name: "UWED", tag: "Jahon iqtisodiyoti va diplomatiya universiteti", logo: "/universities/uwed.png", pos: "top-[10px] left-0", glow: "#8B7CF0", delay: "0s" },
-  { name: "TDYU", tag: "Toshkent davlat yuridik universiteti", logo: "/universities/tdyu.png", pos: "top-0 right-0", glow: "#F0A24D", delay: "0.7s" },
-  { name: "O'zMU", tag: "O'zbekiston Milliy universiteti", logo: "/universities/ozmu.png", pos: "top-[262px] left-[-40px] lg:left-[-72px]", glow: "#5DCAA5", delay: "1.4s" },
-  { name: "TATU", tag: "Toshkent axborot texnologiyalari universiteti", logo: "/universities/tatu.png", pos: "top-[250px] right-[-40px] lg:right-[-72px]", glow: "#4D8CF0", delay: "2.1s" },
-  { name: "UzDJTU", tag: "O'zbekiston davlat jahon tillari universiteti", logo: "/universities/uzdjtu.png", pos: "top-[512px] left-[14px]", glow: "#B78BF0", delay: "2.8s" },
-  { name: "TDIU", tag: "Toshkent davlat iqtisodiyot universiteti", logo: "/universities/tdiu.png", pos: "top-[502px] right-[6px]", glow: "#F0A24D", delay: "3.5s" },
+  { name: "UWED", tag: "Jahon iqtisodiyoti va diplomatiya universiteti", logo: "/universities/uwed.png", pos: "top-[26px] left-[44px] rotate-[-3deg]", glow: "#8B7CF0", delay: "0s" },
+  { name: "TDYU", tag: "Toshkent davlat yuridik universiteti", logo: "/universities/tdyu.png", pos: "top-[16px] right-[44px] rotate-[3deg]", glow: "#F0A24D", delay: "0.7s" },
+  { name: "O'zMU", tag: "O'zbekiston Milliy universiteti", logo: "/universities/ozmu.png", pos: "top-[216px] left-[-8px] rotate-[-2deg]", glow: "#5DCAA5", delay: "1.4s" },
+  { name: "TATU", tag: "Toshkent axborot texnologiyalari universiteti", logo: "/universities/tatu.png", pos: "top-[206px] right-[-8px] rotate-[2.5deg]", glow: "#4D8CF0", delay: "2.1s" },
+  { name: "UzDJTU", tag: "O'zbekiston davlat jahon tillari universiteti", logo: "/universities/uzdjtu.png", pos: "top-[406px] left-[58px] rotate-[-2.5deg]", glow: "#B78BF0", delay: "2.8s" },
+  { name: "TDIU", tag: "Toshkent davlat iqtisodiyot universiteti", logo: "/universities/tdiu.png", pos: "top-[398px] right-[52px] rotate-[2deg]", glow: "#F0A24D", delay: "3.5s" },
 ];
 
 function UniversityCard({ uni }: { uni: UniCard }) {
   return (
     <div className={`animate-float absolute w-[230px] ${uni.pos}`} style={{ animationDelay: uni.delay }}>
       <div
-        className="absolute -inset-[18px] -z-10 rounded-[30px] opacity-50 blur-2xl"
+        className="absolute -inset-[14px] -z-10 rounded-[28px] opacity-75 blur-2xl"
         style={{ background: `radial-gradient(circle, ${uni.glow}, transparent 70%)` }}
       />
       <div className="flex items-center gap-3.5 rounded-2xl border border-[#E9DFC9] bg-[#FFFDF9] p-4 shadow-[0_16px_36px_-14px_rgba(46,38,32,0.16)]">
@@ -133,12 +133,20 @@ function Hero() {
   return (
     <section className="relative w-full overflow-x-clip bg-[#FAF7EF] px-5 pb-20 pt-14 md:pt-16">
       {/* Desktop orbit hero */}
-      <div className="relative mx-auto hidden min-h-[660px] max-w-[1180px] md:block">
+      <div className="relative mx-auto hidden min-h-[600px] max-w-[980px] md:block">
         <div
-          className="pointer-events-none absolute left-1/2 top-[38%] h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
-          style={{ background: "radial-gradient(circle, rgba(193,133,47,0.13), transparent 70%)" }}
+          className="pointer-events-none absolute left-1/2 top-[38%] h-[460px] w-[460px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+          style={{ background: "radial-gradient(circle, rgba(193,133,47,0.15), transparent 70%)" }}
         />
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[660px] w-[660px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-[#2E2620]/[0.14]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-[#2E2620]/[0.14]" />
+
+        {/* connecting accent dots */}
+        <div className="absolute left-[224px] top-[96px] h-[7px] w-[7px] rounded-full bg-[#8B7CF0]" />
+        <div className="absolute right-[236px] top-[88px] h-[7px] w-[7px] rounded-full bg-[#F0A24D]" />
+        <div className="absolute left-[112px] top-[280px] h-[7px] w-[7px] rounded-full bg-[#5DCAA5]" />
+        <div className="absolute right-[120px] top-[270px] h-[7px] w-[7px] rounded-full bg-[#4D8CF0]" />
+        <div className="absolute left-[190px] top-[452px] h-[7px] w-[7px] rounded-full bg-[#D4537E]" />
+        <div className="absolute right-[200px] top-[444px] h-[7px] w-[7px] rounded-full bg-[#F0A24D]" />
 
         {UNIVERSITIES.map((u) => (
           <UniversityCard key={u.name} uni={u} />
@@ -148,7 +156,7 @@ function Hero() {
           <div className="inline-flex items-center gap-1.5 rounded-full border border-[#E9DFC9] bg-[#FFFDF9] px-[18px] py-2 text-[12.5px] font-bold text-[#C1852F] shadow-sm">
             🏆 DTM maksimal ball
           </div>
-          <div className="mt-4 text-[132px] font-extrabold leading-none tracking-[-6px] text-[#2E2620] [text-shadow:0_10px_34px_rgba(46,38,32,0.12)]">
+          <div className="mt-4 text-[148px] font-extrabold leading-none tracking-[-7px] text-[#2E2620] [text-shadow:0_10px_34px_rgba(46,38,32,0.12)]">
             189
           </div>
           <h1 className="mt-4 text-[21px] font-extrabold text-[#2E2620]">
