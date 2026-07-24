@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
+import { useRef, useState } from "react";
 import { AuthLoadingScreen, useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/")({
@@ -28,12 +29,12 @@ function Index() {
 /* ---------------- Navbar ---------------- */
 function Navbar() {
   return (
-    <nav className="relative z-10 mx-auto flex max-w-6xl items-center justify-between py-7">
-      <div className="flex items-center gap-2 font-serif text-[22px] font-medium tracking-tight">
+    <nav className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between py-7">
+      <div className="flex shrink-0 items-center gap-2 font-serif text-[22px] font-medium tracking-tight">
         <span className="h-[26px] w-[26px] rounded-[7px] bg-[linear-gradient(145deg,#FBE2AC,#B87F2C)] shadow-[0_2px_10px_-2px_rgba(223,167,66,0.6)]" />
         int<span className="italic text-[#F0C670]">i</span>l
       </div>
-      <ul className="hidden gap-9 text-sm text-[#B8A490] md:flex">
+      <ul className="hidden shrink-0 gap-9 text-sm text-[#B8A490] md:flex">
         <li><a href="#" className="transition-colors hover:text-[#F7EEE1]">Fanlar</a></li>
         <li><a href="#" className="transition-colors hover:text-[#F7EEE1]">DTM testlari</a></li>
         <li><a href="#" className="transition-colors hover:text-[#F7EEE1]">Reyting</a></li>
@@ -41,7 +42,7 @@ function Navbar() {
       </ul>
       <Link
         to="/login"
-        className="rounded-full border border-[#DFA74266] px-6 py-2.5 text-sm font-medium text-[#FBE2AC] backdrop-blur-md transition-colors hover:bg-[#DFA742] hover:text-[#140D08]"
+        className="shrink-0 rounded-full border border-[#DFA74266] px-6 py-2.5 text-sm font-medium text-[#FBE2AC] backdrop-blur-md transition-colors hover:bg-[#DFA742] hover:text-[#140D08]"
       >
         Kirish
       </Link>
@@ -49,51 +50,80 @@ function Navbar() {
   );
 }
 
-/* ---------------- Floating university card ---------------- */
-function FloatCard({
+/* ---------------- Marquee ticker ---------------- */
+function Marquee() {
+  const items = ["DTM TIZIMI", "MILLIY SERTIFIKAT", "189 BALL", "UWED", "TATU", "TDYU", "ONLAYN TEST"];
+  const strip = [...items, ...items];
+  return (
+    <div className="relative z-10 mx-auto w-full max-w-6xl overflow-hidden border-y border-[#F7EEE114] py-3">
+      <div className="flex w-max animate-[marquee_28s_linear_infinite] gap-10">
+        {[0, 1].map((rep) => (
+          <div key={rep} className="flex shrink-0 gap-10">
+            {strip.map((label, i) => (
+              <span key={`${rep}-${i}`} className="flex items-center gap-10 text-xs font-semibold tracking-[2px] text-[#8C7A68]">
+                {label}
+                <span className="h-1 w-1 rounded-full bg-[#DFA742]" />
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Ticket card (small, peeking behind the main card) ---------------- */
+function PeekCard({
   className,
-  iconBg,
+  stripe,
   iconFg,
   label,
-  sub,
   icon,
 }: {
   className: string;
-  iconBg: string;
+  stripe: string;
   iconFg: string;
   label: string;
-  sub: string;
   icon: React.ReactNode;
 }) {
   return (
     <div
-      className={`absolute z-[8] flex w-[146px] items-center gap-2.5 rounded-2xl border border-white/[0.09] bg-[linear-gradient(160deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] px-4 py-3 shadow-[0_20px_40px_-18px_rgba(0,0,0,0.6)] backdrop-blur-xl ${className}`}
+      className={`absolute flex h-[150px] w-[110px] flex-col items-center justify-between rounded-2xl border border-white/10 bg-[#241609] p-3 shadow-[0_20px_36px_-16px_rgba(0,0,0,0.65)] ${className}`}
     >
-      <div
-        className="flex h-[30px] w-[30px] flex-shrink-0 items-center justify-center rounded-[9px]"
-        style={{ background: iconBg, color: iconFg }}
-      >
+      <span className="h-1 w-9 rounded-full" style={{ background: stripe }} />
+      <div className="flex h-9 w-9 items-center justify-center rounded-full" style={{ background: stripe, color: iconFg }}>
         {icon}
       </div>
-      <div>
-        <div className="text-sm font-semibold text-[#F7EEE1]">{label}</div>
-        <div className="text-[11px] text-[#8C7A68]">{sub}</div>
-      </div>
+      <span className="text-[11px] font-bold tracking-[1px] text-[#F7EEE1]">{label}</span>
     </div>
   );
 }
 
 /* ---------------- Hero ---------------- */
 function Hero() {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+
+  function handleMove(e: React.MouseEvent<HTMLDivElement>) {
+    const el = stageRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: py * -14, y: px * 16 });
+  }
+  function handleLeave() {
+    setTilt({ x: 0, y: 0 });
+  }
+
   return (
     <section
       className="relative flex min-h-screen flex-col overflow-hidden px-6 md:px-[6.5vw]"
       style={{
         background:
-          "radial-gradient(1100px 700px at 82% 8%, rgba(223,167,66,0.14), transparent 62%), radial-gradient(700px 500px at 8% 92%, rgba(223,167,66,0.06), transparent 60%), linear-gradient(172deg, #140D08 0%, #1E140D 38%, #2C1D12 70%, #40291A 100%)",
+          "radial-gradient(1000px 640px at 84% 6%, rgba(223,167,66,0.10), transparent 62%), linear-gradient(172deg, #140D08 0%, #1E140D 42%, #2C1D12 78%, #3A2408 100%)",
       }}
     >
-      {/* grain texture */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.05] mix-blend-overlay"
         style={{
@@ -103,8 +133,17 @@ function Hero() {
       />
 
       <Navbar />
+      <Marquee />
 
-      <div className="relative grid flex-1 grid-cols-1 items-center gap-5 py-5 md:grid-cols-[1.05fr_0.95fr]">
+      <div className="relative grid flex-1 grid-cols-1 items-center gap-5 py-10 md:grid-cols-[1.05fr_0.95fr]">
+        {/* ghost watermark numeral */}
+        <span
+          className="pointer-events-none absolute -left-6 top-1/2 -translate-y-1/2 select-none font-serif text-[420px] font-medium leading-none text-[#F7EEE1] opacity-[0.035] md:text-[520px]"
+          aria-hidden
+        >
+          189
+        </span>
+
         {/* Copy */}
         <div className="relative z-[6]">
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#DFA7424D] bg-[linear-gradient(180deg,rgba(223,167,66,0.10),rgba(223,167,66,0.03))] py-2 pl-3.5 pr-4.5 text-[13px] text-[#FBE2AC] shadow-[0_4px_20px_-8px_rgba(223,167,66,0.25)]">
@@ -112,7 +151,7 @@ function Hero() {
             Milliy sertifikat &amp; DTM tayyorgarligi
           </div>
 
-          <h1 className="font-serif text-[42px] font-normal leading-[1.04] tracking-[-0.8px] text-[#F7EEE1] md:text-[58px]">
+          <h1 className="font-serif text-[44px] font-normal leading-[1.03] tracking-[-0.8px] text-[#F7EEE1] md:text-[62px]">
             Bir xabar. Butun{" "}
             <span className="bg-[linear-gradient(100deg,#FBE2AC,#DFA742_60%,#B87F2C)] bg-clip-text italic text-transparent">
               kelajagingizni
@@ -144,122 +183,85 @@ function Hero() {
           </div>
         </div>
 
-        {/* Visual stage */}
-        <div className="relative h-full min-h-[420px]">
-          <FloatCard
-            className="left-[2%] top-[6%] animate-[floatY_6s_ease-in-out_infinite]"
-            iconBg="linear-gradient(145deg,#C23A4A,#7A1F2B)"
-            iconFg="#FDEBEC"
-            label="UWED"
-            sub="tayyorgarlik mos"
-            icon={
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M3 12h18M12 3c2.5 2.6 4 6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-6-4-9s1.5-6.4 4-9z" />
-              </svg>
-            }
-          />
-          <FloatCard
-            className="bottom-[10%] left-[-2%] animate-[floatY_7s_ease-in-out_infinite_0.6s]"
-            iconBg="linear-gradient(145deg,#3FD98C,#1F8A56)"
-            iconFg="#08301C"
-            label="TATU"
-            sub="tayyorgarlik mos"
-            icon={
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 5h14M12 5v14M8 19c-1.8 0-3-1.5-3-3.3 0-1.3.8-2.4 2-2.9" />
-              </svg>
-            }
-          />
-          <FloatCard
-            className="right-[-4%] top-[44%] animate-[floatY_5.5s_ease-in-out_infinite_1.1s]"
-            iconBg="linear-gradient(145deg,#3D5A8A,#152540)"
-            iconFg="#EAF0FA"
-            label="TDYU"
-            sub="tayyorgarlik mos"
-            icon={
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <path d="M12 4l1.5 1.5H17v11H7v-11h3.5L12 4z" />
-                <path d="M7 6.5v11M17 6.5v11" />
-              </svg>
-            }
-          />
+        {/* Visual stage — fanned certificate/ticket stack, mouse-reactive tilt */}
+        <div
+          ref={stageRef}
+          onMouseMove={handleMove}
+          onMouseLeave={handleLeave}
+          className="relative z-[6] flex h-full min-h-[460px] items-center justify-center [perspective:1400px]"
+        >
+          <div
+            className="relative h-[380px] w-[300px] transition-transform duration-300 ease-out"
+            style={{ transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`, transformStyle: "preserve-3d" }}
+          >
+            <PeekCard
+              className="-top-10 left-2 rotate-[-16deg]"
+              stripe="linear-gradient(145deg,#C23A4A,#7A1F2B)"
+              iconFg="#FDEBEC"
+              label="UWED"
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18M12 3c2.5 2.6 4 6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-6-4-9s1.5-6.4 4-9z" />
+                </svg>
+              }
+            />
+            <PeekCard
+              className="-top-14 left-1/2 -translate-x-1/2 rotate-[-2deg]"
+              stripe="linear-gradient(145deg,#3FD98C,#1F8A56)"
+              iconFg="#08301C"
+              label="TATU"
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 5h14M12 5v14M8 19c-1.8 0-3-1.5-3-3.3 0-1.3.8-2.4 2-2.9" />
+                </svg>
+              }
+            />
+            <PeekCard
+              className="-top-10 right-2 rotate-[14deg]"
+              stripe="linear-gradient(145deg,#3D5A8A,#152540)"
+              iconFg="#EAF0FA"
+              label="TDYU"
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <path d="M12 4l1.5 1.5H17v11H7v-11h3.5L12 4z" />
+                  <path d="M7 6.5v11M17 6.5v11" />
+                </svg>
+              }
+            />
 
-          <div className="absolute right-[-6%] top-1/2 w-[120%] max-w-[640px] -translate-y-1/2">
-            <svg viewBox="0 0 600 600" width="100%" height="100%">
-              <defs>
-                <radialGradient id="ambient" cx="50%" cy="45%" r="55%">
-                  <stop offset="0%" stopColor="#DFA742" stopOpacity="0.28" />
-                  <stop offset="100%" stopColor="#DFA742" stopOpacity="0" />
-                </radialGradient>
+            {/* main certificate ticket */}
+            <div
+              className="absolute bottom-0 left-1/2 h-[330px] w-[280px] -translate-x-1/2 overflow-hidden rounded-[22px] border border-[#FBE2AC33] shadow-[0_40px_70px_-24px_rgba(0,0,0,0.7)]"
+              style={{
+                background: "linear-gradient(155deg,#FCEAC0 0%,#EBBE6E 42%,#C6903E 78%,#6B4419 100%)",
+                transform: "translateZ(40px) translateX(-50%)",
+              }}
+            >
+              <div className="flex h-full flex-col justify-between p-6 text-[#2C1D12]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold tracking-[2px]">INTIL</span>
+                  <span className="text-[11px] font-semibold tracking-[1px] opacity-70">SERTIFIKAT</span>
+                </div>
 
-                <linearGradient id="ringA" x1="10%" y1="0%" x2="90%" y2="100%">
-                  <stop offset="0%" stopColor="#FBE2AC" />
-                  <stop offset="45%" stopColor="#DFA742" />
-                  <stop offset="100%" stopColor="#7A4E1E" />
-                </linearGradient>
-                <linearGradient id="ringB" x1="90%" y1="10%" x2="10%" y2="90%">
-                  <stop offset="0%" stopColor="#5C3A22" />
-                  <stop offset="55%" stopColor="#DFA742" />
-                  <stop offset="100%" stopColor="#FBE2AC" />
-                </linearGradient>
+                <div className="text-center">
+                  <div className="font-serif text-[104px] font-semibold leading-none">189</div>
+                  <div className="mt-2 text-[11px] font-semibold tracking-[3px] opacity-70">DTM NATIJA BALI</div>
+                </div>
 
-                <radialGradient id="medalFace" cx="38%" cy="32%" r="70%">
-                  <stop offset="0%" stopColor="#FCEAC0" />
-                  <stop offset="35%" stopColor="#EBBE6E" />
-                  <stop offset="70%" stopColor="#B87F2C" />
-                  <stop offset="100%" stopColor="#6B4419" />
-                </radialGradient>
-
-                <linearGradient id="medalRim" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FBE2AC" />
-                  <stop offset="50%" stopColor="#B87F2C" />
-                  <stop offset="100%" stopColor="#3A2408" />
-                </linearGradient>
-
-                <filter id="blurSm" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="1.6" />
-                </filter>
-                <filter id="shadow" x="-60%" y="-60%" width="220%" height="220%">
-                  <feDropShadow dx="0" dy="14" stdDeviation="18" floodColor="#000000" floodOpacity="0.55" />
-                </filter>
-              </defs>
-
-              <circle cx="300" cy="300" r="280" fill="url(#ambient)" />
-
-              <g style={{ transformOrigin: "300px 300px", animation: "spin 40s linear infinite" }}>
-                <path d="M 300 60 A 240 240 0 1 1 84 220" fill="none" stroke="url(#ringA)" strokeWidth="3" strokeLinecap="round" opacity="0.55" />
-                <circle cx="300" cy="60" r="4.5" fill="#FBE2AC" />
-              </g>
-              <g style={{ transformOrigin: "300px 300px", animation: "spinRev 55s linear infinite" }}>
-                <path d="M 300 96 A 204 204 0 1 0 470 430" fill="none" stroke="url(#ringB)" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
-              </g>
-
-              <g filter="url(#shadow)">
-                <g style={{ transformOrigin: "300px 300px", animation: "spin 34s linear infinite" }}>
-                  <path d="M 300 120 A 180 180 0 1 1 132 402" fill="none" stroke="url(#ringA)" strokeWidth="26" strokeLinecap="round" filter="url(#blurSm)" />
-                </g>
-                <g style={{ transformOrigin: "300px 300px", animation: "spinRev 44s linear infinite" }}>
-                  <path d="M 300 165 A 135 135 0 1 0 415 385" fill="none" stroke="url(#ringB)" strokeWidth="15" strokeLinecap="round" filter="url(#blurSm)" />
-                </g>
-
-                <circle cx="300" cy="300" r="86" fill="url(#medalRim)" />
-                <circle cx="300" cy="300" r="76" fill="url(#medalFace)" />
-                <circle cx="300" cy="300" r="76" fill="none" stroke="#3A2408" strokeWidth="1" opacity="0.4" />
-                <circle cx="278" cy="272" r="34" fill="#FFFFFF" opacity="0.18" />
-
-                <text x="300" y="315" textAnchor="middle" fontFamily="Fraunces, serif" fontSize="52" fill="#2C1D12" fontWeight="600">
-                  189
-                </text>
-              </g>
-
-              <g opacity="0.8" style={{ animation: "pulse 4s ease-in-out infinite" }}>
-                <circle cx="470" cy="180" r="3" fill="#FBE2AC" />
-                <circle cx="130" cy="440" r="2.5" fill="#F0C670" />
-                <circle cx="500" cy="380" r="2" fill="#FBE2AC" />
-                <circle cx="110" cy="200" r="2" fill="#F0C670" />
-              </g>
-            </svg>
+                <div>
+                  <div className="mb-3 h-px w-full bg-[repeating-linear-gradient(90deg,#2C1D1266_0_6px,transparent_6px_12px)]" />
+                  <div className="flex items-end justify-between">
+                    <div className="flex gap-[3px]">
+                      {[3, 5, 2, 6, 4, 2, 5, 3, 6, 2, 4, 5].map((h, i) => (
+                        <span key={i} className="w-[2px] bg-[#2C1D12]" style={{ height: `${h * 3}px`, opacity: 0.6 }} />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-semibold tracking-[1px] opacity-60">№ 2026-UZ</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -270,10 +272,7 @@ function Hero() {
       </div>
 
       <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spinRev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
-        @keyframes pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 0.85; } }
-        @keyframes floatY { 0%,100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
       `}</style>
     </section>
   );
