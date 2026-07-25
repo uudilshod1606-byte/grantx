@@ -54,8 +54,8 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
   head: () => ({
     meta: [
-      { title: "Admin Panel — GrantX" },
-      { name: "description", content: "GrantX admin paneli: savol bazasi, imtihonlar va foydalanuvchilarni boshqarish." },
+      { title: "Admin Panel — INTIL" },
+      { name: "description", content: "INTIL admin paneli: savol bazasi, imtihonlar va foydalanuvchilarni boshqarish." },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -86,7 +86,7 @@ function AdminContent() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
             <ShieldCheck className="h-5 w-5 text-accent" />
-            <span className="font-semibold">GrantX Admin</span>
+            <span className="font-semibold">INTIL Admin</span>
           </div>
           <div className="text-xs text-muted-foreground">{user?.email}</div>
         </div>
@@ -130,7 +130,7 @@ function NotAdmin() {
       <ShieldCheck className="mx-auto h-10 w-10 text-accent" />
       <h1 className="mt-3 text-xl font-semibold">Ruxsat yo'q</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Bu sahifa faqat administratorlar uchun. Admin panel faqat ruxsat berilgan GrantX hisobida ochiladi.
+        Bu sahifa faqat administratorlar uchun. Admin panel faqat ruxsat berilgan INTIL hisobida ochiladi.
       </p>
       <Button asChild className="gradient-bg mt-5 text-primary-foreground">
         <Link to="/dashboard">Dashboard'ga qaytish</Link>
@@ -761,7 +761,7 @@ function ExamFormDialog({ onSaved }: { onSaved: () => void }) {
 function readUsersStorage(): Array<{ id: string; email: string; fullName: string; createdAt: string }> {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem("grantx.auth.users") ?? "[]");
+    return JSON.parse(localStorage.getItem("intil.auth.users") ?? "[]");
   } catch {
     return [];
   }
