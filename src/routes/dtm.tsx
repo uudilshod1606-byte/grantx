@@ -34,7 +34,7 @@ export const Route = createFileRoute("/dtm")({
   component: DtmPage,
   head: () => ({
     meta: [
-      { title: "DTM imtihoni — GrantX" },
+      { title: "DTM imtihoni — INTIL" },
       {
         name: "description",
         content:
