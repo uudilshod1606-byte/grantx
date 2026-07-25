@@ -16,7 +16,7 @@ export function Hero() {
           <ul className="ih-nav-links">
             <li><a href="#">Natijalar</a></li>
             <li><a href="#platforma">Platforma</a></li>
-            <li><a href="#">Yo'nalish</a></li>
+            <li><a href="#yonalish">Yo'nalish</a></li>
             <li><a href="#">Reja</a></li>
           </ul>
           <Link className="ih-cta-btn" to="/signup">
