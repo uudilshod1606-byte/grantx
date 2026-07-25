@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { AuthLoadingScreen, useAuth } from "@/lib/auth";
 import { Hero } from "@/components/hero/Hero";
-
+import HeroPracticeSection from "@/components/HeroPracticeSection";
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
@@ -21,6 +21,7 @@ function Index() {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-[#F3EEE3] text-[#241A12]">
       <Hero />
+      <HeroPracticeSection />
     </div>
   );
 }
