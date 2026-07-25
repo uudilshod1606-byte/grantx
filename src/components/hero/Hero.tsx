@@ -1,4 +1,5 @@
 import { HeroScene } from "./HeroScene";
+import { Link } from "@tanstack/react-router";
 import "./Hero.css";
 
 export function Hero() {
@@ -18,12 +19,12 @@ export function Hero() {
             <li><a href="#">Yo'nalish</a></li>
             <li><a href="#">Reja</a></li>
           </ul>
-          <a className="ih-cta-btn" href="#">
+          <Link className="ih-cta-btn" to="/signup">
             Boshlash
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
-          </a>
+          </Link>
         </div>
 
         <div className="ih-hero">
@@ -50,12 +51,12 @@ export function Hero() {
               </p>
 
               <div className="ih-cta-row">
-                <a className="ih-primary-btn" href="#">
+                <Link className="ih-primary-btn" to="/signup">
                   Bepul boshlash
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
                     <path d="M5 12h14M13 6l6 6-6 6" />
                   </svg>
-                </a>
+                </Link>
                 <a className="ih-secondary-link" href="#">
                   Testlarni ko'rish
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
@@ -65,11 +66,9 @@ export function Hero() {
               </div>
             </div>
 
-            {/* RIGHT — 3D visual */}
-            <div className="ih-hero-right">
-              <div className="ih-visual">
-                <HeroScene />
-              </div>
+            {/* RIGHT: real 3D scene */}
+            <div className="ih-visual">
+              <HeroScene />
             </div>
           </div>
         </div>
@@ -77,3 +76,5 @@ export function Hero() {
     </div>
   );
 }
+
+export default Hero;
