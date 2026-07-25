@@ -9,8 +9,8 @@ export const Route = createFileRoute("/forgot-password")({
   component: ForgotPasswordPage,
   head: () => ({
     meta: [
-      { title: "Parolni tiklash — GrantX" },
-      { name: "description", content: "GrantX hisobingiz parolini tiklash uchun email yuboring." },
+      { title: "Parolni tiklash — INTIL" },
+      { name: "description", content: "INTIL hisobingiz parolini tiklash uchun email yuboring." },
     ],
   }),
 });
