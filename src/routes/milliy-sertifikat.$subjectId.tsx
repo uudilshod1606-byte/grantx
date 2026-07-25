@@ -31,7 +31,7 @@ export const Route = createFileRoute("/milliy-sertifikat/$subjectId")({
     const name = s?.name ?? "Milliy Sertifikat";
     return {
       meta: [
-        { title: `${name} — Milliy Sertifikat imtihoni · GrantX` },
+        { title: `${name} — Milliy Sertifikat imtihoni · INTIL` },
         {
           name: "description",
           content: `${name} fanidan milliy sertifikat imtihonini real formatda topshiring.`,
