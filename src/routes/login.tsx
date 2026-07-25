@@ -11,8 +11,8 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
   head: () => ({
     meta: [
-      { title: "Kirish — GrantX" },
-      { name: "description", content: "GrantX hisobingizga kiring va o'qishni davom ettiring." },
+      { title: "Kirish — INTIL" },
+      { name: "description", content: "INTIL hisobingizga kiring va o'qishni davom ettiring." },
     ],
   }),
 });
@@ -67,7 +67,7 @@ function LoginPage() {
     <AuthShell
       badge="Hisobga kirish"
       title="Xush kelibsiz"
-      subtitle="GrantX hisobingizga kiring va davom ettiring."
+      subtitle="INTIL hisobingizga kiring va davom ettiring."
       footer={
         <>
           Hisobingiz yo'qmi?{" "}
