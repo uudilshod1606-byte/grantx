@@ -21,8 +21,8 @@ export const Route = createFileRoute("/milliy-sertifikat")({
   component: MilliySertifikat,
   head: () => ({
     meta: [
-      { title: "Milliy Sertifikat — GrantX" },
-      { name: "description", content: "Milliy Sertifikat imtihonlariga tayyorlanish — CEFR English, Matematika, Ona tili va adabiyot, Tarix, Fizika, Biologiya, Kimyo. GrantX bilan imtihonga tayyorlaning." },
+      { title: "Milliy Sertifikat — INTIL" },
+      { name: "description", content: "Milliy Sertifikat imtihonlariga tayyorlanish — CEFR English, Matematika, Ona tili va adabiyot, Tarix, Fizika, Biologiya, Kimyo. INTIL bilan imtihonga tayyorlaning." },
     ],
   }),
 });
@@ -300,7 +300,7 @@ function Footer() {
           <Logo />
         </Link>
         <p className="text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} GrantX. Barcha huquqlar himoyalangan.
+          &copy; {new Date().getFullYear()} INTIL. Barcha huquqlar himoyalangan.
         </p>
         <div className="flex gap-5 text-sm text-muted-foreground">
           <a href="#" className="hover:text-foreground">Telegram</a>
