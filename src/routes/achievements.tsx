@@ -8,8 +8,8 @@ export const Route = createFileRoute("/achievements")({
   component: AchievementsPage,
   head: () => ({
     meta: [
-      { title: "Yutuqlar — GrantX" },
-      { name: "description", content: "GrantX yutuqlari va daraja tizimi." },
+      { title: "Yutuqlar — INTIL" },
+      { name: "description", content: "INTIL yutuqlari va daraja tizimi." },
     ],
   }),
 });
