@@ -8,7 +8,7 @@ export const Route = createFileRoute("/history")({
   component: HistoryPage,
   head: () => ({
     meta: [
-      { title: "Tarix — GrantX" },
+      { title: "Tarix — INTIL" },
       { name: "description", content: "Yechgan imtihonlaringiz tarixi va analitika." },
     ],
   }),
