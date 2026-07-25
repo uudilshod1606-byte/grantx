@@ -10,8 +10,8 @@ export const Route = createFileRoute("/leaderboard")({
   component: LeaderboardPage,
   head: () => ({
     meta: [
-      { title: "Reyting — GrantX" },
-      { name: "description", content: "GrantX global va fan bo'yicha reyting." },
+      { title: "Reyting — INTIL" },
+      { name: "description", content: "INTIL global va fan bo'yicha reyting." },
     ],
   }),
 });
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/leaderboard")({
 function readUsersStorage() {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem("grantx.auth.users") ?? "[]") as Array<{ id: string; fullName: string; email: string }>;
+    return JSON.parse(localStorage.getItem("intil.auth.users") ?? "[]") as Array<{ id: string; fullName: string; email: string }>;
   } catch {
     return [];
   }
