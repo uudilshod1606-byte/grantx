@@ -28,8 +28,8 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
   head: () => ({
     meta: [
-      { title: "Dashboard — GrantX" },
-      { name: "description", content: "GrantX shaxsiy kabinet: statistikalar, faollik va imtihon natijalari." },
+      { title: "Dashboard — INTIL" },
+      { name: "description", content: "INTIL shaxsiy kabinet: statistikalar, faollik va imtihon natijalari." },
     ],
   }),
 });
@@ -102,7 +102,7 @@ function DashboardContent() {
 }
 
 function getDisplayUser(authUser: AuthUser | null) {
-  const name = authUser?.fullName || "GrantX foydalanuvchi";
+  const name = authUser?.fullName || "INTIL foydalanuvchi";
   const initials = name
     .split(" ")
     .filter(Boolean)
