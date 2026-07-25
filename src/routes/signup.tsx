@@ -11,8 +11,8 @@ export const Route = createFileRoute("/signup")({
   component: SignUpPage,
   head: () => ({
     meta: [
-      { title: "Ro'yxatdan o'tish — GrantX" },
-      { name: "description", content: "GrantX'da yangi hisob yarating va o'qishni boshlang." },
+      { title: "Ro'yxatdan o'tish — INTIL" },
+      { name: "description", content: "INTIL'da yangi hisob yarating va o'qishni boshlang." },
     ],
   }),
 });
@@ -52,7 +52,7 @@ function SignUpPage() {
     setLoading(true);
     try {
       await signUp(parsed.data);
-      toast.success("Hisob yaratildi! GrantX'ga xush kelibsiz");
+      toast.success("Hisob yaratildi! INTIL'ga xush kelibsiz");
       navigate({ to: "/dashboard" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Xatolik yuz berdi");
