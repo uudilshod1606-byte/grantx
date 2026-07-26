@@ -14,7 +14,7 @@ export function Hero() {
             </span>
           </div>
           <ul className="ih-nav-links">
-            <li><a href="#">Natijalar</a></li>
+            <li><a href="#natijalar">Natijalar</a></li>
             <li><a href="#platforma">Platforma</a></li>
             <li><a href="#yonalish">Yo'nalish</a></li>
             <li><a href="#">Reja</a></li>
