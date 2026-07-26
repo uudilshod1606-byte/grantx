@@ -1,7 +1,7 @@
 import React from "react";
 
-// INTIL — amaliy mashq bo'limi, DTM matematik savoli bilan
-// Karta reference (IELTStation) bilan bir xil nisbatda — katta, professional taqdimot
+// INTIL — amaliy mashq bo'limi
+// Haqiqiy savol interfeysi uslubida: harfli doira belgilar, Oldingi/Keyingi tugmalari
 
 const accent = "#C9962E";
 const accentDark = "#A47418";
@@ -10,68 +10,11 @@ const cardBorder = "#EADDC5";
 const textPrimary = "#221C13";
 const textSecondary = "#6B6152";
 
-function Fraction({ num, den }: { num: string; den: string }) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        flexDirection: "column",
-        alignItems: "center",
-        verticalAlign: "middle",
-        margin: "0 3px",
-        lineHeight: 1.1,
-      }}
-    >
-      <span style={{ fontSize: "0.95em" }}>{num}</span>
-      <span
-        style={{
-          width: "100%",
-          borderTop: `1.4px solid ${textPrimary}`,
-          margin: "1px 0",
-        }}
-      />
-      <span style={{ fontSize: "0.95em" }}>{den}</span>
-    </span>
-  );
-}
-
-function TriangleSquareDiagram() {
-  return (
-    <svg
-      viewBox="0 0 260 220"
-      width="230"
-      height="195"
-      style={{ display: "block" }}
-    >
-      <rect
-        x="30"
-        y="66"
-        width="150"
-        height="150"
-        fill="none"
-        stroke="#332B1C"
-        strokeWidth="2.5"
-      />
-      <polygon
-        points="150,14 238,188 62,188"
-        fill="none"
-        stroke="#332B1C"
-        strokeWidth="2.5"
-      />
-      <polygon
-        points="150,66 180,138 78,138 95,66"
-        fill="#E7C787"
-        opacity="0.75"
-      />
-    </svg>
-  );
-}
-
 const options = [
-  { id: "A", value: "2\u221C3" },
-  { id: "B", value: "2\u221A3", selected: true },
-  { id: "C", value: "\u221A(2\u221A3)" },
-  { id: "D", value: "\u221A3" },
+  { id: "A", value: "4" },
+  { id: "B", value: "2" },
+  { id: "C", value: "2\u03C0" },
+  { id: "D", value: "4\u03C0" },
 ];
 
 export default function HeroPracticeSection() {
@@ -173,136 +116,131 @@ export default function HeroPracticeSection() {
             overflow: "hidden",
           }}
         >
+          {/* top bar */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "16px 24px",
+              padding: "16px 28px",
               borderBottom: `1px solid ${cardBorder}`,
             }}
           >
-            <div style={{ display: "flex", gap: 6 }}>
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: "#EADDC5",
-                    display: "inline-block",
-                  }}
-                />
-              ))}
-            </div>
             <p
               style={{
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
+                fontSize: 14,
                 color: textSecondary,
                 margin: 0,
               }}
             >
-              DTM &middot; Matematika &middot; 13-savol
+              Fizika &middot; Savol 28/30
             </p>
             <span
               style={{
-                background: accentDark,
-                color: "#fff",
+                background: "#F3E2BA",
+                color: accentDark,
                 fontSize: 13,
                 fontWeight: 700,
                 borderRadius: 999,
                 padding: "5px 12px",
               }}
             >
-              24:08
+              2.1 ball
             </span>
           </div>
 
-          <div style={{ padding: "32px 32px 20px", display: "flex", gap: 28 }}>
-            <div style={{ flexShrink: 0 }}>
-              <TriangleSquareDiagram />
-            </div>
+          {/* savol qismi */}
+          <div style={{ padding: "30px 28px 24px" }}>
+            <p
+              style={{
+                fontSize: 17,
+                lineHeight: 1.6,
+                color: textPrimary,
+                margin: "0 0 26px",
+              }}
+            >
+              Garmonik tebranayotgan jismning tebranish davri 0,5 s ga teng.
+              Uning siklik chastotasini (rad/s) aniqlang.
+            </p>
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: accentDark,
-                  margin: "0 0 10px",
-                }}
-              >
-                13-savol
-              </p>
-              <p
-                style={{
-                  fontSize: 16,
-                  lineHeight: 1.65,
-                  color: textPrimary,
-                  margin: "0 0 22px",
-                }}
-              >
-                Rasmda muntazam uchburchak va kvadrat tasvirlangan. Agar ular
-                kesishgan (rasmda bo'yab ko'rsatilgan) sohaning yuzi
-                uchburchak yuzining <Fraction num="1" den="6" /> qismiga,
-                kvadrat yuzining esa <Fraction num="1" den="4" /> qismiga
-                teng bo'lsa, uchburchak tomonining kvadrat tomoniga
-                nisbatini toping.
-              </p>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {options.map((opt) => (
-                  <div
-                    key={opt.id}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {options.map((opt) => (
+                <div
+                  key={opt.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    border: `1px solid ${cardBorder}`,
+                    background: "#FDF8EF",
+                    borderRadius: 12,
+                    padding: "14px 18px",
+                  }}
+                >
+                  <span
                     style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: "50%",
+                      background: "#F3E2BA",
+                      color: accentDark,
+                      fontWeight: 700,
+                      fontSize: 14,
                       display: "flex",
                       alignItems: "center",
-                      gap: 12,
-                      border: `1.5px solid ${opt.selected ? accent : cardBorder}`,
-                      background: opt.selected ? "#FBF0DA" : "#FFFFFF",
-                      borderRadius: 10,
-                      padding: "13px 16px",
+                      justifyContent: "center",
+                      flexShrink: 0,
                     }}
                   >
-                    <span
-                      style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: "50%",
-                        border: `1.5px solid ${opt.selected ? accent : "#DCCBA0"}`,
-                        background: opt.selected ? accent : "transparent",
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span style={{ fontSize: 15, color: textPrimary }}>
-                      {opt.id}. {opt.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                    {opt.id}
+                  </span>
+                  <span style={{ fontSize: 16, color: textPrimary }}>
+                    {opt.value}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
+          {/* bottom bar */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "16px 32px",
+              padding: "18px 28px",
               borderTop: `1px solid ${cardBorder}`,
             }}
           >
-            <span style={{ fontSize: 13, color: accentDark, fontWeight: 600 }}>
-              13 / 30
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                border: `1px solid ${cardBorder}`,
+                borderRadius: 10,
+                padding: "10px 18px",
+                fontSize: 14,
+                fontWeight: 600,
+                color: textPrimary,
+              }}
+            >
+              &larr; Oldingi
             </span>
-            <span style={{ fontSize: 13, color: textSecondary }}>
-              Avtomatik saqlangan
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: accent,
+                color: "#fff",
+                borderRadius: 10,
+                padding: "10px 18px",
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              Keyingi &rarr;
             </span>
           </div>
         </div>
