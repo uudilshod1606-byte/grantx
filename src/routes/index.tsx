@@ -3,6 +3,7 @@ import { AuthLoadingScreen, useAuth } from "@/lib/auth";
 import { Hero } from "@/components/hero/Hero";
 import HeroPracticeSection from "@/components/HeroPracticeSection";
 import PlatformFeaturesSection from "@/components/PlatformFeaturesSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
 export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
@@ -23,6 +24,7 @@ function Index() {
     <div className="relative min-h-screen w-full overflow-x-hidden bg-[#F3EEE3] text-[#241A12]">
       <Hero />
       <HeroPracticeSection />
+      <TestimonialsSection />
       <PlatformFeaturesSection />
     </div>
   );
