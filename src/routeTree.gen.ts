@@ -9,8 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TestlarRouteImport } from './routes/testlar'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as QollanmalarRouteImport } from './routes/qollanmalar'
 import { Route as MilliySertifikatRouteImport } from './routes/milliy-sertifikat'
+import { Route as MateriallarRouteImport } from './routes/materiallar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -22,14 +25,29 @@ import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MilliySertifikatSubjectIdRouteImport } from './routes/milliy-sertifikat.$subjectId'
 
+const TestlarRoute = TestlarRouteImport.update({
+  id: '/testlar',
+  path: '/testlar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QollanmalarRoute = QollanmalarRouteImport.update({
+  id: '/qollanmalar',
+  path: '/qollanmalar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MilliySertifikatRoute = MilliySertifikatRouteImport.update({
   id: '/milliy-sertifikat',
   path: '/milliy-sertifikat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MateriallarRoute = MateriallarRouteImport.update({
+  id: '/materiallar',
+  path: '/materiallar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -94,8 +112,11 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/materiallar': typeof MateriallarRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/qollanmalar': typeof QollanmalarRoute
   '/signup': typeof SignupRoute
+  '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRoutesByTo {
@@ -108,8 +129,11 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/materiallar': typeof MateriallarRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/qollanmalar': typeof QollanmalarRoute
   '/signup': typeof SignupRoute
+  '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRoutesById {
@@ -123,8 +147,11 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/materiallar': typeof MateriallarRoute
   '/milliy-sertifikat': typeof MilliySertifikatRouteWithChildren
+  '/qollanmalar': typeof QollanmalarRoute
   '/signup': typeof SignupRoute
+  '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
 }
 export interface FileRouteTypes {
@@ -139,8 +166,11 @@ export interface FileRouteTypes {
     | '/history'
     | '/leaderboard'
     | '/login'
+    | '/materiallar'
     | '/milliy-sertifikat'
+    | '/qollanmalar'
     | '/signup'
+    | '/testlar'
     | '/milliy-sertifikat/$subjectId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -153,8 +183,11 @@ export interface FileRouteTypes {
     | '/history'
     | '/leaderboard'
     | '/login'
+    | '/materiallar'
     | '/milliy-sertifikat'
+    | '/qollanmalar'
     | '/signup'
+    | '/testlar'
     | '/milliy-sertifikat/$subjectId'
   id:
     | '__root__'
@@ -167,8 +200,11 @@ export interface FileRouteTypes {
     | '/history'
     | '/leaderboard'
     | '/login'
+    | '/materiallar'
     | '/milliy-sertifikat'
+    | '/qollanmalar'
     | '/signup'
+    | '/testlar'
     | '/milliy-sertifikat/$subjectId'
   fileRoutesById: FileRoutesById
 }
@@ -182,12 +218,22 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
+  MateriallarRoute: typeof MateriallarRoute
   MilliySertifikatRoute: typeof MilliySertifikatRouteWithChildren
+  QollanmalarRoute: typeof QollanmalarRoute
   SignupRoute: typeof SignupRoute
+  TestlarRoute: typeof TestlarRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/testlar': {
+      id: '/testlar'
+      path: '/testlar'
+      fullPath: '/testlar'
+      preLoaderRoute: typeof TestlarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -195,11 +241,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/qollanmalar': {
+      id: '/qollanmalar'
+      path: '/qollanmalar'
+      fullPath: '/qollanmalar'
+      preLoaderRoute: typeof QollanmalarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/milliy-sertifikat': {
       id: '/milliy-sertifikat'
       path: '/milliy-sertifikat'
       fullPath: '/milliy-sertifikat'
       preLoaderRoute: typeof MilliySertifikatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/materiallar': {
+      id: '/materiallar'
+      path: '/materiallar'
+      fullPath: '/materiallar'
+      preLoaderRoute: typeof MateriallarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -296,8 +356,11 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
+  MateriallarRoute: MateriallarRoute,
   MilliySertifikatRoute: MilliySertifikatRouteWithChildren,
+  QollanmalarRoute: QollanmalarRoute,
   SignupRoute: SignupRoute,
+  TestlarRoute: TestlarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

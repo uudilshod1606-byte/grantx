@@ -23,6 +23,7 @@ import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ExamRunner } from "@/components/exam/ExamRunner";
 import { ProtectedRoute } from "@/lib/auth";
+import { AppShell } from "@/components/layout/AppShell";
 import {
   DTM_DURATION_MINUTES,
   DTM_MAX_SCORE,
@@ -97,6 +98,7 @@ function DtmContent() {
   };
 
   return (
+    <AppShell>
     <div className="relative min-h-screen overflow-hidden text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-32 -left-20 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
@@ -147,6 +149,7 @@ function DtmContent() {
         />
       )}
     </div>
+    </AppShell>
   );
 }
 

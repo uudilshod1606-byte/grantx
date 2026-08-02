@@ -5,7 +5,6 @@ import {
   BookOpen,
   Trophy,
   Target,
-  Flame,
   TrendingUp,
   TrendingDown,
   Clock,
@@ -22,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ProtectedRoute, useAuth, type AuthUser } from "@/lib/auth";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { AppShell } from "@/components/layout/AppShell";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -46,7 +46,6 @@ const stats = {
   averageScore: 0,
   bestScore: 0,
   weeklyActivity: 0,
-  streak: 0,
 };
 
 function Dashboard() {
@@ -62,6 +61,7 @@ function DashboardContent() {
   const displayUser = getDisplayUser(user);
 
   return (
+    <AppShell>
     <div className="relative min-h-screen overflow-hidden text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-32 -left-20 h-96 w-96 rounded-full bg-primary/30 blur-3xl animate-blob" />
@@ -74,12 +74,11 @@ function DashboardContent() {
       <main className="mx-auto max-w-6xl px-4 pt-8 pb-24">
         <ProfileCard user={displayUser} />
 
-        <section className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <section className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
           <StatCard icon={<BookOpen className="h-5 w-5" />} label="Ishlangan testlar" value={stats.totalTests} />
           <StatCard icon={<Target className="h-5 w-5" />} label="O'rtacha ball" value={`${stats.averageScore}%`} />
           <StatCard icon={<Trophy className="h-5 w-5" />} label="Eng yuqori ball" value={`${stats.bestScore}%`} />
           <StatCard icon={<BarChart3 className="h-5 w-5" />} label="Haftalik faollik" value={stats.weeklyActivity} />
-          <StatCard icon={<Flame className="h-5 w-5" />} label="Streak" value={`${stats.streak} kun`} />
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -97,6 +96,7 @@ function DashboardContent() {
         </section>
       </main>
     </div>
+    </AppShell>
   );
 }
 
@@ -129,16 +129,17 @@ function Navbar({ user, isAdmin, onSignOut }: { user: DashboardUser; isAdmin: bo
       <nav className="glass mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-3">
         <Link to="/dashboard"><Logo /></Link>
         <div className="hidden items-center gap-8 md:flex">
-          <Link to="/dashboard" className="text-sm text-foreground transition">Dashboard</Link>
           <Link to="/dtm" className="text-sm text-muted-foreground transition hover:text-foreground">DTM</Link>
           <Link to="/milliy-sertifikat" className="text-sm text-muted-foreground transition hover:text-foreground">Milliy Sertifikat</Link>
-          <Link to="/leaderboard" className="text-sm text-muted-foreground transition hover:text-foreground">Reyting</Link>
-          <Link to="/achievements" className="text-sm text-muted-foreground transition hover:text-foreground">Yutuqlar</Link>
-          <Link to="/history" className="text-sm text-muted-foreground transition hover:text-foreground">Tarix</Link>
           {isAdmin && <Link to="/admin" className="text-sm text-primary transition hover:text-foreground">Admin Panel</Link>}
         </div>
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
+          {isAdmin && (
+            <Link to="/admin" aria-label="Admin Panel" className="rounded-lg p-2 text-primary hover:bg-white/10">
+              <ShieldCheck className="h-5 w-5" />
+            </Link>
+          )}
           <div className="flex h-9 w-9 items-center justify-center rounded-full gradient-bg text-sm font-semibold text-primary-foreground">
             {user.avatarInitials}
           </div>
