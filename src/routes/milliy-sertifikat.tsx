@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Logo } from "@/components/brand/Logo";
 import {
-  GraduationCap,
   Menu,
   Trophy,
   ArrowRight,
@@ -26,19 +26,6 @@ export const Route = createFileRoute("/milliy-sertifikat")({
     ],
   }),
 });
-
-function Logo() {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-bg glow">
-        <GraduationCap className="h-5 w-5 text-primary-foreground" />
-      </div>
-      <span className="text-xl font-bold tracking-tight">
-        Grant<span className="gradient-text">X</span>
-      </span>
-    </div>
-  );
-}
 
 function Navbar() {
   return (
