@@ -13,7 +13,7 @@
  * The :root block defines the actual color values using oklch.
  * All colors MUST use oklch format.
  *
- * GrantX is light-mode only. There is no .dark block — the app always
+ * INTIL is light-mode only. There is no .dark block — the app always
  * forces light mode (see ThemeProvider), so a single :root palette is the
  * one source of truth. The `@custom-variant dark` line is kept as a no-cost
  * safety net in case any `dark:` utility exists somewhere, but nothing ever

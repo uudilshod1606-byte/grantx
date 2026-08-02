@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { Navigate } from "@tanstack/react-router";
 
 /**
- * Lightweight auth context for GrantX.
+ * Lightweight auth context for INTIL.
  *
  * Persistence is currently localStorage-backed so we can ship the full UX now.
  * The shape matches what we'll need when wiring Supabase later — just swap the
@@ -31,19 +31,19 @@ type AuthContextValue = {
 
 const STORAGE_USER = "grantx.auth.user";
 const STORAGE_USERS = "grantx.auth.users";
-export const GRANTX_ADMIN_EMAIL = "dilshoduktamov34@gmail.com";
+export const INTIL_ADMIN_EMAIL = "dilshoduktamov34@gmail.com";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 type StoredUser = AuthUser & { password: string };
 
 function adminRoleFor(email: string): AuthUser["role"] {
-  return email.trim().toLowerCase() === GRANTX_ADMIN_EMAIL ? "admin" : "user";
+  return email.trim().toLowerCase() === INTIL_ADMIN_EMAIL ? "admin" : "user";
 }
 
 function normalizeUser<T extends Partial<AuthUser> & { email?: string }>(raw: T): T & AuthUser {
   const email = String(raw.email ?? "").trim().toLowerCase();
-  const fullName = String(raw.fullName ?? email.split("@")[0] ?? "GrantX user").trim();
+  const fullName = String(raw.fullName ?? email.split("@")[0] ?? "INTIL user").trim();
   return {
     ...raw,
     id: String(raw.id ?? (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}`)),

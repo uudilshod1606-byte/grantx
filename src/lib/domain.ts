@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 /**
- * GrantX domain model.
+ * INTIL domain model.
  *
  * Types + catalogs. Questions are stored in Supabase (Postgres via the REST
  * API) so every visitor sees the same question bank. Exams, attempts and the
