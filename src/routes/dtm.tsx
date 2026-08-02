@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Logo } from "@/components/brand/Logo";
 import {
-  GraduationCap,
   ArrowLeft,
   ArrowRight,
   Atom,
@@ -154,13 +154,8 @@ function TopBar() {
   return (
     <header className="sticky top-0 z-50 px-4 pt-4">
       <nav className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-5 py-3">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-bg glow">
-            <GraduationCap className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold tracking-tight">
-            Grant<span className="gradient-text">X</span>
-          </span>
+        <Link to="/dashboard">
+          <Logo />
         </Link>
         <Link to="/dashboard">
           <Button variant="ghost" className="text-foreground hover:bg-white/10">

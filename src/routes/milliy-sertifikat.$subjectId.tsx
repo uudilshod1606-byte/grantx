@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Logo } from "@/components/brand/Logo";
 import {
-  GraduationCap,
   ArrowLeft,
   Languages,
   Calculator,
@@ -71,13 +71,8 @@ function MilliyExamPage() {
 
       <header className="sticky top-0 z-50 px-4 pt-4">
         <nav className="glass mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-5 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-bg glow">
-              <GraduationCap className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">
-              Grant<span className="gradient-text">X</span>
-            </span>
+          <Link to="/">
+            <Logo />
           </Link>
           <Link to="/milliy-sertifikat">
             <Button variant="ghost" className="text-foreground hover:bg-white/10">

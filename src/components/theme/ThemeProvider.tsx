@@ -19,7 +19,7 @@ function applyLight() {
 }
 
 /**
- * GrantX currently ships light mode only. Dark mode has been intentionally
+ * INTIL currently ships light mode only. Dark mode has been intentionally
  * disabled — the provider always forces "light" and ignores any previously
  * saved preference, so every visitor sees the same look regardless of what
  * they may have toggled before this change shipped.

@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { GraduationCap, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
+import { Logo } from "@/components/brand/Logo";
 
 export function AuthShell({
   title,
@@ -29,12 +30,7 @@ export function AuthShell({
 
       <div className="w-full max-w-md">
         <Link to={logoTarget} className="mb-8 flex items-center justify-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-bg glow">
-            <GraduationCap className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight">
-            Grant<span className="gradient-text">X</span>
-          </span>
+          <Logo iconClassName="h-10 w-10" textClassName="text-2xl" />
         </Link>
 
         <div className="glass animate-fade-up rounded-3xl p-6 md:p-8">
