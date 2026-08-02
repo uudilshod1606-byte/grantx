@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Logo } from "@/components/brand/Logo";
 import {
-  GraduationCap,
   ArrowLeft,
   ArrowRight,
   Atom,
