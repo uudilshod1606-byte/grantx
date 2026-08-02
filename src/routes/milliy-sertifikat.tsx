@@ -16,6 +16,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AppShell } from "@/components/layout/AppShell";
 
 export const Route = createFileRoute("/milliy-sertifikat")({
   component: MilliySertifikat,
@@ -301,6 +302,7 @@ function Footer() {
 
 function MilliySertifikat() {
   return (
+    <AppShell>
     <div className="relative min-h-screen overflow-hidden text-foreground">
       {/* Decorative blobs */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -315,5 +317,6 @@ function MilliySertifikat() {
       <InfoSection />
       <Footer />
     </div>
+    </AppShell>
   );
 }
