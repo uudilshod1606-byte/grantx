@@ -5,7 +5,6 @@ import {
   BookOpen,
   Trophy,
   Target,
-  Flame,
   TrendingUp,
   TrendingDown,
   Clock,
