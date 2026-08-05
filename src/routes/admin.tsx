@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
 import { RichEditor } from "@/components/math/RichEditor";
 import { MathContent } from "@/components/math/MathContent";
+import { BulkImportDialog } from "@/components/admin/BulkImportDialog";
 import {
   ADMIN_SUBJECTS,
   SUBJECTS,
@@ -287,6 +288,7 @@ function QuestionsTab() {
           </DialogTrigger>
           <QuestionFormDialog onSaved={() => { refresh(); setOpen(false); }} />
         </Dialog>
+        <BulkImportDialog onImported={refresh} />
       </div>
 
       {loading ? (

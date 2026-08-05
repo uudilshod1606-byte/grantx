@@ -10,6 +10,7 @@ import {
   Sigma,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { renderFormulaEmbed } from "./formula";
 
 type Props = {
   value: string;
@@ -137,19 +138,7 @@ export function RichEditor({
       setFormulaOpen(false);
       return;
     }
-    let markup = latex;
-    try {
-      const ml: any = await import("mathlive");
-      if (typeof ml.convertLatexToMarkup === "function") {
-        markup = ml.convertLatexToMarkup(latex);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
-    const html = `<span class="formula-embed" data-latex="${escapeAttr(
-      latex,
-    )}" contenteditable="false">${markup}</span>&nbsp;`;
+    const html = (await renderFormulaEmbed(latex)) + "&nbsp;";
 
     // Focus the editor and insert at the saved caret/selection position.
     // Using the saved Range directly is more reliable than execCommand,
@@ -295,12 +284,4 @@ function ToolbarBtn({
       {children}
     </button>
   );
-}
-
-function escapeAttr(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
 }
