@@ -406,22 +406,35 @@ function subjectNameFor(kind: ExamKind, subjectId: string, block?: DtmBlock | nu
   return pool.find((s) => s.id === subjectId)?.name ?? subjectId;
 }
 
-function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
-  const [kind, setKind] = useState<ExamKind>("dtm");
-  const [block, setBlock] = useState<DtmBlock>("mandatory");
+function QuestionFormDialog({
+  onSaved,
+  question,
+}: {
+  onSaved: () => void;
+  question?: Question;
+}) {
+  const isEdit = !!question;
+  const [kind, setKind] = useState<ExamKind>(question?.kind ?? "dtm");
+  const [block, setBlock] = useState<DtmBlock>(question?.block ?? "mandatory");
   const subjectPool =
     kind === "milliy"
       ? ADMIN_SUBJECTS.milliy
       : block === "mandatory"
       ? ADMIN_SUBJECTS.dtmMandatory
       : ADMIN_SUBJECTS.dtmMain;
-  const [subjectId, setSubjectId] = useState(subjectPool[0].id);
-  const [text, setText] = useState("");
-  const [opts, setOpts] = useState<string[]>(["", "", "", ""]);
-  const [correctIndex, setCorrectIndex] = useState<0 | 1 | 2 | 3>(0);
-  const [points, setPoints] = useState<number>(defaultPointsFor("dtm", "mandatory"));
-  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
-  const [explanation, setExplanation] = useState("");
+  const [subjectId, setSubjectId] = useState(question?.subjectId ?? subjectPool[0].id);
+  const [text, setText] = useState(question?.text ?? "");
+  const [opts, setOpts] = useState<string[]>(
+    question ? [...question.options] : ["", "", "", ""],
+  );
+  const [correctIndex, setCorrectIndex] = useState<0 | 1 | 2 | 3>(
+    question?.correctIndex ?? 0,
+  );
+  const [points, setPoints] = useState<number>(
+    question?.points ?? defaultPointsFor("dtm", "mandatory"),
+  );
+  const [imageUrl, setImageUrl] = useState<string | undefined>(question?.imageUrl);
+  const [explanation, setExplanation] = useState(question?.explanation ?? "");
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -463,20 +476,23 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
     if (opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
     if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
     setSaving(true);
-    questionsRepo
-      .add({
-        text: text.trim(),
-        subjectId,
-        kind,
-        block: kind === "dtm" ? block : null,
-        points,
-        imageUrl,
-        options: opts as [string, string, string, string],
-        correctIndex,
-        explanation: explanation.trim() || undefined,
-      })
+    const payload = {
+      text: text.trim(),
+      subjectId,
+      kind,
+      block: kind === "dtm" ? block : null,
+      points,
+      imageUrl,
+      options: opts as [string, string, string, string],
+      correctIndex,
+      explanation: explanation.trim() || undefined,
+    };
+    (isEdit
+      ? questionsRepo.update(question!.id, payload)
+      : questionsRepo.add(payload)
+    )
       .then(() => {
-        toast.success("Savol qo'shildi");
+        toast.success(isEdit ? "Savol yangilandi" : "Savol qo'shildi");
         onSaved();
       })
       .catch((err) => {
@@ -521,7 +537,7 @@ function QuestionFormDialog({ onSaved }: { onSaved: () => void }) {
     >
       <div className="flex items-center justify-between">
         <DialogHeader className="flex-1">
-          <DialogTitle>Yangi savol qo'shish</DialogTitle>
+          <DialogTitle>{isEdit ? "Savolni tahrirlash" : "Yangi savol qo'shish"}</DialogTitle>
         </DialogHeader>
         <Button onClick={submit} disabled={saving} className="gradient-bg text-primary-foreground">
           {saving ? "Saqlanmoqda..." : "Saqlash"}
