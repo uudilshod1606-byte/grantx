@@ -8,6 +8,7 @@ import {
   Activity,
   Plus,
   Trash2,
+  Pencil,
   Search,
   ShieldCheck,
   Inbox,
@@ -225,6 +226,7 @@ function QuestionsTab() {
   const [kindFilter, setKindFilter] = useState<"all" | ExamKind>("all");
   const [blockFilter, setBlockFilter] = useState<"all" | DtmBlock>("all");
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Question | null>(null);
 
   const refresh = () => {
     setLoading(true);
@@ -291,6 +293,16 @@ function QuestionsTab() {
         <BulkImportDialog onImported={refresh} />
       </div>
 
+      <Dialog open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
+        {editing && (
+          <QuestionFormDialog
+            key={editing.id}
+            question={editing}
+            onSaved={() => { refresh(); setEditing(null); }}
+          />
+        )}
+      </Dialog>
+
       {loading ? (
         <div className="glass rounded-2xl p-10 text-center text-sm text-muted-foreground">
           Yuklanmoqda...
@@ -349,6 +361,15 @@ function QuestionsTab() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        onClick={() => setEditing(q)}
+                        aria-label="Tahrirlash"
+                      >
+                        <Pencil className="h-4 w-4 text-accent" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label="O'chirish"
                         onClick={() => {
                           questionsRepo
                             .remove(q.id)
