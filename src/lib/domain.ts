@@ -271,9 +271,11 @@ function rowToQuestion(row: Record<string, unknown>): Question {
     difficulty: (row.difficulty as Difficulty | undefined) ?? undefined,
     points: row.points != null ? Number(row.points) : undefined,
     imageUrl: (row.image_url as string | undefined) ?? undefined,
-    text: String(row.text),
-    options: row.options as [string, string, string, string],
-    correctIndex: Number(row.correct_index) as 0 | 1 | 2 | 3,
+   text: String(row.text),
+    questionType: (row.question_type as "yopiq" | "moslashtirish" | "ochiq" | undefined) ?? "yopiq",
+    options: (row.options as string[]) ?? [],
+    correctIndex: row.correct_index != null ? Number(row.correct_index) : undefined,
+    answerText: (row.answer_text as string | undefined) ?? undefined,
     explanation: (row.explanation as string | undefined) ?? undefined,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -292,6 +294,8 @@ function questionToRow(q: Partial<Question>): Record<string, unknown> {
   if (q.text !== undefined) row.text = q.text;
   if (q.options !== undefined) row.options = q.options;
   if (q.correctIndex !== undefined) row.correct_index = q.correctIndex;
+  if (q.questionType !== undefined) row.question_type = q.questionType;
+  if (q.answerText !== undefined) row.answer_text = q.answerText;
   if (q.explanation !== undefined) row.explanation = q.explanation;
   return row;
 }
