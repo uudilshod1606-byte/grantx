@@ -98,9 +98,9 @@ const MilliySertifikatIndexRoute = MilliySertifikatIndexRouteImport.update({
 } as any)
 const MilliySertifikatSubjectIdRoute =
   MilliySertifikatSubjectIdRouteImport.update({
-    id: '/$subjectId',
-    path: '/$subjectId',
-    getParentRoute: () => MilliySertifikatRoute,
+    id: '/milliy-sertifikat/$subjectId',
+    path: '/milliy-sertifikat/$subjectId',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ImtihonSubjectIdExamIdRoute = ImtihonSubjectIdExamIdRouteImport.update({
   id: '/imtihon/$subjectId/$examId',
@@ -234,6 +234,7 @@ export interface RootRouteChildren {
   QollanmalarRoute: typeof QollanmalarRoute
   SignupRoute: typeof SignupRoute
   TestlarRoute: typeof TestlarRoute
+  MilliySertifikatSubjectIdRoute: typeof MilliySertifikatSubjectIdRoute
   MilliySertifikatIndexRoute: typeof MilliySertifikatIndexRoute
   ImtihonSubjectIdExamIdRoute: typeof ImtihonSubjectIdExamIdRoute
 }
@@ -340,10 +341,10 @@ declare module '@tanstack/react-router' {
     }
     '/milliy-sertifikat/$subjectId': {
       id: '/milliy-sertifikat/$subjectId'
-      path: '/$subjectId'
+      path: '/milliy-sertifikat/$subjectId'
       fullPath: '/milliy-sertifikat/$subjectId'
       preLoaderRoute: typeof MilliySertifikatSubjectIdRouteImport
-      parentRoute: typeof MilliySertifikatRoute
+      parentRoute: typeof rootRouteImport
     }
     '/imtihon/$subjectId/$examId': {
       id: '/imtihon/$subjectId/$examId'
@@ -369,19 +370,10 @@ const rootRouteChildren: RootRouteChildren = {
   QollanmalarRoute: QollanmalarRoute,
   SignupRoute: SignupRoute,
   TestlarRoute: TestlarRoute,
+  MilliySertifikatSubjectIdRoute: MilliySertifikatSubjectIdRoute,
   MilliySertifikatIndexRoute: MilliySertifikatIndexRoute,
   ImtihonSubjectIdExamIdRoute: ImtihonSubjectIdExamIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
