@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AppShell } from "@/components/layout/AppShell";
 
-export const Route = createFileRoute("/milliy-sertifikat")({
+export const Route = createFileRoute("/milliy-sertifikat/")({
   component: MilliySertifikat,
   head: () => ({
     meta: [
