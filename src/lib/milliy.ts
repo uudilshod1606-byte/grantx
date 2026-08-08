@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 /** Questions bundled into one Milliy Sertifikat exam variant. */
-export const QUESTIONS_PER_EXAM = 30;
+export const QUESTIONS_PER_EXAM = 45;
 
 export const MILLIY_SUBJECTS: Record<string, { name: string; icon: LucideIcon }> = {
   "cefr-english": { name: "CEFR English", icon: Languages },
