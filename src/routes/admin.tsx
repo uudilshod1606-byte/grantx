@@ -427,9 +427,13 @@ function QuestionFormDialog({
   const [opts, setOpts] = useState<string[]>(
     question ? [...question.options] : ["", "", "", ""],
   );
-  const [correctIndex, setCorrectIndex] = useState<0 | 1 | 2 | 3>(
-    question?.correctIndex ?? 0,
+  const [questionType, setQuestionType] = useState<"yopiq" | "moslashtirish" | "ochiq">(
+    question?.questionType ?? "yopiq",
   );
+  const [correctIndex, setCorrectIndex] = useState<0 | 1 | 2 | 3>(
+    (question?.correctIndex as 0 | 1 | 2 | 3) ?? 0,
+  );
+  const [answerText, setAnswerText] = useState(question?.answerText ?? "");
   const [points, setPoints] = useState<number>(
     question?.points ?? defaultPointsFor("dtm", "mandatory"),
   );
@@ -473,7 +477,8 @@ function QuestionFormDialog({
 
   const submit = () => {
     if (!text.trim()) return toast.error("Savol matnini kiriting");
-    if (opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
+    if (questionType === "yopiq" && opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
+    if (questionType !== "yopiq" && !answerText.trim()) return toast.error("Javobni kiriting");
     if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
     setSaving(true);
     const payload = {
@@ -483,8 +488,10 @@ function QuestionFormDialog({
       block: kind === "dtm" ? block : null,
       points,
       imageUrl,
-      options: opts as [string, string, string, string],
-      correctIndex,
+     questionType,
+      options: questionType === "yopiq" ? opts : [],
+      correctIndex: questionType === "yopiq" ? correctIndex : undefined,
+      answerText: questionType !== "yopiq" ? answerText.trim() : undefined,
       explanation: explanation.trim() || undefined,
     };
     (isEdit
