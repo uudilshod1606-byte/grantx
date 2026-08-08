@@ -85,9 +85,11 @@ export type Question = {
   /** Optional image (data URL or remote URL). */
   imageUrl?: string;
   text: string;
-  options: [string, string, string, string];
-  correctIndex: 0 | 1 | 2 | 3;
+  questionType?: "yopiq" | "moslashtirish" | "ochiq";
+  options: string[];
+  correctIndex?: number;
   explanation?: string;
+  answerText?: string;
   createdAt: string;
   updatedAt: string;
 };
