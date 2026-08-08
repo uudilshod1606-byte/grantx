@@ -24,6 +24,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MilliySertifikatSubjectIdRouteImport } from './routes/milliy-sertifikat.$subjectId'
+import { Route as ImtihonSubjectIdExamIdRouteImport } from './routes/imtihon.$subjectId.$examId'
 
 const TestlarRoute = TestlarRouteImport.update({
   id: '/testlar',
@@ -101,6 +102,11 @@ const MilliySertifikatSubjectIdRoute =
     path: '/$subjectId',
     getParentRoute: () => MilliySertifikatRoute,
   } as any)
+const ImtihonSubjectIdExamIdRoute = ImtihonSubjectIdExamIdRouteImport.update({
+  id: '/imtihon/$subjectId/$examId',
+  path: '/imtihon/$subjectId/$examId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
+  '/imtihon/$subjectId/$examId': typeof ImtihonSubjectIdExamIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
+  '/imtihon/$subjectId/$examId': typeof ImtihonSubjectIdExamIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
+  '/imtihon/$subjectId/$examId': typeof ImtihonSubjectIdExamIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/testlar'
     | '/milliy-sertifikat/$subjectId'
+    | '/imtihon/$subjectId/$examId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/testlar'
     | '/milliy-sertifikat/$subjectId'
+    | '/imtihon/$subjectId/$examId'
   id:
     | '__root__'
     | '/'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/testlar'
     | '/milliy-sertifikat/$subjectId'
+    | '/imtihon/$subjectId/$examId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,6 +235,7 @@ export interface RootRouteChildren {
   QollanmalarRoute: typeof QollanmalarRoute
   SignupRoute: typeof SignupRoute
   TestlarRoute: typeof TestlarRoute
+  ImtihonSubjectIdExamIdRoute: typeof ImtihonSubjectIdExamIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MilliySertifikatSubjectIdRouteImport
       parentRoute: typeof MilliySertifikatRoute
     }
+    '/imtihon/$subjectId/$examId': {
+      id: '/imtihon/$subjectId/$examId'
+      path: '/imtihon/$subjectId/$examId'
+      fullPath: '/imtihon/$subjectId/$examId'
+      preLoaderRoute: typeof ImtihonSubjectIdExamIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -361,17 +381,8 @@ const rootRouteChildren: RootRouteChildren = {
   QollanmalarRoute: QollanmalarRoute,
   SignupRoute: SignupRoute,
   TestlarRoute: TestlarRoute,
+  ImtihonSubjectIdExamIdRoute: ImtihonSubjectIdExamIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
