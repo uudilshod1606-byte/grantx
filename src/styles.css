@@ -240,3 +240,30 @@
 .rich-content ol { list-style: decimal; padding-left: 1.25rem; }
 .rich-editor ul { list-style: disc; padding-left: 1.25rem; }
 .rich-editor ol { list-style: decimal; padding-left: 1.25rem; }
+
+/* ------------------------------------------------------------------ */
+/*  Legacy utility compatibility                                       */
+/*  Older screens (auth, admin, DTM) still reference these class names. */
+/*  They are remapped onto the new Obsidian & Champagne system so no    */
+/*  page falls back to unstyled markup.                                 */
+/* ------------------------------------------------------------------ */
+@utility glass {
+  background: color-mix(in oklab, var(--card) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-ambient);
+}
+@utility gradient-bg {
+  background: var(--obsidian);
+  color: var(--ivory);
+}
+@utility gradient-text {
+  color: var(--gold-muted);
+}
+@utility glow {
+  box-shadow: var(--shadow-lift);
+}
+.animate-fade-up { animation: intil-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-float { animation: intil-fade 300ms ease both; }
+.animate-blob { display: none; }
