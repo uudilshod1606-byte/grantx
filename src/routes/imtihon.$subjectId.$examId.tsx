@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { questionsRepo, type Question } from "@/lib/domain";
+import { attemptsRepo, questionsRepo, type Question } from "@/lib/domain";
 import { useAuth } from "@/lib/auth";
 import { BluebookExam } from "@/components/bluebook/BluebookExam";
 import { FullscreenGate } from "@/components/bluebook/FullscreenGate";
 import { MILLIY_SUBJECTS, QUESTIONS_PER_EXAM } from "@/lib/milliy";
+
+const DURATION_MINUTES = 90;
 
 export const Route = createFileRoute("/imtihon/$subjectId/$examId")({
   component: BluebookExamPage,
@@ -64,26 +66,38 @@ function BluebookExamPage() {
 
   if (!subject) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-black">
-        <div className="text-center">
-          <h1 className="text-xl font-bold">Fan topilmadi</h1>
-          <button onClick={exit} className="mt-6 rounded bg-black px-5 py-2.5 text-sm text-white">
-            Orqaga
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF7F1] px-6 text-[#171717]">
+        <div className="max-w-sm text-center">
+          <h1 className="text-xl font-semibold">Fan topilmadi</h1>
+          <button
+            onClick={() => navigate({ to: "/milliy-sertifikat" })}
+            className="mt-6 rounded-xl bg-[#0B0B0C] px-5 py-2.5 text-sm font-medium text-[#F6F1E8]"
+          >
+            Fanlar ro'yxati
           </button>
         </div>
       </div>
     );
   }
 
-  if (!started) {
-    return <FullscreenGate bigNumber={variant} onContinue={() => setStarted(true)} />;
-  }
-
   if (!all) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-sm text-gray-600">
-        Savollar yuklanmoqda...
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF7F1] text-sm text-[#6F6A62]">
+        Imtihon tayyorlanmoqda...
       </div>
+    );
+  }
+
+  if (!started) {
+    return (
+      <FullscreenGate
+        subjectName={subject.name}
+        examTitle={`Imtihon ${variant}`}
+        questionCount={questions.length}
+        durationMinutes={DURATION_MINUTES}
+        onContinue={() => setStarted(true)}
+        onExit={exit}
+      />
     );
   }
 
@@ -93,10 +107,28 @@ function BluebookExamPage() {
       examTitle={`Imtihon ${variant} · ${subject.name}`}
       moduleLabel={`Bo'lim 1, Modul ${variant}`}
       questions={questions}
-      durationMinutes={90}
+      durationMinutes={DURATION_MINUTES}
       userName={user?.fullName ?? "Talaba"}
       showReference={subjectId === "matematika"}
       onExit={exit}
+      onComplete={(result) => {
+        if (!user) return;
+        // Persist the real attempt so dashboard analytics stay factual.
+        attemptsRepo.add({
+          userId: user.id,
+          examTitle: `${subject.name} · Imtihon ${variant}`,
+          kind: "milliy",
+          subjectIds: [subjectId],
+          total: result.total,
+          correct: result.correct,
+          incorrect: result.incorrect,
+          unanswered: result.unanswered,
+          percent: result.percent,
+          durationSeconds: result.durationSeconds,
+          startedAt: result.startedAt,
+          finishedAt: result.finishedAt,
+        });
+      }}
     />
   );
 }
