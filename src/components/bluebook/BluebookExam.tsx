@@ -121,6 +121,24 @@ export function BluebookExam({
     return correct;
   }, [answers, questions]);
 
+  // Report the real result exactly once.
+  useEffect(() => {
+    if (!submitted || reportedRef.current || !total) return;
+    reportedRef.current = true;
+    const answered = questions.filter((q) => answers[q.id] !== undefined).length;
+    const finishedAt = new Date().toISOString();
+    onComplete?.({
+      total,
+      correct: score,
+      incorrect: answered - score,
+      unanswered: total - answered,
+      percent: Math.round((score / total) * 100),
+      durationSeconds: durationMinutes * 60 - secondsLeft,
+      startedAt: startedAtRef.current,
+      finishedAt,
+    });
+  }, [submitted, total, questions, answers, score, durationMinutes, secondsLeft, onComplete]);
+
   const exitExam = async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
@@ -148,17 +166,48 @@ export function BluebookExam({
 
   if (submitted) {
     const percent = Math.round((score / total) * 100);
+    const answered = questions.filter((q) => answers[q.id] !== undefined).length;
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white px-6 text-black">
-        <div className="w-full max-w-md text-center">
-          <p className="text-sm uppercase tracking-wide text-gray-500">{examTitle}</p>
-          <div className="mt-4 text-6xl font-bold tabular-nums">{percent}%</div>
-          <p className="mt-3 text-sm text-gray-600">
-            {score} / {total} savolga to'g'ri javob berdingiz
+      <div className="min-h-screen bg-[#FAF7F1] px-6 py-14 text-[#171717]">
+        <div className="mx-auto w-full max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#9F7830]">
+            {examTitle}
           </p>
+          <h1 className="mt-5 text-[32px] font-semibold leading-tight sm:text-[40px]">
+            Imtihon yakunlandi.
+          </h1>
+          <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-[#6F6A62]">
+            Quyidagi ko'rsatkich — test natijasi. Rasmiy sertifikat balli Rash modeli asosida
+            alohida hisoblanadi.
+          </p>
+
+          <div className="mt-12 flex items-end gap-4 border-b border-[rgba(30,25,18,0.10)] pb-8">
+            <span className="text-[72px] font-semibold leading-none tabular-nums">{percent}</span>
+            <span className="pb-2 text-2xl text-[#6F6A62]">%</span>
+            <span className="pb-3 pl-2 text-sm text-[#6F6A62]">
+              {score} / {total} to'g'ri javob
+            </span>
+          </div>
+
+          <h2 className="mt-10 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6F6A62]">
+            Natijangiz tahlili
+          </h2>
+          <dl className="mt-6 grid grid-cols-3 gap-x-8 gap-y-6">
+            {([
+              ["To'g'ri", score],
+              ["Noto'g'ri", answered - score],
+              ["Javobsiz", total - answered],
+            ] as [string, number][]).map(([k, v]) => (
+              <div key={k}>
+                <dt className="text-[11px] uppercase tracking-[0.1em] text-[#6F6A62]">{k}</dt>
+                <dd className="mt-2 text-[28px] font-semibold tabular-nums">{v}</dd>
+              </div>
+            ))}
+          </dl>
+
           <button
             onClick={exitExam}
-            className="mt-8 w-full rounded-lg bg-black px-6 py-3 text-base font-semibold text-white hover:bg-gray-800"
+            className="mt-12 inline-flex h-12 items-center rounded-xl bg-[#0B0B0C] px-6 text-[15px] font-medium text-[#F6F1E8] transition-colors hover:bg-[#151516]"
           >
             Yakunlash
           </button>
