@@ -31,6 +31,17 @@ export type BluebookExamProps = {
   /** Reference (formula) panel is only available for Milliy Matematika. */
   showReference?: boolean;
   onExit: () => void;
+  /** Fired once, with the real computed result, when the exam is submitted. */
+  onComplete?: (result: {
+    total: number;
+    correct: number;
+    incorrect: number;
+    unanswered: number;
+    percent: number;
+    durationSeconds: number;
+    startedAt: string;
+    finishedAt: string;
+  }) => void;
 };
 
 /**
@@ -47,6 +58,7 @@ export function BluebookExam({
   userName,
   showReference = false,
   onExit,
+  onComplete,
 }: BluebookExamProps) {
   const total = questions.length;
   const [index, setIndex] = useState(0);
@@ -61,6 +73,8 @@ export function BluebookExam({
   const [moreOpen, setMoreOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const startedAtRef = useRef(new Date().toISOString());
+  const reportedRef = useRef(false);
 
   const q = questions[index];
 
