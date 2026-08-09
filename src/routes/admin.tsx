@@ -599,6 +599,18 @@ function QuestionFormDialog({
         </div>
 
         <div>
+          <label className="text-xs text-muted-foreground">Savol turi</label>
+          <Select value={questionType} onValueChange={(v) => setQuestionType(v as typeof questionType)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="yopiq">Yopiq (A/B/C/D variantli)</SelectItem>
+              <SelectItem value="moslashtirish">Moslashtirish (umumiy javob banki)</SelectItem>
+              <SelectItem value="ochiq">Ochiq (yozma javob)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
           <label className="text-xs text-muted-foreground">Savol matni</label>
           <RichEditor
             value={text}
@@ -654,27 +666,42 @@ function QuestionFormDialog({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs text-muted-foreground">Variantlar (to'g'risini belgilang)</label>
-          {(["A", "B", "C", "D"] as const).map((l, i) => (
-            <div key={l} className="flex items-start gap-2">
-              <button
-                type="button"
-                onClick={() => setCorrectIndex(i as 0 | 1 | 2 | 3)}
-                className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-muted"}`}
-              >{l}</button>
-              <div className="flex-1">
-                <RichEditor
-                  value={opts[i]}
-                  onChange={(v) => { const n = [...opts]; n[i] = v; setOpts(n); }}
-                  placeholder={`Variant ${l}`}
-                  minHeight={56}
-                  ariaLabel={`Variant ${l}`}
-                />
+       {questionType === "yopiq" ? (
+          <div className="space-y-2">
+            <label className="text-xs text-muted-foreground">Variantlar (to'g'risini belgilang)</label>
+            {(["A", "B", "C", "D"] as const).map((l, i) => (
+              <div key={l} className="flex items-start gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCorrectIndex(i as 0 | 1 | 2 | 3)}
+                  className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-muted"}`}
+                >{l}</button>
+                <div className="flex-1">
+                  <RichEditor
+                    value={opts[i]}
+                    onChange={(v) => { const n = [...opts]; n[i] = v; setOpts(n); }}
+                    placeholder={`Variant ${l}`}
+                    minHeight={56}
+                    ariaLabel={`Variant ${l}`}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div>
+            <label className="text-xs text-muted-foreground">
+              {questionType === "moslashtirish" ? "Javob (masalan: A-F dan tanlangan javob)" : "Javob (masalan: a) 1  b) 5/4)"}
+            </label>
+            <RichEditor
+              value={answerText}
+              onChange={setAnswerText}
+              placeholder="Javobni kiriting…"
+              minHeight={80}
+              ariaLabel="Javob"
+            />
+          </div>
+        )}
         <div>
           <label className="text-xs text-muted-foreground">Izoh (ixtiyoriy)</label>
           <RichEditor
