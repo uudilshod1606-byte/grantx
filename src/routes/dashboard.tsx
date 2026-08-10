@@ -1,22 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, ArrowUpRight, Compass } from "lucide-react";
-import { ProtectedRoute, useAuth } from "@/lib/auth";
-import { AppShell } from "@/components/layout/AppShell";
-import { BrandVisual } from "@/components/intil/BrandVisual";
 import {
-  ActivityItem,
-  ButtonLink,
-  EmptyState,
-  Eyebrow,
-  InfoTip,
-  MetricDisplay,
-  Panel,
-  ProgressIndicator,
-  SectionHeader,
-  Skeleton,
-  StatusBadge,
-} from "@/components/intil/ui";
+  ArrowRight,
+  BookOpen,
+  Calendar,
+  Check,
+  LineChart,
+  Sparkles,
+} from "lucide-react";
+import { ProtectedRoute, useAuth } from "@/lib/auth";
+import { DashboardShell } from "@/components/layout/DashboardShell";
 import { attemptsRepo, computeStats, type ExamAttempt } from "@/lib/domain";
 import { MILLIY_SUBJECTS } from "@/lib/milliy";
 
@@ -49,11 +42,6 @@ function Dashboard() {
   );
 }
 
-function firstName(full?: string | null) {
-  const n = (full ?? "").trim().split(" ").filter(Boolean);
-  return n[0] ?? "talaba";
-}
-
 function fmtDate(iso: string) {
   try {
     return new Date(iso).toLocaleDateString("uz-UZ", {
@@ -66,246 +54,204 @@ function fmtDate(iso: string) {
   }
 }
 
+/** Consecutive active days derived from real attempt timestamps. */
+function computeStreak(attempts: ExamAttempt[]) {
+  if (!attempts.length) return 0;
+  const dayKey = (d: Date) => d.toISOString().slice(0, 10);
+  const days = new Set(attempts.map((a) => dayKey(new Date(a.finishedAt))));
+  const today = new Date();
+  let cursor = new Date(today);
+  if (!days.has(dayKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+    if (!days.has(dayKey(cursor))) return 0;
+  }
+  let streak = 0;
+  while (days.has(dayKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-[20px] border border-edge bg-white ${className}`}>{children}</div>
+  );
+}
+
+function IconPlate({ icon: Icon }: { icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }) {
+  return (
+    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-deep">
+      <Icon className="h-[18px] w-[18px] text-brass" strokeWidth={1.6} />
+    </span>
+  );
+}
+
 function DashboardContent() {
   const { user } = useAuth();
   const [attempts, setAttempts] = useState<ExamAttempt[] | null>(null);
 
   useEffect(() => {
-    // Attempts are stored locally per user until the backend takes over.
     setAttempts(attemptsRepo.list(user?.id));
   }, [user?.id]);
 
-  const stats = useMemo(() => (attempts ? computeStats(attempts) : null), [attempts]);
-  const loading = attempts === null;
-  const hasData = !!attempts?.length;
-  const last = attempts?.[0];
+  const list = attempts ?? [];
+  const stats = useMemo(() => (attempts ? computeStats(list) : null), [attempts]);
+  const hasData = list.length > 0;
+  const last = list[0];
+  const streak = useMemo(() => computeStreak(list), [attempts]);
+
+  const features = [
+    {
+      icon: Check,
+      title: "1 Matematika + 1 Ona tili",
+      sub: "Kunlik maqsadli mashq",
+    },
+    {
+      icon: LineChart,
+      title: "Progressni kuzating",
+      sub: hasData
+        ? `${stats?.totalTests} ta imtihon yakunlangan`
+        : "Rivojlanishni real vaqtda ko'ring",
+    },
+    {
+      icon: Sparkles,
+      title: "Aniq tushuntirish",
+      sub: "Har bir javob uchun izoh",
+    },
+  ];
 
   return (
-    <AppShell breadcrumb={[{ label: "INTIL", to: "/dashboard" }, { label: "Bosh sahifa" }]}>
-      {/* ---------------------------------------------------------------- */}
-      {/*  Hero                                                            */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="rise relative overflow-hidden rounded-[28px] bg-obsidian text-ivory">
-        <div className="girih pointer-events-none absolute inset-0 opacity-[0.35]" />
-        <div className="pointer-events-none absolute -right-24 -top-24 hidden h-[520px] w-[520px] opacity-90 md:block">
-          <BrandVisual className="h-full w-full" />
-        </div>
-
-        <div className="relative grid gap-8 px-6 py-10 sm:px-10 sm:py-14 md:max-w-[62%]">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-champagne">
-              Milliy sertifikat
-            </p>
-            <h1 className="mt-5 text-[30px] font-semibold leading-[1.12] text-ivory sm:text-[42px]">
-              Assalomu alaykum, {firstName(user?.fullName)}.
-            </h1>
-            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ivory/60">
-              {hasData
-                ? "Tayyorgarlik davom etmoqda. Keyingi imtihonni tanlab, natijangizni mustahkamlang."
-                : "Tayyorgarligingiz shu yerdan boshlanadi. Birinchi imtihon darajangizni aniqlaydi."}
+    <DashboardShell
+      title="Bosh sahifa"
+      subtitle={`Xush kelibsiz, ${user?.fullName ?? "talaba"}`}
+      streakDays={streak}
+    >
+      {/* Kunlik mashqlar */}
+      <Card className="p-5 sm:p-6">
+        <div className="flex items-start gap-3.5">
+          <IconPlate icon={BookOpen} />
+          <div className="min-w-0">
+            <h2 className="text-[18px] font-bold text-ink-strong">Kunlik mashqlar</h2>
+            <p className="mt-0.5 text-[14px] text-ink-mute">
+              Milliy sertifikatga har kuni maqsadli savollar bilan tayyorlaning
             </p>
           </div>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <ButtonLink to="/milliy-sertifikat" variant="gold" size="lg">
-              {hasData ? "Imtihonni tanlash" : "Boshlash"}
-              <ArrowRight className="h-4 w-4" />
-            </ButtonLink>
-            <Link
-              to="/testlar"
-              className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/12 px-5 text-[15px] text-ivory/75 transition-colors hover:border-champagne/40 hover:text-ivory"
+        <div className="mt-5 grid gap-4 md:grid-cols-3">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="flex items-center gap-3 rounded-2xl border border-edge bg-white px-4 py-3.5"
             >
-              Imtihonlarim
-            </Link>
-          </div>
+              <f.icon className="h-[18px] w-[18px] shrink-0 text-brass" strokeWidth={1.6} />
+              <span className="min-w-0">
+                <span className="block truncate text-[14px] font-semibold text-ink-strong">
+                  {f.title}
+                </span>
+                <span className="block truncate text-[13px] text-ink-mute">{f.sub}</span>
+              </span>
+            </div>
+          ))}
         </div>
-      </section>
+      </Card>
 
-      {/* ---------------------------------------------------------------- */}
-      {/*  Keyingi qadam                                                    */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="mt-14">
-        <SectionHeader
-          eyebrow="Bugungi tayyorgarlik"
-          title="Keyingi qadam"
-          description="Har kuni bitta aniq harakat — tayyorgarlikning eng ishonchli yo'li."
-        />
-
-        {loading ? (
-          <div className="mt-6 space-y-3">
-            <Skeleton className="h-5 w-56" />
-            <Skeleton className="h-4 w-80" />
-          </div>
-        ) : (
-          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            <Panel className="p-6 sm:p-8">
-              <Eyebrow>{hasData ? "Tavsiya" : "Diagnostika"}</Eyebrow>
-              <h3 className="mt-3 text-[22px] font-semibold leading-snug text-ink">
-                {hasData ? "Tayyorgarlikni davom ettiring." : "Darajangizni aniqlang."}
-              </h3>
-              <p className="mt-3 max-w-md text-sm leading-relaxed text-ink-soft">
-                {hasData
-                  ? `Oxirgi imtihoningiz — ${last?.examTitle}. Yangi variantni ishlab, natijangizni solishtiring.`
-                  : "Birinchi diagnostik testdan boshlang. Natija asosida kuchli va zaif tomonlaringiz aniqlanadi."}
-              </p>
-              <div className="mt-7">
-                <ButtonLink to="/milliy-sertifikat" size="md">
-                  {hasData ? "Davom ettirish" : "Boshlash"}
-                  <ArrowRight className="h-4 w-4" />
-                </ButtonLink>
-              </div>
-            </Panel>
-
-            <div className="rounded-[24px] border border-hairline bg-ivory p-6 sm:p-8">
-              <Eyebrow>Baholash</Eyebrow>
-              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-                Platformadagi ko'rsatkich — <span className="font-medium text-ink">test natijasi</span>:
-                to'g'ri javoblar ulushi. Bu rasmiy sertifikat balli emas. Rasmiy natija Rash modeli
-                asosida, savol qiyinligi hisobga olingan holda hisoblanadi.
-              </p>
-              <div className="mt-5">
-                <InfoTip label="Rash modeli haqida">
-                  Rash modelida har bir savolning qiyinlik darajasi hisobga olinadi, shuning uchun
-                  bir xil sondagi to'g'ri javob har doim ham bir xil rasmiy ballni bermaydi.
-                </InfoTip>
-              </div>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
-      {/*  Natijangiz                                                       */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="mt-14">
-        <SectionHeader
-          eyebrow="Ko'rsatkichlar"
-          title="Natijangiz"
-          description="Faqat siz ishlagan imtihonlardan olingan haqiqiy ma'lumot."
-        />
-
-        {loading ? (
-          <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="h-3 w-24" />
-                <Skeleton className="h-7 w-16" />
-              </div>
-            ))}
-          </div>
-        ) : !hasData || !stats ? (
-          <EmptyState
-            icon={Compass}
-            title="Natijangiz hali shakllanmagan."
-            description="Birinchi imtihoningizdan so'ng bu yerda shaxsiy tahlilingiz paydo bo'ladi."
-            cta={
-              <ButtonLink to="/milliy-sertifikat" size="md">
-                Testni boshlash
-                <ArrowRight className="h-4 w-4" />
-              </ButtonLink>
-            }
-          />
-        ) : (
-          <div className="mt-8 grid divide-y divide-hairline sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
-            <div className="pb-6 sm:pb-0 lg:pr-8">
-              <MetricDisplay label="Ishlangan imtihonlar" value={stats.totalTests} />
-            </div>
-            <div className="py-6 sm:py-0 lg:px-8">
-              <MetricDisplay label="O'rtacha natija" value={stats.averagePercent} suffix="%" />
-            </div>
-            <div className="py-6 sm:py-0 lg:px-8">
-              <MetricDisplay label="Eng yuqori natija" value={stats.bestPercent} suffix="%" />
-            </div>
-            <div className="pt-6 sm:pt-0 lg:pl-8">
-              <MetricDisplay
-                label="Haftalik faollik"
-                value={stats.weeklyActivity}
-                hint="So'nggi 7 kun ichida yakunlangan imtihonlar"
-              />
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* ---------------------------------------------------------------- */}
-      {/*  Fanlar + faoliyat                                                */}
-      {/* ---------------------------------------------------------------- */}
-      <section className="mt-14 grid gap-12 lg:grid-cols-2">
+      {/* CTA */}
+      <div className="mt-5 flex flex-col gap-4 rounded-[20px] bg-deep px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <SectionHeader eyebrow="Tahlil" title="Fanlar bo'yicha" />
-          {loading ? (
-            <div className="mt-6 space-y-5">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-1.5 w-full" />
-            </div>
-          ) : !hasData || !stats || !Object.keys(stats.perSubject).length ? (
-            <EmptyState
-              title="Fanlar kesimi hali bo'sh."
-              description="Yetarli ma'lumot to'plangach, har bir fan bo'yicha tahlilingiz shu yerda paydo bo'ladi."
-            />
-          ) : (
-            <ul className="mt-6 space-y-6">
-              {Object.entries(stats.perSubject).map(([sid, v]) => {
-                const pct = v.total ? Math.round((v.correct / v.total) * 100) : 0;
-                return (
-                  <li key={sid}>
-                    <ProgressIndicator
-                      label={MILLIY_SUBJECTS[sid]?.name ?? sid}
-                      value={pct}
-                    />
-                    <p className="mt-1.5 text-xs text-ink-soft">
-                      {v.attempts} ta imtihon
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          <p className="text-[18px] font-bold text-white">Mashq qilishga tayyormisiz?</p>
+          <p className="mt-1 text-[14px] text-white/60">
+            {hasData ? "Keyingi imtihonni tanlab davom eting" : "Shaxsiy tayyorgarlik rejasini yoqing"}
+          </p>
         </div>
+        <Link
+          to="/milliy-sertifikat"
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-ink-strong transition-colors hover:bg-[#F3EFE6]"
+        >
+          {hasData ? "Davom etish" : "Yoqish"}
+          <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
+        </Link>
+      </div>
 
-        <div>
-          <SectionHeader
-            eyebrow="Tarix"
-            title="Oxirgi faoliyat"
-            action={
-              hasData ? (
-                <Link
-                  to="/testlar"
-                  className="inline-flex items-center gap-1 text-[13px] text-ink-soft transition-colors hover:text-gold-muted"
-                >
-                  Barchasi <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              ) : undefined
-            }
-          />
-          {loading ? (
-            <div className="mt-6 space-y-4">
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-1/2" />
+      {/* Pastki ikkita panel */}
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <Card className="p-5 sm:p-6">
+          <div className="flex items-center gap-3">
+            <IconPlate icon={Calendar} />
+            <h3 className="text-[17px] font-bold text-ink-strong">Oxirgi imtihon</h3>
+          </div>
+          {hasData ? (
+            <div className="mt-4">
+              <p className="text-[15px] font-medium text-ink-strong">{last.examTitle}</p>
+              <p className="mt-1 text-[14px] text-ink-mute">{fmtDate(last.finishedAt)}</p>
+              <p className="tabnum mt-3 text-[14px] text-ink-strong">
+                {last.correct}/{last.total} to'g'ri
+              </p>
             </div>
-          ) : !hasData ? (
-            <EmptyState
-              title="Faoliyat tarixi bo'sh."
-              description="Yakunlangan imtihonlaringiz shu yerda, eng yangilaridan boshlab ko'rinadi."
-            />
           ) : (
-            <ul className="mt-4">
-              {attempts!.slice(0, 6).map((a) => (
-                <ActivityItem
-                  key={a.id}
-                  title={a.examTitle}
-                  timestamp={fmtDate(a.finishedAt)}
-                  right={
-                    <StatusBadge tone="done">
-                      <span className="tabnum">{a.correct}/{a.total}</span>
-                    </StatusBadge>
-                  }
-                />
-              ))}
-            </ul>
+            <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">
+              Hozircha yakunlangan imtihon yo'q. Birinchi imtihoningizdan so'ng sana shu yerda ko'rinadi.
+            </p>
           )}
-        </div>
-      </section>
-    </AppShell>
+        </Card>
+
+        <Card className="p-5 sm:p-6">
+          <div className="flex items-center gap-3">
+            <IconPlate icon={LineChart} />
+            <h3 className="text-[17px] font-bold text-ink-strong">Natijangiz</h3>
+          </div>
+          {hasData && stats ? (
+            <div className="mt-4 grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Imtihonlar</p>
+                <p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">
+                  {stats.totalTests}
+                </p>
+              </div>
+              <div>
+                <p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">O'rtacha</p>
+                <p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">
+                  {stats.averagePercent}%
+                </p>
+              </div>
+              <div>
+                <p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Eng yuqori</p>
+                <p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">
+                  {stats.bestPercent}%
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">
+              Hozircha ma'lumot yo'q. Birinchi imtihon natijasi bu yerda ko'rinadi.
+            </p>
+          )}
+        </Card>
+      </div>
+
+      {/* Fanlar kesimi — faqat real ma'lumot bo'lsa */}
+      {hasData && stats && Object.keys(stats.perSubject).length > 0 && (
+        <Card className="mt-5 p-5 sm:p-6">
+          <h3 className="text-[17px] font-bold text-ink-strong">Fanlar bo'yicha</h3>
+          <ul className="mt-4 space-y-4">
+            {Object.entries(stats.perSubject).map(([sid, v]) => {
+              const pct = v.total ? Math.round((v.correct / v.total) * 100) : 0;
+              return (
+                <li key={sid}>
+                  <div className="flex items-center justify-between text-[13px]">
+                    <span className="text-ink-strong">{MILLIY_SUBJECTS[sid]?.name ?? sid}</span>
+                    <span className="tabnum text-ink-mute">{pct}%</span>
+                  </div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EDE8DC]">
+                    <div className="h-full rounded-full bg-brass" style={{ width: `${pct}%` }} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+    </DashboardShell>
   );
 }
