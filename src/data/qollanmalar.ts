@@ -12,6 +12,7 @@ export interface Guide {
   readTime: string;
   publishedDate: string;
   coverImage: string;
+  coverCaption?: string;
   sections: GuideSection[];
   nextGuideNote?: string;
 }
@@ -26,6 +27,7 @@ export const guides: Guide[] = [
     readTime: "8 daqiqa o'qish",
     publishedDate: "2026-08-10",
     coverImage: "/guides/189-ball-cover.png",
+    coverCaption: "Intizom. Reja. Natija — 189 ball sari yo'l shu uchtasidan boshlanadi.",
     sections: [
       {
         heading: "1. Kimlar uchun",
