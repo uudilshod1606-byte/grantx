@@ -51,6 +51,10 @@ function norm(v: unknown) {
   return String(v ?? "").trim();
 }
 
+function stripLeadingNumber(v: string) {
+  return v.replace(/^\d+(-[a-zA-Zа-яА-Я])?[.)]\s*/, "").trim();
+}
+
 function parseKind(raw: string): { kind: ExamKind | null; block: DtmBlock | null } {
   const v = raw.toLowerCase().replace(/[\s_-]+/g, "");
   if (v.startsWith("milliy") || v.includes("sertifikat")) return { kind: "milliy", block: null };
@@ -165,7 +169,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         }
 
         // Formulalar aynan admin paneldagi funksiya orqali HTML'ga aylantiriladi.
-        const text = await renderTextWithLatexMarkers(get("savol_matni"));
+        const text = await renderTextWithLatexMarkers(stripLeadingNumber(get("savol_matni")));
         const options = (await Promise.all(
           optionCells.map((o) => renderTextWithLatexMarkers(o)),
         )) as [string, string, string, string];
@@ -278,7 +282,8 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
               Formulalar <code className="text-foreground">[[LATEX: x^2+y^2]]</code> ko'rinishida
               yoziladi — import paytida ular avtomatik formulaga aylantiriladi. Ochiq (yozma
               javob) savollar uchun variant ustunlarini bo'sh qoldiring, javobni to'g'ridan-to'g'ri
-              "togri_javob" ustuniga yozing.
+              "togri_javob" ustuniga yozing. Savol matni boshidagi raqam (masalan "14. ") avtomatik
+              olib tashlanadi.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <label className="inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground">
