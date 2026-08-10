@@ -41,8 +41,10 @@ type PreparedRow = {
   subjectName: string;
   points: number;
   text: string;
+  questionType: "yopiq" | "ochiq";
   options: [string, string, string, string];
   correctIndex: 0 | 1 | 2 | 3;
+  answerText: string;
 };
 
 function norm(v: unknown) {
@@ -147,17 +149,29 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         if (!(points > 0)) errors.push("ball noto'g'ri");
 
         const optionCells = ["variant_a", "variant_b", "variant_c", "variant_d"].map(get);
-        if (optionCells.some((o) => !o)) errors.push("barcha variantlar to'ldirilmagan");
+        const filledCount = optionCells.filter((o) => o).length;
+        const isOpenQuestion = filledCount === 0;
+
+        if (!isOpenQuestion && filledCount < 4) errors.push("barcha variantlar to'ldirilmagan");
         if (!get("savol_matni")) errors.push("savol_matni bo'sh");
 
-        const correctIndex = parseAnswer(get("togri_javob"));
-        if (correctIndex === null) errors.push("togri_javob noto'g'ri (A/B/C/D)");
+        const rawAnswer = get("togri_javob");
+        if (!rawAnswer) errors.push("togri_javob bo'sh");
+
+        let correctIndex: 0 | 1 | 2 | 3 | null = null;
+        if (!isOpenQuestion) {
+          correctIndex = parseAnswer(rawAnswer);
+          if (correctIndex === null) errors.push("togri_javob noto'g'ri (A/B/C/D)");
+        }
 
         // Formulalar aynan admin paneldagi funksiya orqali HTML'ga aylantiriladi.
         const text = await renderTextWithLatexMarkers(get("savol_matni"));
         const options = (await Promise.all(
           optionCells.map((o) => renderTextWithLatexMarkers(o)),
         )) as [string, string, string, string];
+        const answerText = isOpenQuestion && rawAnswer
+          ? await renderTextWithLatexMarkers(rawAnswer)
+          : "";
 
         prepared.push({
           rowNumber: i + 2,
@@ -168,8 +182,10 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
           subjectName: match?.subject.name ?? get("fan"),
           points,
           text,
+          questionType: isOpenQuestion ? "ochiq" : "yopiq",
           options,
           correctIndex: correctIndex ?? 0,
+          answerText,
         });
       }
       setRows(prepared);
@@ -197,8 +213,10 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
           kind: r.kind,
           block: r.block,
           points: r.points,
-          options: r.options,
-          correctIndex: r.correctIndex,
+          questionType: r.questionType,
+          options: r.questionType === "ochiq" ? [] : r.options,
+          correctIndex: r.questionType === "ochiq" ? undefined : r.correctIndex,
+          answerText: r.questionType === "ochiq" ? r.answerText : undefined,
         });
         ok++;
       } catch {
@@ -258,7 +276,9 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
             </p>
             <p className="mt-2 text-muted-foreground">
               Formulalar <code className="text-foreground">[[LATEX: x^2+y^2]]</code> ko'rinishida
-              yoziladi — import paytida ular avtomatik formulaga aylantiriladi.
+              yoziladi — import paytida ular avtomatik formulaga aylantiriladi. Ochiq (yozma
+              javob) savollar uchun variant ustunlarini bo'sh qoldiring, javobni to'g'ridan-to'g'ri
+              "togri_javob" ustuniga yozing.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <label className="inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground">
@@ -318,25 +338,32 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
                   >
                     <div className="mb-1 text-xs text-muted-foreground">
                       {r.rowNumber}-qator · {r.kind === "dtm" ? "DTM" : "Milliy"} ·{" "}
-                      {r.subjectName} · {r.points} ball
+                      {r.subjectName} · {r.points} ball · {r.questionType === "ochiq" ? "Ochiq" : "Yopiq"}
                     </div>
                     <MathContent latex={r.text} />
-                    <ol className="mt-2 grid gap-1 sm:grid-cols-2">
-                      {r.options.map((o, i) => (
-                        <li
-                          key={i}
-                          className={
-                            "rounded-md px-2 py-1 text-xs " +
-                            (i === r.correctIndex ? "bg-emerald-500/15" : "bg-muted/50")
-                          }
-                        >
-                          <span className="mr-1 font-semibold">
-                            {["A", "B", "C", "D"][i]}.
-                          </span>
-                          <MathContent latex={o} inline />
-                        </li>
-                      ))}
-                    </ol>
+                    {r.questionType === "ochiq" ? (
+                      <div className="mt-2 rounded-md bg-emerald-500/15 px-2 py-1 text-xs">
+                        <span className="mr-1 font-semibold">Javob:</span>
+                        <MathContent latex={r.answerText} inline />
+                      </div>
+                    ) : (
+                      <ol className="mt-2 grid gap-1 sm:grid-cols-2">
+                        {r.options.map((o, i) => (
+                          <li
+                            key={i}
+                            className={
+                              "rounded-md px-2 py-1 text-xs " +
+                              (i === r.correctIndex ? "bg-emerald-500/15" : "bg-muted/50")
+                            }
+                          >
+                            <span className="mr-1 font-semibold">
+                              {["A", "B", "C", "D"][i]}.
+                            </span>
+                            <MathContent latex={o} inline />
+                          </li>
+                        ))}
+                      </ol>
+                    )}
                   </div>
                 ))}
                 {rows.length > 30 && (
