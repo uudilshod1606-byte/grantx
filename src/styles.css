@@ -57,6 +57,14 @@
   --color-ink-soft: var(--muted-foreground);
   --color-hairline: var(--border);
 
+  /* Dashboard surface scale (light shell) */
+  --color-page: #faf8f4;
+  --color-edge: #eae4d6;
+  --color-deep: #1c1712;
+  --color-brass: #b8863c;
+  --color-ink-strong: #171310;
+  --color-ink-mute: #8a8375;
+
   --color-chart-1: var(--gold);
   --color-chart-2: var(--champagne);
   --color-chart-3: var(--gold-muted);
