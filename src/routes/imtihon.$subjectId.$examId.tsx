@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { attemptsRepo, questionsRepo, type Question } from "@/lib/domain";
+import { attemptsRepo, buildQuestionSlots, questionsRepo, type Question } from "@/lib/domain";
 import { useAuth } from "@/lib/auth";
 import { BluebookExam } from "@/components/bluebook/BluebookExam";
 import { FullscreenGate } from "@/components/bluebook/FullscreenGate";
@@ -59,7 +59,12 @@ function BluebookExamPage() {
       .filter((q) => q.kind === "milliy" && q.subjectId === subjectId)
       .slice()
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-    return pool.slice((variant - 1) * QUESTIONS_PER_EXAM, variant * QUESTIONS_PER_EXAM);
+    // Slice by logical question count (slots), not raw row count — a
+    // moslashtirish/ochiq group counts as ONE question even though it spans
+    // several database rows.
+    const slots = buildQuestionSlots(pool);
+    const pageSlots = slots.slice((variant - 1) * QUESTIONS_PER_EXAM, variant * QUESTIONS_PER_EXAM);
+    return pageSlots.flat();
   }, [all, subjectId, variant]);
 
   const exit = () => navigate({ to: "/milliy-sertifikat/$subjectId", params: { subjectId } });
@@ -93,7 +98,7 @@ function BluebookExamPage() {
       <FullscreenGate
         subjectName={subject.name}
         examTitle={`Imtihon ${variant}`}
-        questionCount={questions.length}
+        questionCount={buildQuestionSlots(questions).length}
         durationMinutes={DURATION_MINUTES}
         onContinue={() => setStarted(true)}
         onExit={exit}
@@ -113,7 +118,6 @@ function BluebookExamPage() {
       onExit={exit}
       onComplete={(result) => {
         if (!user) return;
-        // Persist the real attempt so dashboard analytics stay factual.
         attemptsRepo.add({
           userId: user.id,
           examTitle: `${subject.name} · Imtihon ${variant}`,
