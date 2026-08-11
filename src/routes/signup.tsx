@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Eye, EyeOff, Loader2, Mail, User, Lock, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail, User, Lock, ArrowRight, MailCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ function SignUpPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,9 +52,14 @@ function SignUpPage() {
     setErrors({});
     setLoading(true);
     try {
-      await signUp(parsed.data);
-      toast.success("Hisob yaratildi! INTIL'ga xush kelibsiz");
-      navigate({ to: "/dashboard" });
+      const { needsEmailConfirmation } = await signUp(parsed.data);
+      if (needsEmailConfirmation) {
+        setPendingEmail(parsed.data.email);
+        toast.success("Tasdiqlash havolasi emailingizga yuborildi");
+      } else {
+        toast.success("Hisob yaratildi! INTIL'ga xush kelibsiz");
+        navigate({ to: "/dashboard" });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Xatolik yuz berdi");
     } finally {
@@ -63,6 +69,33 @@ function SignUpPage() {
 
   if (authLoading) return <AuthLoadingScreen />;
   if (isAuthenticated) return <Navigate to="/dashboard" />;
+
+  if (pendingEmail) {
+    return (
+      <AuthShell
+        badge="Deyarli tayyor"
+        title="Emailingizni tasdiqlang"
+        subtitle={`Biz ${pendingEmail} manziliga tasdiqlash havolasini yubordik. Havolani bosing — shundan so'ng avtomatik tarzda hisobingizga kirasiz.`}
+        footer={
+          <>
+            Havola kelmadimi? Spam papkasini tekshiring yoki{" "}
+            <button type="button" onClick={() => setPendingEmail(null)} className="font-medium text-foreground hover:text-primary">
+              qaytadan urinib ko'ring
+            </button>
+            .
+          </>
+        }
+      >
+        <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm text-muted-foreground">
+          <MailCheck className="h-5 w-5 text-primary" />
+          Tasdiqlanmagan hisob bilan tizimga kirib bo'lmaydi.
+        </div>
+        <Link to="/login" className="mt-4 block text-center text-sm font-medium text-foreground hover:text-primary">
+          Kirish sahifasiga o'tish
+        </Link>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
