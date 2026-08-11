@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { listPlatformUsers, type AdminUserRow } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -145,9 +146,19 @@ function NotAdmin() {
 
 function Overview() {
   const [questionCount, setQuestionCount] = useState<number | null>(null);
+  const [userCount, setUserCount] = useState<number | null>(null);
   const exams = examsRepo.list();
   const attempts = attemptsRepo.list();
-  const users = readUsersStorage();
+
+  useEffect(() => {
+    let alive = true;
+    listPlatformUsers()
+      .then((rows) => alive && setUserCount(rows.length))
+      .catch(() => alive && setUserCount(null));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,7 +176,7 @@ function Overview() {
   }, []);
 
   const cards = [
-    { label: "Foydalanuvchilar", value: users.length, icon: Users },
+    { label: "Foydalanuvchilar", value: userCount ?? 0, icon: Users },
     { label: "Imtihonlar", value: exams.length, icon: ClipboardList },
     { label: "Savollar", value: questionCount ?? "…", icon: FileQuestion },
     { label: "Faol imtihonlar", value: attempts.length, icon: Activity },
@@ -831,19 +842,30 @@ function ExamFormDialog({ onSaved }: { onSaved: () => void }) {
 
 /* ----------------------------- Users ----------------------------- */
 
-function readUsersStorage(): Array<{ id: string; email: string; fullName: string; createdAt: string }> {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("intil.auth.users") ?? "[]");
-  } catch {
-    return [];
-  }
-}
-
 function UsersTab() {
   const [search, setSearch] = useState("");
-  const users = readUsersStorage();
+  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [errorMsg, setErrorMsg] = useState("");
   const attempts = attemptsRepo.list();
+
+  useEffect(() => {
+    let alive = true;
+    listPlatformUsers()
+      .then((rows) => {
+        if (!alive) return;
+        setUsers(rows);
+        setState("ready");
+      })
+      .catch((err: unknown) => {
+        if (!alive) return;
+        setErrorMsg(err instanceof Error ? err.message : "Noma'lum xatolik");
+        setState("error");
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const filtered = users.filter((u) =>
     !search || u.email.includes(search.toLowerCase()) || u.fullName.toLowerCase().includes(search.toLowerCase())
@@ -857,7 +879,13 @@ function UsersTab() {
           <Input placeholder="Email yoki ism..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
       </div>
-      {filtered.length === 0 ? (
+      {state === "loading" ? (
+        <div className="glass rounded-2xl p-6 text-sm text-muted-foreground">Foydalanuvchilar yuklanmoqda...</div>
+      ) : state === "error" ? (
+        <div className="glass rounded-2xl p-6 text-sm text-destructive">
+          Foydalanuvchilar ro'yxatini olishda xatolik: {errorMsg}
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyBox icon={Users} title="Foydalanuvchilar yo'q" description="Hozircha ro'yxatdan o'tgan foydalanuvchilar yo'q." />
       ) : (
         <div className="glass overflow-hidden rounded-2xl">
@@ -866,6 +894,7 @@ function UsersTab() {
               <tr>
                 <th className="px-4 py-3">Foydalanuvchi</th>
                 <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Holat</th>
                 <th className="px-4 py-3">Imtihonlar</th>
                 <th className="px-4 py-3">Qo'shilgan</th>
               </tr>
@@ -877,6 +906,7 @@ function UsersTab() {
                   <tr key={u.id} className="border-t border-border">
                     <td className="px-4 py-3">{u.fullName}</td>
                     <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{u.confirmed ? "Tasdiqlangan" : "Tasdiqlanmagan"}</td>
                     <td className="px-4 py-3">{count}</td>
                     <td className="px-4 py-3 text-muted-foreground">{new Date(u.createdAt).toLocaleDateString("uz-UZ")}</td>
                   </tr>

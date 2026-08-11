@@ -127,10 +127,10 @@ export interface FileRoutesByFullPath {
   '/materiallar': typeof MateriallarRoute
   '/signup': typeof SignupRoute
   '/testlar': typeof TestlarRoute
-  '/qollanmalar/$slug': typeof QollanmalarSlugRoute
-  '/qollanmalar/': typeof QollanmalarIndexRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
+  '/qollanmalar/$slug': typeof QollanmalarSlugRoute
   '/milliy-sertifikat/': typeof MilliySertifikatIndexRoute
+  '/qollanmalar/': typeof QollanmalarIndexRoute
   '/imtihon/$subjectId/$examId': typeof ImtihonSubjectIdExamIdRoute
 }
 export interface FileRoutesByTo {
@@ -146,10 +146,10 @@ export interface FileRoutesByTo {
   '/materiallar': typeof MateriallarRoute
   '/signup': typeof SignupRoute
   '/testlar': typeof TestlarRoute
-  '/qollanmalar/$slug': typeof QollanmalarSlugRoute
-  '/qollanmalar': typeof QollanmalarIndexRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
+  '/qollanmalar/$slug': typeof QollanmalarSlugRoute
   '/milliy-sertifikat': typeof MilliySertifikatIndexRoute
+  '/qollanmalar': typeof QollanmalarIndexRoute
   '/imtihon/$subjectId/$examId': typeof ImtihonSubjectIdExamIdRoute
 }
 export interface FileRoutesById {
@@ -166,10 +166,10 @@ export interface FileRoutesById {
   '/materiallar': typeof MateriallarRoute
   '/signup': typeof SignupRoute
   '/testlar': typeof TestlarRoute
-  '/qollanmalar/$slug': typeof QollanmalarSlugRoute
-  '/qollanmalar/': typeof QollanmalarIndexRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
+  '/qollanmalar/$slug': typeof QollanmalarSlugRoute
   '/milliy-sertifikat/': typeof MilliySertifikatIndexRoute
+  '/qollanmalar/': typeof QollanmalarIndexRoute
   '/imtihon/$subjectId/$examId': typeof ImtihonSubjectIdExamIdRoute
 }
 export interface FileRouteTypes {
@@ -187,10 +187,10 @@ export interface FileRouteTypes {
     | '/materiallar'
     | '/signup'
     | '/testlar'
-    | '/qollanmalar/$slug'
-    | '/qollanmalar/'
     | '/milliy-sertifikat/$subjectId'
+    | '/qollanmalar/$slug'
     | '/milliy-sertifikat/'
+    | '/qollanmalar/'
     | '/imtihon/$subjectId/$examId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -206,10 +206,10 @@ export interface FileRouteTypes {
     | '/materiallar'
     | '/signup'
     | '/testlar'
-    | '/qollanmalar/$slug'
-    | '/qollanmalar'
     | '/milliy-sertifikat/$subjectId'
+    | '/qollanmalar/$slug'
     | '/milliy-sertifikat'
+    | '/qollanmalar'
     | '/imtihon/$subjectId/$examId'
   id:
     | '__root__'
@@ -225,10 +225,10 @@ export interface FileRouteTypes {
     | '/materiallar'
     | '/signup'
     | '/testlar'
-    | '/qollanmalar/$slug'
-    | '/qollanmalar/'
     | '/milliy-sertifikat/$subjectId'
+    | '/qollanmalar/$slug'
     | '/milliy-sertifikat/'
+    | '/qollanmalar/'
     | '/imtihon/$subjectId/$examId'
   fileRoutesById: FileRoutesById
 }
@@ -245,10 +245,10 @@ export interface RootRouteChildren {
   MateriallarRoute: typeof MateriallarRoute
   SignupRoute: typeof SignupRoute
   TestlarRoute: typeof TestlarRoute
-  QollanmalarSlugRoute: typeof QollanmalarSlugRoute
-  QollanmalarIndexRoute: typeof QollanmalarIndexRoute
   MilliySertifikatSubjectIdRoute: typeof MilliySertifikatSubjectIdRoute
+  QollanmalarSlugRoute: typeof QollanmalarSlugRoute
   MilliySertifikatIndexRoute: typeof MilliySertifikatIndexRoute
+  QollanmalarIndexRoute: typeof QollanmalarIndexRoute
   ImtihonSubjectIdExamIdRoute: typeof ImtihonSubjectIdExamIdRoute
 }
 
@@ -389,22 +389,12 @@ const rootRouteChildren: RootRouteChildren = {
   MateriallarRoute: MateriallarRoute,
   SignupRoute: SignupRoute,
   TestlarRoute: TestlarRoute,
-  QollanmalarSlugRoute: QollanmalarSlugRoute,
-  QollanmalarIndexRoute: QollanmalarIndexRoute,
   MilliySertifikatSubjectIdRoute: MilliySertifikatSubjectIdRoute,
+  QollanmalarSlugRoute: QollanmalarSlugRoute,
   MilliySertifikatIndexRoute: MilliySertifikatIndexRoute,
+  QollanmalarIndexRoute: QollanmalarIndexRoute,
   ImtihonSubjectIdExamIdRoute: ImtihonSubjectIdExamIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

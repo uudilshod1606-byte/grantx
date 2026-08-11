@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Lightbulb } from "lucide-react";
 import { ProtectedRoute } from "@/lib/auth";
 import { AppShell } from "@/components/layout/AppShell";
-import { getGuideBySlug } from "@/data/qollanmalar";
+import { getGuideBySlug, type Guide } from "@/data/qollanmalar";
 
 export const Route = createFileRoute("/qollanmalar/$slug")({
   loader: ({ params }) => {
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/qollanmalar/$slug")({
     return guide;
   },
   component: () => {
-    const guide = Route.useLoaderData();
+    const guide = Route.useLoaderData() as Guide;
 
     return (
       <ProtectedRoute>

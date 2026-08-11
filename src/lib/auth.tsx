@@ -1,13 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Navigate } from "@tanstack/react-router";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Lightweight auth context for INTIL.
- *
- * Persistence is currently localStorage-backed so we can ship the full UX now.
- * The shape matches what we'll need when wiring Supabase later — just swap the
- * three async methods (signIn / signUp / signOut) to call supabase.auth.* and
- * replace the storage with onAuthStateChange.
+ * Auth context for INTIL — backed by real Cloud (Supabase) Auth.
+ * Sessions are managed by supabase-js and synced via onAuthStateChange.
  */
 
 export type AuthUser = {
@@ -20,140 +18,99 @@ export type AuthUser = {
 
 type AuthContextValue = {
   user: AuthUser | null;
+  session: Session | null;
   loading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
   signIn: (input: { email: string; password: string; remember?: boolean }) => Promise<void>;
-  signUp: (input: { fullName: string; email: string; password: string }) => Promise<void>;
+  signUp: (input: { fullName: string; email: string; password: string }) => Promise<{ needsEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
-  restoreSession: () => void;
 };
 
-const STORAGE_USER = "grantx.auth.user";
-const STORAGE_USERS = "grantx.auth.users";
 export const INTIL_ADMIN_EMAIL = "dilshoduktamov34@gmail.com";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-type StoredUser = AuthUser & { password: string };
 
 function adminRoleFor(email: string): AuthUser["role"] {
   return email.trim().toLowerCase() === INTIL_ADMIN_EMAIL ? "admin" : "user";
 }
 
-function normalizeUser<T extends Partial<AuthUser> & { email?: string }>(raw: T): T & AuthUser {
-  const email = String(raw.email ?? "").trim().toLowerCase();
-  const fullName = String(raw.fullName ?? email.split("@")[0] ?? "INTIL user").trim();
+function mapUser(u: User | null | undefined): AuthUser | null {
+  if (!u) return null;
+  const email = (u.email ?? "").trim().toLowerCase();
+  const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
+  const fullName = String(meta['full_name'] ?? meta['fullName'] ?? "").trim() || email.split("@")[0] || "INTIL user";
   return {
-    ...raw,
-    id: String(raw.id ?? (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}`)),
+    id: u.id,
     email,
     fullName,
-    createdAt: String(raw.createdAt ?? new Date().toISOString()),
+    createdAt: u.created_at ?? new Date().toISOString(),
     role: adminRoleFor(email),
-  } as T & AuthUser;
-}
-
-function readUsers(): StoredUser[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_USERS) ?? "[]") as Array<Partial<StoredUser>>;
-    return parsed
-      .filter((u) => u.email && u.password)
-      .map((u) => normalizeUser(u) as StoredUser);
-  } catch {
-    return [];
-  }
-}
-
-function writeUsers(users: StoredUser[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_USERS, JSON.stringify(users.map((u) => normalizeUser(u))));
-}
-
-function readSession(): AuthUser | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_USER);
-    if (!raw) return null;
-    const session = normalizeUser(JSON.parse(raw) as Partial<AuthUser>);
-    localStorage.setItem(STORAGE_USER, JSON.stringify(session));
-    return session;
-  } catch {
-    localStorage.removeItem(STORAGE_USER);
-    return null;
-  }
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const restoreSession = useCallback(() => {
-    setUser(readSession());
-    setLoading(false);
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setLoading(false);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setLoading(false);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    restoreSession();
-    const syncSession = (event: StorageEvent) => {
-      if (event.key === STORAGE_USER || event.key === STORAGE_USERS) restoreSession();
-    };
-    window.addEventListener("storage", syncSession);
-    return () => window.removeEventListener("storage", syncSession);
-  }, [restoreSession]);
-
-  const persist = (u: AuthUser | null) => {
-    if (u) localStorage.setItem(STORAGE_USER, JSON.stringify(normalizeUser(u)));
-    else localStorage.removeItem(STORAGE_USER);
-    setUser(u ? normalizeUser(u) : null);
-  };
-
   const signUp: AuthContextValue["signUp"] = async ({ fullName, email, password }) => {
-    await new Promise((r) => setTimeout(r, 500));
-    const users = readUsers();
-    const normalized = email.trim().toLowerCase();
-    if (users.some((u) => u.email === normalized)) {
-      throw new Error("Bu email allaqachon ro'yxatdan o'tgan");
-    }
-    const newUser: StoredUser = {
-      id: crypto.randomUUID(),
-      email: normalized,
-      fullName: fullName.trim(),
-      createdAt: new Date().toISOString(),
-      role: adminRoleFor(normalized),
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
       password,
-    };
-    writeUsers([...users, newUser]);
-    const { password: _pw, ...publicUser } = newUser;
-    persist(publicUser);
+      options: {
+        data: { full_name: fullName.trim() },
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+    if (error) throw new Error(error.message);
+    return { needsEmailConfirmation: !data.session };
   };
 
   const signIn: AuthContextValue["signIn"] = async ({ email, password }) => {
-    await new Promise((r) => setTimeout(r, 500));
-    const normalized = email.trim().toLowerCase();
-    const found = readUsers().find((u) => u.email === normalized);
-    if (!found || found.password !== password) {
-      throw new Error("Email yoki parol noto'g'ri");
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+    if (error) {
+      if (/email not confirmed/i.test(error.message)) {
+        throw new Error("Email hali tasdiqlanmagan. Pochtangizdagi tasdiqlash havolasini bosing.");
+      }
+      if (/invalid login credentials/i.test(error.message)) {
+        throw new Error("Email yoki parol noto'g'ri");
+      }
+      throw new Error(error.message);
     }
-    const { password: _pw, ...publicUser } = found;
-    persist(publicUser);
   };
 
   const signOut: AuthContextValue["signOut"] = async () => {
-    persist(null);
+    await supabase.auth.signOut();
+    setSession(null);
   };
+
+  const user = useMemo(() => mapUser(session?.user), [session]);
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
+    session,
     loading,
     isAuthenticated: !!user,
-    isAdmin: user?.role === "admin" || adminRoleFor(user?.email ?? "") === "admin",
+    isAdmin: adminRoleFor(user?.email ?? "") === "admin",
     signIn,
     signUp,
     signOut,
-    restoreSession,
-  }), [user, loading, restoreSession]);
+  }), [user, session, loading]);
 
   return (
     <AuthContext.Provider value={value}>
