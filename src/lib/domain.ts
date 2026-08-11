@@ -90,6 +90,13 @@ export type Question = {
   correctIndex?: number;
   explanation?: string;
   answerText?: string;
+  /**
+   * Rows that share the same non-null groupId are rendered together on one
+   * screen (33-35 moslashtirish set, or a two-part 36-45 ochiq question).
+   */
+  groupId?: string | null;
+  /** Shared intro/stem text for a group — falls back to the first item's text. */
+  groupIntro?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -122,6 +129,38 @@ export type ExamAttempt = {
   startedAt: string;
   finishedAt: string;
 };
+
+/* -------------------------------------------------------------------------- */
+/*  Question grouping helper                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Groups consecutive questions that share the same non-null groupId into a
+ * single slot. Used both by the exam runner (to render 33-35 / 36-a,36-b as
+ * one screen) and by exam-slicing logic (so "N questions" means N logical
+ * slots, not N database rows).
+ */
+export function buildQuestionSlots(questions: Question[]): Question[][] {
+  const slots: Question[][] = [];
+  let i = 0;
+  while (i < questions.length) {
+    const q = questions[i];
+    if (q.groupId) {
+      const group = [q];
+      let j = i + 1;
+      while (j < questions.length && questions[j].groupId === q.groupId) {
+        group.push(questions[j]);
+        j++;
+      }
+      slots.push(group);
+      i = j;
+    } else {
+      slots.push([q]);
+      i++;
+    }
+  }
+  return slots;
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Ranks                                                                     */
@@ -277,6 +316,8 @@ function rowToQuestion(row: Record<string, unknown>): Question {
     correctIndex: row.correct_index != null ? Number(row.correct_index) : undefined,
     answerText: (row.answer_text as string | undefined) ?? undefined,
     explanation: (row.explanation as string | undefined) ?? undefined,
+    groupId: (row.group_id as string | null) ?? null,
+    groupIntro: (row.group_intro as string | null) ?? null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
@@ -297,6 +338,8 @@ function questionToRow(q: Partial<Question>): Record<string, unknown> {
   if (q.questionType !== undefined) row.question_type = q.questionType;
   if (q.answerText !== undefined) row.answer_text = q.answerText;
   if (q.explanation !== undefined) row.explanation = q.explanation;
+  if (q.groupId !== undefined) row.group_id = q.groupId;
+  if (q.groupIntro !== undefined) row.group_intro = q.groupIntro;
   return row;
 }
 
