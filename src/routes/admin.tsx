@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { listPlatformUsers, type AdminUserRow } from "@/lib/admin-users.functions";
 import {
   Dialog,
   DialogContent,
@@ -145,9 +146,19 @@ function NotAdmin() {
 
 function Overview() {
   const [questionCount, setQuestionCount] = useState<number | null>(null);
+  const [userCount, setUserCount] = useState<number | null>(null);
   const exams = examsRepo.list();
   const attempts = attemptsRepo.list();
-  const users = readUsersStorage();
+
+  useEffect(() => {
+    let alive = true;
+    listPlatformUsers()
+      .then((rows) => alive && setUserCount(rows.length))
+      .catch(() => alive && setUserCount(null));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,7 +176,7 @@ function Overview() {
   }, []);
 
   const cards = [
-    { label: "Foydalanuvchilar", value: users.length, icon: Users },
+    { label: "Foydalanuvchilar", value: userCount ?? 0, icon: Users },
     { label: "Imtihonlar", value: exams.length, icon: ClipboardList },
     { label: "Savollar", value: questionCount ?? "…", icon: FileQuestion },
     { label: "Faol imtihonlar", value: attempts.length, icon: Activity },
