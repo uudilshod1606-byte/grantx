@@ -9,17 +9,29 @@ import {
   ChevronUp,
   X,
 } from "lucide-react";
-import type { Question } from "@/lib/domain";
+import { buildQuestionSlots, type Question } from "@/lib/domain";
 import { MathContent } from "@/components/math/MathContent";
 import { ReferencePanel } from "./ReferencePanel";
 
-const LETTERS = ["A", "B", "C", "D"] as const;
+const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
+const PART_LABELS = ["a", "b", "c", "d"] as const;
 
 function fmt(sec: number) {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
+
+function stripHtml(v: string) {
+  return v.replace(/<[^>]+>/g, "");
+}
+
+/** Very simple open-answer comparison (whitespace/case/comma-vs-dot insensitive). */
+function normalizeAnswer(v: string): string {
+  return stripHtml(v).replace(/\s+/g, "").replace(/,/g, ".").toLowerCase();
+}
+
+type AnswerValue = { kind: "option"; index: number } | { kind: "text"; value: string };
 
 export type BluebookExamProps = {
   subjectName: string;
@@ -60,9 +72,12 @@ export function BluebookExam({
   onExit,
   onComplete,
 }: BluebookExamProps) {
-  const total = questions.length;
+  // Group consecutive same-groupId rows (33-35 moslashtirish, 36-a/36-b ochiq).
+  const slots = useMemo(() => buildQuestionSlots(questions), [questions]);
+  const total = slots.length;
+
   const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [flags, setFlags] = useState<Record<string, boolean>>({});
   const [secondsLeft, setSecondsLeft] = useState(durationMinutes * 60);
   const [clockHidden, setClockHidden] = useState(false);
@@ -72,11 +87,17 @@ export function BluebookExam({
   const [directionsOpen, setDirectionsOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [activeMatchSub, setActiveMatchSub] = useState(0);
   const bodyRef = useRef<HTMLDivElement>(null);
   const startedAtRef = useRef(new Date().toISOString());
   const reportedRef = useRef(false);
 
-  const q = questions[index];
+  const group = slots[index] ?? [];
+  const flagKey = group[0]?.groupId ? `group:${group[0].groupId}` : group[0]?.id ?? String(index);
+
+  useEffect(() => {
+    setActiveMatchSub(0);
+  }, [index]);
 
   useEffect(() => {
     if (submitted) return;
@@ -116,28 +137,41 @@ export function BluebookExam({
   const score = useMemo(() => {
     let correct = 0;
     for (const item of questions) {
-      if (answers[item.id] === item.correctIndex) correct++;
+      const a = answers[item.id];
+      if (!a) continue;
+      if (item.questionType === "ochiq") {
+        if (a.kind === "text" && item.answerText && normalizeAnswer(a.value) === normalizeAnswer(item.answerText)) {
+          correct++;
+        }
+      } else if (a.kind === "option" && a.index === item.correctIndex) {
+        correct++;
+      }
     }
     return correct;
   }, [answers, questions]);
 
+  const answeredRawCount = useMemo(
+    () => questions.filter((q) => answers[q.id] !== undefined).length,
+    [answers, questions]
+  );
+
   // Report the real result exactly once.
   useEffect(() => {
-    if (!submitted || reportedRef.current || !total) return;
+    if (!submitted || reportedRef.current || !questions.length) return;
     reportedRef.current = true;
-    const answered = questions.filter((q) => answers[q.id] !== undefined).length;
     const finishedAt = new Date().toISOString();
     onComplete?.({
-      total,
+      total: questions.length,
       correct: score,
-      incorrect: answered - score,
-      unanswered: total - answered,
-      percent: Math.round((score / total) * 100),
+      incorrect: answeredRawCount - score,
+      unanswered: questions.length - answeredRawCount,
+      percent: Math.round((score / questions.length) * 100),
       durationSeconds: durationMinutes * 60 - secondsLeft,
       startedAt: startedAtRef.current,
       finishedAt,
     });
-  }, [submitted, total, questions, answers, score, durationMinutes, secondsLeft, onComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitted]);
 
   const exitExam = async () => {
     try {
@@ -146,6 +180,13 @@ export function BluebookExam({
       /* ignore */
     }
     onExit();
+  };
+
+  const setOptionAnswer = (questionId: string, idx: number) => {
+    setAnswers((a) => ({ ...a, [questionId]: { kind: "option", index: idx } }));
+  };
+  const setTextAnswer = (questionId: string, value: string) => {
+    setAnswers((a) => ({ ...a, [questionId]: { kind: "text", value } }));
   };
 
   if (!total) {
@@ -165,8 +206,7 @@ export function BluebookExam({
   }
 
   if (submitted) {
-    const percent = Math.round((score / total) * 100);
-    const answered = questions.filter((q) => answers[q.id] !== undefined).length;
+    const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
     return (
       <div className="min-h-screen bg-[#FAF7F1] px-6 py-14 text-[#171717]">
         <div className="mx-auto w-full max-w-2xl">
@@ -185,7 +225,7 @@ export function BluebookExam({
             <span className="text-[72px] font-semibold leading-none tabular-nums">{percent}</span>
             <span className="pb-2 text-2xl text-[#6F6A62]">%</span>
             <span className="pb-3 pl-2 text-sm text-[#6F6A62]">
-              {score} / {total} to'g'ri javob
+              {score} / {questions.length} to'g'ri javob
             </span>
           </div>
 
@@ -195,8 +235,8 @@ export function BluebookExam({
           <dl className="mt-6 grid grid-cols-3 gap-x-8 gap-y-6">
             {([
               ["To'g'ri", score],
-              ["Noto'g'ri", answered - score],
-              ["Javobsiz", total - answered],
+              ["Noto'g'ri", answeredRawCount - score],
+              ["Javobsiz", questions.length - answeredRawCount],
             ] as [string, number][]).map(([k, v]) => (
               <div key={k}>
                 <dt className="text-[11px] uppercase tracking-[0.1em] text-[#6F6A62]">{k}</dt>
@@ -215,6 +255,13 @@ export function BluebookExam({
       </div>
     );
   }
+
+  const isMoslashtirish = group.length > 0 && group[0].questionType === "moslashtirish";
+  const isOpenGroup = group.length > 1 && group[0].questionType === "ochiq";
+  const isSingle = group.length === 1 && group[0].questionType !== "moslashtirish";
+
+  const groupAnsweredCount = group.filter((q) => answers[q.id] !== undefined).length;
+  const groupComplete = group.length > 0 && groupAnsweredCount === group.length;
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-black">
@@ -317,60 +364,39 @@ export function BluebookExam({
               </span>
               <button
                 type="button"
-                onClick={() =>
-                  setFlags((f) => ({ ...f, [q.id]: !f[q.id] }))
-                }
+                onClick={() => setFlags((f) => ({ ...f, [flagKey]: !f[flagKey] }))}
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-black"
               >
                 <Flag
-                  className={["h-4 w-4", flags[q.id] ? "fill-black text-black" : ""].join(" ")}
+                  className={["h-4 w-4", flags[flagKey] ? "fill-black text-black" : ""].join(" ")}
                 />
                 Ko'rib chiqish uchun belgilash
               </button>
             </div>
 
             <div ref={bodyRef} onMouseUp={applyHighlight}>
-              <div className="text-[17px] leading-relaxed text-black">
-                <MathContent latex={q.text} />
-              </div>
-              {q.imageUrl && (
-                <img
-                  src={q.imageUrl}
-                  alt="Savol rasmi"
-                  className="mt-4 max-h-80 rounded border border-gray-300"
+              {isSingle && (
+                <SingleQuestion
+                  question={group[0]}
+                  answer={answers[group[0].id]}
+                  onSelectOption={(idx) => setOptionAnswer(group[0].id, idx)}
+                  onChangeText={(v) => setTextAnswer(group[0].id, v)}
                 />
               )}
 
-              <div className="mt-6 space-y-3">
-                {q.options.map((opt, i) => {
-                  const selected = answers[q.id] === i;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setAnswers((a) => ({ ...a, [q.id]: i }))}
-                      className={[
-                        "flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition",
-                        selected
-                          ? "border-2 border-black bg-gray-100"
-                          : "border-gray-400 hover:bg-gray-50",
-                      ].join(" ")}
-                    >
-                      <span
-                        className={[
-                          "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold",
-                          selected ? "border-black bg-black text-white" : "border-gray-500 text-gray-700",
-                        ].join(" ")}
-                      >
-                        {LETTERS[i]}
-                      </span>
-                      <span className="text-[16px] leading-relaxed text-black">
-                        <MathContent latex={opt} inline />
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              {isMoslashtirish && (
+                <MatchingGroup
+                  group={group}
+                  answers={answers}
+                  activeSub={activeMatchSub}
+                  onSelectSub={setActiveMatchSub}
+                  onSelectOption={setOptionAnswer}
+                />
+              )}
+
+              {isOpenGroup && (
+                <OpenGroup group={group} answers={answers} onChangeText={setTextAnswer} />
+              )}
             </div>
           </div>
         </main>
@@ -455,12 +481,13 @@ export function BluebookExam({
               </span>
             </div>
             <div className="grid max-h-56 grid-cols-8 gap-2 overflow-y-auto sm:grid-cols-10">
-              {questions.map((item, i) => {
-                const answered = answers[item.id] !== undefined;
+              {slots.map((g, i) => {
+                const answered = g.length > 0 && g.every((q) => answers[q.id] !== undefined);
                 const current = i === index;
+                const key = g[0]?.groupId ? `group:${g[0].groupId}` : g[0]?.id ?? String(i);
                 return (
                   <button
-                    key={item.id}
+                    key={key}
                     onClick={() => {
                       setIndex(i);
                       setGridOpen(false);
@@ -472,7 +499,7 @@ export function BluebookExam({
                     ].join(" ")}
                   >
                     {i + 1}
-                    {flags[item.id] && (
+                    {flags[key] && (
                       <Flag className="absolute -right-1 -top-1 h-3 w-3 fill-white stroke-black" />
                     )}
                   </button>
@@ -494,7 +521,12 @@ export function BluebookExam({
               </button>
             </div>
             <div className="space-y-2 text-sm leading-relaxed text-gray-700">
-              <p>Har bir savolga faqat bitta to'g'ri javobni tanlang.</p>
+              <p>Yopiq savollarda faqat bitta to'g'ri javobni tanlang.</p>
+              <p>Ochiq savollarda javobingizni maydonga aniq va sodda holatda yozing.</p>
+              <p>
+                Moslashtirish turidagi savollarda pastdagi savolni bosib faollashtiring, so'ng
+                o'ngdan mos javobni tanlang.
+              </p>
               <p>
                 Savolni keyinroq qayta ko'rib chiqmoqchi bo'lsangiz, bayroqcha bilan belgilab
                 qo'ying.
@@ -510,6 +542,237 @@ export function BluebookExam({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Single yopiq/ochiq question                                               */
+/* -------------------------------------------------------------------------- */
+
+function SingleQuestion({
+  question,
+  answer,
+  onSelectOption,
+  onChangeText,
+}: {
+  question: Question;
+  answer: AnswerValue | undefined;
+  onSelectOption: (idx: number) => void;
+  onChangeText: (v: string) => void;
+}) {
+  return (
+    <>
+      <div className="text-[17px] leading-relaxed text-black">
+        <MathContent latex={question.text} />
+      </div>
+      {question.imageUrl && (
+        <img
+          src={question.imageUrl}
+          alt="Savol rasmi"
+          className="mt-4 max-h-80 rounded border border-gray-300"
+        />
+      )}
+
+      {question.questionType === "ochiq" ? (
+        <div className="mt-6">
+          <label className="mb-2 block text-sm font-medium text-gray-700">Javobingizni yozing:</label>
+          {/* TODO: bu yerga loyihangizdagi MathLive komponentini ulang */}
+          <input
+            type="text"
+            value={answer?.kind === "text" ? answer.value : ""}
+            onChange={(e) => onChangeText(e.target.value)}
+            placeholder="Javob..."
+            className="w-full max-w-md rounded-lg border border-gray-400 px-4 py-3 text-[16px] outline-none focus:border-black"
+          />
+        </div>
+      ) : (
+        <div className="mt-6 space-y-3">
+          {question.options.slice(0, 4).map((opt, i) => {
+            const selected = answer?.kind === "option" && answer.index === i;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => onSelectOption(i)}
+                className={[
+                  "flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-left transition",
+                  selected ? "border-2 border-black bg-gray-100" : "border-gray-400 hover:bg-gray-50",
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold",
+                    selected ? "border-black bg-black text-white" : "border-gray-500 text-gray-700",
+                  ].join(" ")}
+                >
+                  {LETTERS[i]}
+                </span>
+                <span className="text-[16px] leading-relaxed text-black">
+                  <MathContent latex={opt} inline />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Moslashtirish group (33-35 style — tap-to-select, IELTS-style)            */
+/* -------------------------------------------------------------------------- */
+
+function MatchingGroup({
+  group,
+  answers,
+  activeSub,
+  onSelectSub,
+  onSelectOption,
+}: {
+  group: Question[];
+  answers: Record<string, AnswerValue>;
+  activeSub: number;
+  onSelectSub: (i: number) => void;
+  onSelectOption: (questionId: string, idx: number) => void;
+}) {
+  const intro = group[0].groupIntro || group[0].text;
+  const options = group[0].options;
+  const activeQuestion = group[activeSub];
+
+  return (
+    <div className="grid gap-6 md:grid-cols-[1.15fr_1fr]">
+      <div>
+        {group[0].imageUrl && (
+          <img
+            src={group[0].imageUrl}
+            alt="Savol rasmi"
+            className="mb-4 max-h-72 rounded border border-gray-300"
+          />
+        )}
+        <div className="text-[16px] leading-relaxed text-black">
+          <MathContent latex={intro} />
+        </div>
+
+        <div className="mt-5 space-y-2">
+          {group.map((gq, i) => {
+            const a = answers[gq.id];
+            const pickedLabel = a?.kind === "option" ? LETTERS[a.index] : null;
+            const isActive = i === activeSub;
+            return (
+              <button
+                key={gq.id}
+                type="button"
+                onClick={() => onSelectSub(i)}
+                className={[
+                  "flex w-full items-start gap-3 rounded-lg border px-4 py-3 text-left transition",
+                  isActive ? "border-2 border-black bg-gray-100" : "border-gray-400 hover:bg-gray-50",
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold",
+                    pickedLabel ? "border-black bg-black text-white" : "border-gray-500 text-gray-700",
+                  ].join(" ")}
+                >
+                  {pickedLabel ?? "?"}
+                </span>
+                <span className="text-[15px] leading-relaxed text-black">
+                  <MathContent latex={gq.text} inline />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-gray-300 bg-gray-50 p-4 md:sticky md:top-4 md:h-fit">
+        <div className="mb-3 text-xs text-gray-600">
+          <span className="font-semibold text-black">{activeSub + 1}-savol</span> uchun javobni tanlang:
+        </div>
+        <div className="space-y-2">
+          {options.map((optText, idx) => {
+            const a = answers[activeQuestion.id];
+            const selected = a?.kind === "option" && a.index === idx;
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => onSelectOption(activeQuestion.id, idx)}
+                className={[
+                  "flex w-full items-center gap-3 rounded-lg border bg-white px-4 py-3 text-left transition",
+                  selected ? "border-2 border-black bg-gray-100" : "border-gray-400 hover:bg-gray-100",
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold",
+                    selected ? "border-black bg-black text-white" : "border-gray-500 text-gray-700",
+                  ].join(" ")}
+                >
+                  {LETTERS[idx]}
+                </span>
+                <span className="text-[15px] text-black">
+                  <MathContent latex={optText} inline />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Two-part ochiq group (36-a / 36-b — shown together on one screen)         */
+/* -------------------------------------------------------------------------- */
+
+function OpenGroup({
+  group,
+  answers,
+  onChangeText,
+}: {
+  group: Question[];
+  answers: Record<string, AnswerValue>;
+  onChangeText: (questionId: string, v: string) => void;
+}) {
+  return (
+    <div className="space-y-8">
+      {group.map((q, i) => {
+        const a = answers[q.id];
+        return (
+          <div key={q.id} className={i > 0 ? "border-t border-gray-200 pt-6" : ""}>
+            <div className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">
+              {PART_LABELS[i] ?? i + 1}) qism
+            </div>
+            <div className="text-[16px] leading-relaxed text-black">
+              <MathContent latex={q.text} />
+            </div>
+            {q.imageUrl && (
+              <img
+                src={q.imageUrl}
+                alt="Savol rasmi"
+                className="mt-4 max-h-72 rounded border border-gray-300"
+              />
+            )}
+            <div className="mt-4">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Javob: {PART_LABELS[i] ?? i + 1})
+              </label>
+              {/* TODO: bu yerga loyihangizdagi MathLive komponentini ulang */}
+              <input
+                type="text"
+                value={a?.kind === "text" ? a.value : ""}
+                onChange={(e) => onChangeText(q.id, e.target.value)}
+                placeholder="Javob..."
+                className="w-full max-w-md rounded-lg border border-gray-400 px-4 py-3 text-[16px] outline-none focus:border-black"
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
