@@ -23,10 +23,11 @@ const schema = z.object({
 });
 
 function LoginPage() {
-  const { signIn, loading: authLoading, isAuthenticated } = useAuth();
+  const { signIn, signInWithGoogle, loading: authLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -57,6 +58,16 @@ function LoginPage() {
       toast.error(err instanceof Error ? err.message : "Kirish amalga oshmadi");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onGoogleClick = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google orqali kirish amalga oshmadi");
+      setGoogleLoading(false);
     }
   };
 
@@ -128,6 +139,34 @@ function LoginPage() {
           className="gradient-bg w-full text-primary-foreground hover:opacity-90"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Kirish <ArrowRight className="h-4 w-4" /></>}
+        </Button>
+
+        <div className="my-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-white/10" />
+          <span className="text-xs text-muted-foreground">yoki</span>
+          <div className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          disabled={googleLoading}
+          onClick={onGoogleClick}
+          className="w-full border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
+        >
+          {googleLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" className="mr-2 h-4 w-4">
+                <path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.47c-.28 1.5-1.13 2.77-2.4 3.62v3h3.88c2.27-2.09 3.57-5.17 3.57-8.81z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.92l-3.88-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.26v3.11C3.24 21.3 7.28 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.27 14.27A7.2 7.2 0 0 1 4.9 12c0-.79.14-1.56.37-2.27V6.62H1.26A11.98 11.98 0 0 0 0 12c0 1.94.46 3.77 1.26 5.38l4.01-3.11z"/>
+                <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.6 4.58 1.79l3.44-3.44C17.95 1.19 15.24 0 12 0 7.28 0 3.24 2.7 1.26 6.62l4.01 3.11C6.22 6.88 8.87 4.77 12 4.77z"/>
+              </svg>
+              Google orqali kirish
+            </>
+          )}
         </Button>
       </form>
     </AuthShell>
