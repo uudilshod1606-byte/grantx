@@ -25,6 +25,7 @@ type AuthContextValue = {
   signIn: (input: { email: string; password: string; remember?: boolean }) => Promise<void>;
   signUp: (input: { fullName: string; email: string; password: string }) => Promise<{ needsEmailConfirmation: boolean }>;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 };
 
 export const INTIL_ADMIN_EMAIL = "dilshoduktamov34@gmail.com";
@@ -94,6 +95,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithGoogle: AuthContextValue["signInWithGoogle"] = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    });
+    if (error) throw new Error(error.message);
+  };
+
   const signOut: AuthContextValue["signOut"] = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -110,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
+    signInWithGoogle,
   }), [user, session, loading]);
 
   return (
