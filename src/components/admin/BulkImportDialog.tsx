@@ -20,7 +20,7 @@ import {
   type ExamKind,
 } from "@/lib/domain";
 
-const COLUMNS = [
+const REQUIRED_COLUMNS = [
   "imtihon_turi",
   "fan",
   "ball",
@@ -32,6 +32,19 @@ const COLUMNS = [
   "togri_javob",
 ] as const;
 
+const OPTION_COLUMNS = [
+  "variant_a",
+  "variant_b",
+  "variant_c",
+  "variant_d",
+  "variant_e",
+  "variant_f",
+] as const;
+
+const ALL_COLUMNS = [...REQUIRED_COLUMNS, "variant_e", "variant_f", "group_id", "group_intro"];
+
+const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
+
 type PreparedRow = {
   rowNumber: number;
   errors: string[];
@@ -41,10 +54,12 @@ type PreparedRow = {
   subjectName: string;
   points: number;
   text: string;
-  questionType: "yopiq" | "ochiq";
-  options: [string, string, string, string];
-  correctIndex: 0 | 1 | 2 | 3;
+  questionType: "yopiq" | "moslashtirish" | "ochiq";
+  options: string[];
+  correctIndex: number;
   answerText: string;
+  groupId: string | null;
+  groupIntro: string | null;
 };
 
 function norm(v: unknown) {
@@ -89,12 +104,13 @@ function findSubject(kind: ExamKind, block: DtmBlock | null, raw: string) {
   return null;
 }
 
-function parseAnswer(raw: string): 0 | 1 | 2 | 3 | null {
+function parseAnswerLetter(raw: string, optionCount: number): number | null {
   const v = raw.toLowerCase().trim();
-  const idx = ["a", "b", "c", "d"].indexOf(v);
-  if (idx >= 0) return idx as 0 | 1 | 2 | 3;
+  const letters = LETTERS.slice(0, optionCount).map((l) => l.toLowerCase());
+  const idx = letters.indexOf(v);
+  if (idx >= 0) return idx;
   const n = Number(v);
-  if (n >= 1 && n <= 4) return (n - 1) as 0 | 1 | 2 | 3;
+  if (n >= 1 && n <= optionCount) return n - 1;
   return null;
 }
 
@@ -123,7 +139,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
       if (raw.length === 0) throw new Error("Fayl bo'sh");
 
       const headers = Object.keys(raw[0]!).map((h) => h.trim().toLowerCase());
-      const missing = COLUMNS.filter((c) => !headers.includes(c));
+      const missing = REQUIRED_COLUMNS.filter((c) => !headers.includes(c));
       if (missing.length) {
         toast.error("Ustunlar yetishmayapti: " + missing.join(", "));
         setRows([]);
@@ -152,30 +168,48 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
           : defaultPointsFor(kind ?? "dtm", block);
         if (!(points > 0)) errors.push("ball noto'g'ri");
 
-        const optionCells = ["variant_a", "variant_b", "variant_c", "variant_d"].map(get);
-        const filledCount = optionCells.filter((o) => o).length;
-        const isOpenQuestion = filledCount === 0;
+        const optionCells = OPTION_COLUMNS.map(get);
+        const filledOptions = optionCells.filter((o) => o);
+        const groupId = get("group_id") || null;
+        const groupIntroRaw = get("group_intro");
 
-        if (!isOpenQuestion && filledCount < 4) errors.push("barcha variantlar to'ldirilmagan");
+        let questionType: "yopiq" | "moslashtirish" | "ochiq";
+        if (filledOptions.length === 0) {
+          questionType = "ochiq";
+        } else if (optionCells[4] || optionCells[5]) {
+          questionType = "moslashtirish";
+        } else if (filledOptions.length === 4) {
+          questionType = "yopiq";
+        } else {
+          errors.push("variantlar soni noto'g'ri (4 ta yoki 5-6 ta bo'lishi kerak)");
+          questionType = "yopiq";
+        }
+
         if (!get("savol_matni")) errors.push("savol_matni bo'sh");
 
         const rawAnswer = get("togri_javob");
         if (!rawAnswer) errors.push("togri_javob bo'sh");
 
-        let correctIndex: 0 | 1 | 2 | 3 | null = null;
-        if (!isOpenQuestion) {
-          correctIndex = parseAnswer(rawAnswer);
+        let correctIndex: number | null = null;
+        if (questionType === "yopiq") {
+          correctIndex = parseAnswerLetter(rawAnswer, 4);
           if (correctIndex === null) errors.push("togri_javob noto'g'ri (A/B/C/D)");
+        } else if (questionType === "moslashtirish") {
+          correctIndex = parseAnswerLetter(rawAnswer, filledOptions.length);
+          if (correctIndex === null) {
+            errors.push(`togri_javob noto'g'ri (A-${LETTERS[filledOptions.length - 1] ?? "F"})`);
+          }
         }
 
-        // Formulalar aynan admin paneldagi funksiya orqali HTML'ga aylantiriladi.
         const text = await renderTextWithLatexMarkers(stripLeadingNumber(get("savol_matni")));
-        const options = (await Promise.all(
-          optionCells.map((o) => renderTextWithLatexMarkers(o)),
-        )) as [string, string, string, string];
-        const answerText = isOpenQuestion && rawAnswer
-          ? await renderTextWithLatexMarkers(rawAnswer)
-          : "";
+        const options = await Promise.all(filledOptions.map((o) => renderTextWithLatexMarkers(o)));
+        const answerText =
+          questionType === "ochiq" && rawAnswer ? await renderTextWithLatexMarkers(rawAnswer) : "";
+        const groupIntro = groupId
+          ? await renderTextWithLatexMarkers(
+              groupIntroRaw ? stripLeadingNumber(groupIntroRaw) : get("savol_matni")
+            )
+          : null;
 
         prepared.push({
           rowNumber: i + 2,
@@ -186,10 +220,12 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
           subjectName: match?.subject.name ?? get("fan"),
           points,
           text,
-          questionType: isOpenQuestion ? "ochiq" : "yopiq",
+          questionType,
           options,
           correctIndex: correctIndex ?? 0,
           answerText,
+          groupId,
+          groupIntro,
         });
       }
       setRows(prepared);
@@ -221,6 +257,8 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
           options: r.questionType === "ochiq" ? [] : r.options,
           correctIndex: r.questionType === "ochiq" ? undefined : r.correctIndex,
           answerText: r.questionType === "ochiq" ? r.answerText : undefined,
+          groupId: r.groupId,
+          groupIntro: r.groupIntro,
         });
         ok++;
       } catch {
@@ -237,7 +275,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
 
   const downloadTemplate = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      [...COLUMNS],
+      ALL_COLUMNS,
       [
         "dtm-majburiy",
         "Ona tili",
@@ -247,7 +285,56 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         "2xy",
         "x-y",
         "0",
+        "",
+        "",
         "A",
+        "",
+        "",
+      ],
+      [
+        "milliy",
+        "Matematika",
+        "2.7",
+        "33. Ikkala konuslar hajmlari yig'indisi shar hajmidan necha marta kichik?",
+        "2",
+        "1,5",
+        "4,(6)",
+        "7",
+        "3",
+        "6,(6)",
+        "B",
+        "33-35",
+        "Rasmda asos radiusi 3 sm va balandligi 14 sm bo'lgan silindr ichiga...",
+      ],
+      [
+        "milliy",
+        "Matematika",
+        "1.65",
+        "36-a. Tenglama nechta haqiqiy ildizga ega?",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "1",
+        "36",
+        "",
+      ],
+      [
+        "milliy",
+        "Matematika",
+        "1.65",
+        "36-b. Tenglamani barcha ildizlari yig'indisini toping.",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "5/4",
+        "36",
+        "",
       ],
     ]);
     const wb = XLSX.utils.book_new();
@@ -276,14 +363,17 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         <div className="space-y-4">
           <div className="rounded-xl border border-dashed border-border p-4 text-sm">
             <p className="text-muted-foreground">
-              Ustunlar: <span className="text-foreground">{COLUMNS.join(", ")}</span>
+              Ustunlar: <span className="text-foreground">{ALL_COLUMNS.join(", ")}</span>
             </p>
             <p className="mt-2 text-muted-foreground">
               Formulalar <code className="text-foreground">[[LATEX: x^2+y^2]]</code> ko'rinishida
-              yoziladi — import paytida ular avtomatik formulaga aylantiriladi. Ochiq (yozma
-              javob) savollar uchun variant ustunlarini bo'sh qoldiring, javobni to'g'ridan-to'g'ri
-              "togri_javob" ustuniga yozing. Savol matni boshidagi raqam (masalan "14. ") avtomatik
-              olib tashlanadi.
+              yoziladi. Ochiq savollar uchun variant ustunlarini bo'sh qoldiring. Moslashtirish
+              turidagi savollar (masalan 33-35) uchun <code className="text-foreground">variant_e</code>,{" "}
+              <code className="text-foreground">variant_f</code> ustunlarini ham to'ldiring va bir xil{" "}
+              <code className="text-foreground">group_id</code> bering (masalan "33-35"). Bir savolning
+              ikki qismini (36-a, 36-b) bitta ekranda ko'rsatish uchun ham bir xil{" "}
+              <code className="text-foreground">group_id</code> bering (masalan "36"). Savol matni
+              boshidagi raqam avtomatik olib tashlanadi.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <label className="inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground">
@@ -343,7 +433,13 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
                   >
                     <div className="mb-1 text-xs text-muted-foreground">
                       {r.rowNumber}-qator · {r.kind === "dtm" ? "DTM" : "Milliy"} ·{" "}
-                      {r.subjectName} · {r.points} ball · {r.questionType === "ochiq" ? "Ochiq" : "Yopiq"}
+                      {r.subjectName} · {r.points} ball ·{" "}
+                      {r.questionType === "ochiq"
+                        ? "Ochiq"
+                        : r.questionType === "moslashtirish"
+                          ? "Moslashtirish"
+                          : "Yopiq"}
+                      {r.groupId ? ` · Guruh: ${r.groupId}` : ""}
                     </div>
                     <MathContent latex={r.text} />
                     {r.questionType === "ochiq" ? (
@@ -361,9 +457,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
                               (i === r.correctIndex ? "bg-emerald-500/15" : "bg-muted/50")
                             }
                           >
-                            <span className="mr-1 font-semibold">
-                              {["A", "B", "C", "D"][i]}.
-                            </span>
+                            <span className="mr-1 font-semibold">{LETTERS[i]}.</span>
                             <MathContent latex={o} inline />
                           </li>
                         ))}
