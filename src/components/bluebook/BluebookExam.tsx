@@ -72,9 +72,31 @@ export function BluebookExam({
   onExit,
   onComplete,
 }: BluebookExamProps) {
-  // Group consecutive same-groupId rows (33-35 moslashtirish, 36-a/36-b ochiq).
+  // Grouped questions are rendered on one screen.
+  // For National Certificate matching sets (33/34/35), each sub-question
+  // still gets its own logical navigator position. Multi-part open groups
+  // (for example 36-a/36-b) remain one logical position.
   const slots = useMemo(() => buildQuestionSlots(questions), [questions]);
-  const total = slots.length;
+
+  const navigationItems = useMemo(() => {
+    const items: { slotIndex: number; subIndex: number; question: Question }[] = [];
+
+    slots.forEach((slot, slotIndex) => {
+      const isMatchingGroup = slot.length > 1 && slot[0]?.questionType === "moslashtirish";
+
+      if (isMatchingGroup) {
+        slot.forEach((question, subIndex) => {
+          items.push({ slotIndex, subIndex, question });
+        });
+      } else if (slot[0]) {
+        items.push({ slotIndex, subIndex: 0, question: slot[0] });
+      }
+    });
+
+    return items;
+  }, [slots]);
+
+  const total = navigationItems.length;
 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
@@ -94,6 +116,22 @@ export function BluebookExam({
 
   const group = slots[index] ?? [];
   const flagKey = group[0]?.groupId ? `group:${group[0].groupId}` : group[0]?.id ?? String(index);
+
+  const activeNavigationIndex = useMemo(() => {
+    const found = navigationItems.findIndex(
+      (item) => item.slotIndex === index && item.subIndex === activeMatchSub,
+    );
+    return found >= 0 ? found : 0;
+  }, [navigationItems, index, activeMatchSub]);
+
+  const activeQuestionNumber = activeNavigationIndex + 1;
+
+  const goToNavigationItem = (navigationIndex: number) => {
+    const item = navigationItems[navigationIndex];
+    if (!item) return;
+    setIndex(item.slotIndex);
+    setActiveMatchSub(item.subIndex);
+  };
 
   useEffect(() => {
     setActiveMatchSub(0);
@@ -360,7 +398,7 @@ export function BluebookExam({
           <div className="mx-auto max-w-3xl">
             <div className="mb-5 flex items-center gap-3 border-b border-gray-300 pb-3">
               <span className="flex h-7 w-7 items-center justify-center bg-black text-sm font-bold text-white">
-                {index + 1}
+                {activeQuestionNumber}
               </span>
               <button
                 type="button"
@@ -425,7 +463,7 @@ export function BluebookExam({
             onClick={() => setGridOpen((v) => !v)}
             className="inline-flex items-center gap-2 rounded bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
           >
-            Savol {index + 1} / {total}
+            Savol {activeQuestionNumber} / {total}
             <ChevronUp className={["h-4 w-4 transition", gridOpen ? "rotate-180" : ""].join(" ")} />
           </button>
         </div>
@@ -433,13 +471,13 @@ export function BluebookExam({
         <div className="flex justify-end gap-2 md:w-1/4">
           <button
             type="button"
-            disabled={index === 0}
-            onClick={() => setIndex((i) => Math.max(0, i - 1))}
+            disabled={activeNavigationIndex === 0}
+            onClick={() => goToNavigationItem(activeNavigationIndex - 1)}
             className="rounded-full border border-gray-400 px-4 py-2 text-sm font-semibold text-black disabled:opacity-40 md:px-5"
           >
             Orqaga
           </button>
-          {index === total - 1 ? (
+          {activeNavigationIndex === total - 1 ? (
             <button
               type="button"
               onClick={() => setSubmitted(true)}
@@ -450,7 +488,7 @@ export function BluebookExam({
           ) : (
             <button
               type="button"
-              onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}
+              onClick={() => goToNavigationItem(activeNavigationIndex + 1)}
               className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 md:px-5"
             >
               Keyingi
@@ -481,15 +519,71 @@ export function BluebookExam({
               </span>
             </div>
             <div className="grid max-h-56 grid-cols-8 gap-2 overflow-y-auto sm:grid-cols-10">
-              {slots.map((g, i) => {
+              {slots.map((g, slotIndex) => {
+                const isMatchingGroup = g.length > 1 && g[0]?.questionType === "moslashtirish";
+                const key = g[0]?.groupId ? `group:${g[0].groupId}` : g[0]?.id ?? String(slotIndex);
+                const currentGroup = slotIndex === index;
+
+                if (isMatchingGroup) {
+                  return (
+                    <div
+                      key={key}
+                      className={[
+                        "relative col-span-3 flex h-8 items-stretch border text-xs font-semibold",
+                        currentGroup ? "border-2 border-dashed border-black" : "border-gray-400",
+                        "bg-white text-black",
+                      ].join(" ")}
+                    >
+                      {g.map((question, subIndex) => {
+                        const navigationIndex = navigationItems.findIndex(
+                          (item) => item.slotIndex === slotIndex && item.subIndex === subIndex,
+                        );
+                        const questionNumber = navigationIndex + 1;
+                        const answered = answers[question.id] !== undefined;
+                        const current =
+                          currentGroup && activeMatchSub === subIndex;
+
+                        return (
+                          <button
+                            key={question.id}
+                            type="button"
+                            onClick={() => {
+                              setIndex(slotIndex);
+                              setActiveMatchSub(subIndex);
+                              setGridOpen(false);
+                            }}
+                            className={[
+                              "relative flex h-full min-w-0 flex-1 items-center justify-center",
+                              subIndex > 0 ? "border-l border-gray-300" : "",
+                              answered ? "bg-black text-white" : "bg-white text-black",
+                              current ? "font-bold ring-1 ring-inset ring-black" : "",
+                            ].join(" ")}
+                          >
+                            {questionNumber}
+                            {flags[key] && subIndex === 0 && (
+                              <Flag className="absolute -right-1 -top-1 h-3 w-3 fill-white stroke-black" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                const navigationIndex = navigationItems.findIndex(
+                  (item) => item.slotIndex === slotIndex && item.subIndex === 0,
+                );
+                const questionNumber = navigationIndex + 1;
                 const answered = g.length > 0 && g.every((q) => answers[q.id] !== undefined);
-                const current = i === index;
-                const key = g[0]?.groupId ? `group:${g[0].groupId}` : g[0]?.id ?? String(i);
+                const current = currentGroup;
+
                 return (
                   <button
                     key={key}
+                    type="button"
                     onClick={() => {
-                      setIndex(i);
+                      setIndex(slotIndex);
+                      setActiveMatchSub(0);
                       setGridOpen(false);
                     }}
                     className={[
@@ -498,7 +592,7 @@ export function BluebookExam({
                       answered ? "bg-black text-white" : "bg-white text-black",
                     ].join(" ")}
                   >
-                    {i + 1}
+                    {questionNumber}
                     {flags[key] && (
                       <Flag className="absolute -right-1 -top-1 h-3 w-3 fill-white stroke-black" />
                     )}
