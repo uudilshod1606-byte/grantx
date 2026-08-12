@@ -85,11 +85,15 @@ export type Question = {
   /** Optional image (data URL or remote URL). */
   imageUrl?: string;
   text: string;
-  questionType?: "yopiq" | "moslashtirish" | "ochiq";
+  questionType?: "yopiq" | "moslashtirish" | "ochiq" | "esse";
   options: string[];
   correctIndex?: number;
   explanation?: string;
   answerText?: string;
+  /** Full written-out solution text (Fizika/Kimyo/Biologiya "yozma" savollar, yoki Esse baholash mezoni). */
+  solution?: string;
+  /** Source/reading passage text (Ona tili va adabiyot tahlil va esse savollari uchun). */
+  passageText?: string;
   /**
    * Rows that share the same non-null groupId are rendered together on one
    * screen (33-35 moslashtirish set, or a two-part 36-45 ochiq question).
@@ -311,11 +315,14 @@ function rowToQuestion(row: Record<string, unknown>): Question {
     points: row.points != null ? Number(row.points) : undefined,
     imageUrl: (row.image_url as string | undefined) ?? undefined,
    text: String(row.text),
-    questionType: (row.question_type as "yopiq" | "moslashtirish" | "ochiq" | undefined) ?? "yopiq",
+    questionType:
+      (row.question_type as "yopiq" | "moslashtirish" | "ochiq" | "esse" | undefined) ?? "yopiq",
     options: (row.options as string[]) ?? [],
     correctIndex: row.correct_index != null ? Number(row.correct_index) : undefined,
     answerText: (row.answer_text as string | undefined) ?? undefined,
     explanation: (row.explanation as string | undefined) ?? undefined,
+    solution: (row.solution as string | undefined) ?? undefined,
+    passageText: (row.passage_text as string | undefined) ?? undefined,
     groupId: (row.group_id as string | null) ?? null,
     groupIntro: (row.group_intro as string | null) ?? null,
     createdAt: String(row.created_at),
@@ -338,6 +345,8 @@ function questionToRow(q: Partial<Question>): Record<string, unknown> {
   if (q.questionType !== undefined) row.question_type = q.questionType;
   if (q.answerText !== undefined) row.answer_text = q.answerText;
   if (q.explanation !== undefined) row.explanation = q.explanation;
+  if (q.solution !== undefined) row.solution = q.solution;
+  if (q.passageText !== undefined) row.passage_text = q.passageText;
   if (q.groupId !== undefined) row.group_id = q.groupId;
   if (q.groupIntro !== undefined) row.group_intro = q.groupIntro;
   return row;
