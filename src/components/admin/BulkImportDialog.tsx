@@ -41,9 +41,34 @@ const OPTION_COLUMNS = [
   "variant_f",
 ] as const;
 
-const ALL_COLUMNS = [...REQUIRED_COLUMNS, "variant_e", "variant_f", "group_id", "group_intro"];
+// "savol_turi", "yechim" va "asosiy_matn" ixtiyoriy ustunlar — eski fayllarda
+// bo'lmasa ham hech narsa buzilmaydi, faqat qo'shimcha imkoniyat beradi.
+const ALL_COLUMNS = [
+  ...REQUIRED_COLUMNS,
+  "variant_e",
+  "variant_f",
+  "group_id",
+  "group_intro",
+  "savol_turi",
+  "yechim",
+  "asosiy_matn",
+];
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
+
+type QuestionType = "yopiq" | "moslashtirish" | "ochiq" | "esse";
+
+// Excel'dagi "savol_turi" ustunidagi qiymatlarni ilova ichidagi turlarga moslashtiradi.
+// Bo'sh yoki tanilmagan qiymat bo'lsa — pastdagi eski heuristikaga qaytiladi.
+const SAVOL_TURI_MAP: Record<string, QuestionType> = {
+  yopiq: "yopiq",
+  moslashtirish: "moslashtirish",
+  ochiq: "ochiq",
+  ochiq_bitta: "ochiq",
+  ochiq_qism: "ochiq",
+  yozma: "ochiq",
+  esse: "esse",
+};
 
 type PreparedRow = {
   rowNumber: number;
@@ -54,10 +79,12 @@ type PreparedRow = {
   subjectName: string;
   points: number;
   text: string;
-  questionType: "yopiq" | "moslashtirish" | "ochiq";
+  questionType: QuestionType;
   options: string[];
   correctIndex: number;
   answerText: string;
+  solution: string;
+  passageText: string;
   groupId: string | null;
   groupIntro: string | null;
 };
@@ -173,8 +200,15 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         const groupId = get("group_id") || null;
         const groupIntroRaw = get("group_intro");
 
-        let questionType: "yopiq" | "moslashtirish" | "ochiq";
-        if (filledOptions.length === 0) {
+        // Avval Exceldagi aniq "savol_turi" ustuniga qaraymiz. Bo'sh/tanilmagan
+        // bo'lsa — eski avtomatik aniqlash mantig'iga qaytamiz.
+        const savolTuriRaw = get("savol_turi").toLowerCase().replace(/\s+/g, "_");
+        const explicitType = SAVOL_TURI_MAP[savolTuriRaw];
+
+        let questionType: QuestionType;
+        if (explicitType) {
+          questionType = explicitType;
+        } else if (filledOptions.length === 0) {
           questionType = "ochiq";
         } else if (optionCells[4] || optionCells[5]) {
           questionType = "moslashtirish";
@@ -188,7 +222,8 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         if (!get("savol_matni")) errors.push("savol_matni bo'sh");
 
         const rawAnswer = get("togri_javob");
-        if (!rawAnswer) errors.push("togri_javob bo'sh");
+        // Esse turida to'g'ri javob shart emas (baholash qo'lda bo'ladi).
+        if (!rawAnswer && questionType !== "esse") errors.push("togri_javob bo'sh");
 
         let correctIndex: number | null = null;
         if (questionType === "yopiq") {
@@ -204,12 +239,18 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         const text = await renderTextWithLatexMarkers(stripLeadingNumber(get("savol_matni")));
         const options = await Promise.all(filledOptions.map((o) => renderTextWithLatexMarkers(o)));
         const answerText =
-          questionType === "ochiq" && rawAnswer ? await renderTextWithLatexMarkers(rawAnswer) : "";
+          (questionType === "ochiq" || questionType === "esse") && rawAnswer
+            ? await renderTextWithLatexMarkers(rawAnswer)
+            : "";
         const groupIntro = groupId
           ? await renderTextWithLatexMarkers(
               groupIntroRaw ? stripLeadingNumber(groupIntroRaw) : get("savol_matni")
             )
           : null;
+        const solutionRaw = get("yechim");
+        const solution = solutionRaw ? await renderTextWithLatexMarkers(solutionRaw) : "";
+        const passageRaw = get("asosiy_matn");
+        const passageText = passageRaw ? await renderTextWithLatexMarkers(passageRaw) : "";
 
         prepared.push({
           rowNumber: i + 2,
@@ -224,6 +265,8 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
           options,
           correctIndex: correctIndex ?? 0,
           answerText,
+          solution,
+          passageText,
           groupId,
           groupIntro,
         });
@@ -254,9 +297,13 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
           block: r.block,
           points: r.points,
           questionType: r.questionType,
-          options: r.questionType === "ochiq" ? [] : r.options,
-          correctIndex: r.questionType === "ochiq" ? undefined : r.correctIndex,
-          answerText: r.questionType === "ochiq" ? r.answerText : undefined,
+          options: r.questionType === "yopiq" || r.questionType === "moslashtirish" ? r.options : [],
+          correctIndex:
+            r.questionType === "yopiq" || r.questionType === "moslashtirish" ? r.correctIndex : undefined,
+          answerText:
+            r.questionType === "ochiq" || r.questionType === "esse" ? r.answerText : undefined,
+          solution: r.solution || undefined,
+          passageText: r.passageText || undefined,
           groupId: r.groupId,
           groupIntro: r.groupIntro,
         });
@@ -290,6 +337,9 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         "A",
         "",
         "",
+        "yopiq",
+        "",
+        "",
       ],
       [
         "milliy",
@@ -305,35 +355,62 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         "B",
         "33-35",
         "Rasmda asos radiusi 3 sm va balandligi 14 sm bo'lgan silindr ichiga...",
-      ],
-      [
-        "milliy",
-        "Matematika",
-        "1.65",
-        "36-a. Tenglama nechta haqiqiy ildizga ega?",
+        "moslashtirish",
         "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "1",
-        "36",
         "",
       ],
       [
         "milliy",
-        "Matematika",
-        "1.65",
-        "36-b. Tenglamani barcha ildizlari yig'indisini toping.",
+        "Kimyo",
+        "1.5",
+        "36. 5,6 l (n.sh.) metan to'liq yonganda hosil bo'lgan CO2 massasini (g) toping.",
         "",
         "",
         "",
         "",
+        "11",
         "",
         "",
-        "5/4",
         "36",
+        "",
+        "ochiq_bitta",
+        "",
+        "",
+      ],
+      [
+        "milliy",
+        "Kimyo",
+        "2.5",
+        "41. 200 g 20% li tuz eritmasiga 50 g suv qo'shildi. Yangi konsentratsiyani toping.",
+        "",
+        "",
+        "",
+        "",
+        "16%",
+        "",
+        "",
+        "41",
+        "",
+        "yozma",
+        "Tuz massasi: 200*0,2=40 g. Yangi eritma massasi 250 g. 40/250*100%=16%",
+        "",
+      ],
+      [
+        "milliy",
+        "Ona tili va adabiyot",
+        "5",
+        "45. \"Vatanni sevmoq — iymondandir\" mavzusida esse yozing (kamida 150 so'z).",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "45",
+        "",
+        "esse",
+        "Baholash mezoni: mavzuga mosligi, mantiqiylik, savodxonlik, hajm.",
         "",
       ],
     ]);
@@ -374,6 +451,18 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
               ikki qismini (36-a, 36-b) bitta ekranda ko'rsatish uchun ham bir xil{" "}
               <code className="text-foreground">group_id</code> bering (masalan "36"). Savol matni
               boshidagi raqam avtomatik olib tashlanadi.
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              <span className="text-foreground">savol_turi</span> ustuni ixtiyoriy — aniq belgilash
+              uchun: <code className="text-foreground">yopiq</code>,{" "}
+              <code className="text-foreground">moslashtirish</code>,{" "}
+              <code className="text-foreground">ochiq_bitta</code>,{" "}
+              <code className="text-foreground">yozma</code>,{" "}
+              <code className="text-foreground">esse</code>. Bo'sh qoldirilsa, tur variant/javob
+              ustunlariga qarab avtomatik aniqlanadi. <span className="text-foreground">yechim</span>{" "}
+              — to'liq yozma yechim (Fizika/Kimyo/Biologiya "yozma" savollar uchun).{" "}
+              <span className="text-foreground">asosiy_matn</span> — Ona tilida tahlil/esse uchun
+              o'qish parchasi.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <label className="inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground">
@@ -434,19 +523,31 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
                     <div className="mb-1 text-xs text-muted-foreground">
                       {r.rowNumber}-qator · {r.kind === "dtm" ? "DTM" : "Milliy"} ·{" "}
                       {r.subjectName} · {r.points} ball ·{" "}
-                      {r.questionType === "ochiq"
-                        ? "Ochiq"
-                        : r.questionType === "moslashtirish"
-                          ? "Moslashtirish"
-                          : "Yopiq"}
+                      {r.questionType === "esse"
+                        ? "Esse"
+                        : r.questionType === "ochiq"
+                          ? "Ochiq"
+                          : r.questionType === "moslashtirish"
+                            ? "Moslashtirish"
+                            : "Yopiq"}
                       {r.groupId ? ` · Guruh: ${r.groupId}` : ""}
                     </div>
                     <MathContent latex={r.text} />
-                    {r.questionType === "ochiq" ? (
-                      <div className="mt-2 rounded-md bg-emerald-500/15 px-2 py-1 text-xs">
-                        <span className="mr-1 font-semibold">Javob:</span>
-                        <MathContent latex={r.answerText} inline />
-                      </div>
+                    {r.questionType === "ochiq" || r.questionType === "esse" ? (
+                      <>
+                        {r.answerText && (
+                          <div className="mt-2 rounded-md bg-emerald-500/15 px-2 py-1 text-xs">
+                            <span className="mr-1 font-semibold">Javob:</span>
+                            <MathContent latex={r.answerText} inline />
+                          </div>
+                        )}
+                        {r.solution && (
+                          <div className="mt-2 rounded-md bg-muted/50 px-2 py-1 text-xs">
+                            <span className="mr-1 font-semibold">Yechim:</span>
+                            <MathContent latex={r.solution} inline />
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <ol className="mt-2 grid gap-1 sm:grid-cols-2">
                         {r.options.map((o, i) => (
