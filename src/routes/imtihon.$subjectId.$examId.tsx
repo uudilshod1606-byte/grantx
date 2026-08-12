@@ -4,7 +4,7 @@ import { attemptsRepo, buildQuestionSlots, questionsRepo, type Question } from "
 import { useAuth } from "@/lib/auth";
 import { BluebookExam } from "@/components/bluebook/BluebookExam";
 import { FullscreenGate } from "@/components/bluebook/FullscreenGate";
-import { MILLIY_SUBJECTS, QUESTIONS_PER_EXAM } from "@/lib/milliy";
+import { MILLIY_SUBJECTS } from "@/lib/milliy";
 
 const DURATION_MINUTES = 90;
 
@@ -55,16 +55,16 @@ function BluebookExamPage() {
 
   const questions = useMemo(() => {
     if (!all) return [];
+    // Endi savollar TAXMIN qilinmaydi (qo'shilish tartibi bo'yicha kesib
+    // olinmaydi) — har bir savolning o'zida saqlangan aniq "examVariant"
+    // (Imtihon raqami) bo'yicha filtrlanadi. examVariant belgilanmagan
+    // (eski) savollar 1-imtihon deb hisoblanadi — orqaga moslik uchun.
     const pool = all
       .filter((q) => q.kind === "milliy" && q.subjectId === subjectId)
+      .filter((q) => (q.examVariant ?? 1) === variant)
       .slice()
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-    // Slice by logical question count (slots), not raw row count — a
-    // moslashtirish/ochiq group counts as ONE question even though it spans
-    // several database rows.
-    const slots = buildQuestionSlots(pool);
-    const pageSlots = slots.slice((variant - 1) * QUESTIONS_PER_EXAM, variant * QUESTIONS_PER_EXAM);
-    return pageSlots.flat();
+    return pool;
   }, [all, subjectId, variant]);
 
   const exit = () => navigate({ to: "/milliy-sertifikat/$subjectId", params: { subjectId } });
