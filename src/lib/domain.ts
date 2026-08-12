@@ -95,6 +95,12 @@ export type Question = {
   /** Source/reading passage text (Ona tili va adabiyot tahlil va esse savollari uchun). */
   passageText?: string;
   /**
+   * Milliy Sertifikat uchun — savol qaysi imtihon variantiga tegishli
+   * (1 = Imtihon 1, 2 = Imtihon 2, ...). Bo'sh (undefined) bo'lsa, 1-imtihon
+   * deb hisoblanadi (eski savollar bilan orqaga mos bo'lishi uchun).
+   */
+  examVariant?: number;
+  /**
    * Rows that share the same non-null groupId are rendered together on one
    * screen (33-35 moslashtirish set, or a two-part 36-45 ochiq question).
    */
@@ -323,6 +329,7 @@ function rowToQuestion(row: Record<string, unknown>): Question {
     explanation: (row.explanation as string | undefined) ?? undefined,
     solution: (row.solution as string | undefined) ?? undefined,
     passageText: (row.passage_text as string | undefined) ?? undefined,
+    examVariant: row.exam_variant != null ? Number(row.exam_variant) : undefined,
     groupId: (row.group_id as string | null) ?? null,
     groupIntro: (row.group_intro as string | null) ?? null,
     createdAt: String(row.created_at),
@@ -347,6 +354,7 @@ function questionToRow(q: Partial<Question>): Record<string, unknown> {
   if (q.explanation !== undefined) row.explanation = q.explanation;
   if (q.solution !== undefined) row.solution = q.solution;
   if (q.passageText !== undefined) row.passage_text = q.passageText;
+  if (q.examVariant !== undefined) row.exam_variant = q.examVariant;
   if (q.groupId !== undefined) row.group_id = q.groupId;
   if (q.groupIntro !== undefined) row.group_intro = q.groupIntro;
   return row;
