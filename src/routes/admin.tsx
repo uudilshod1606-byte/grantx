@@ -468,6 +468,7 @@ function QuestionFormDialog({
   });
   const [groupId, setGroupId] = useState(question?.groupId ?? "");
   const [groupIntro, setGroupIntro] = useState(question?.groupIntro ?? "");
+  const [examVariant, setExamVariant] = useState<number>(question?.examVariant ?? 1);
   const [answerText, setAnswerText] = useState(question?.answerText ?? "");
   const [solution, setSolution] = useState(question?.solution ?? "");
   const [passageText, setPassageText] = useState(question?.passageText ?? "");
@@ -563,6 +564,7 @@ function QuestionFormDialog({
       explanation: explanation.trim() || undefined,
       groupId: questionType === "moslashtirish" ? groupId.trim() : (groupId.trim() || null),
       groupIntro: groupIntro.trim() || null,
+      examVariant: kind === "milliy" ? examVariant : undefined,
     };
     (isEdit
       ? questionsRepo.update(question!.id, payload)
@@ -667,6 +669,27 @@ function QuestionFormDialog({
             />
           </div>
         </div>
+
+        {kind === "milliy" && (
+          <div className="rounded-xl border border-accent/40 bg-accent/5 p-3">
+            <label className="text-xs font-medium text-foreground">
+              Imtihon raqami (masalan: 1 = Imtihon 1, 2 = Imtihon 2)
+            </label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Bu savol qaysi imtihon variantiga tegishli ekanini bildiradi. Har bir
+              imtihon uchun aynan shu raqamni to'g'ri kiriting — aks holda savollar
+              boshqa imtihonga aralashib qolishi mumkin.
+            </p>
+            <Input
+              type="number"
+              min="1"
+              step="1"
+              value={examVariant}
+              onChange={(e) => setExamVariant(Math.max(1, Number(e.target.value) || 1))}
+              className="mt-2 w-32"
+            />
+          </div>
+        )}
 
         <div>
           <label className="text-xs text-muted-foreground">Savol turi</label>
