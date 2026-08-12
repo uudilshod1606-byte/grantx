@@ -418,6 +418,13 @@ function subjectNameFor(kind: ExamKind, subjectId: string, block?: DtmBlock | nu
 }
 
 type FormQuestionType = "yopiq" | "moslashtirish" | "ochiq" | "esse";
+const MATCH_LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
+
+function padOptions(options: string[], size: number): string[] {
+  const out = [...options];
+  while (out.length < size) out.push("");
+  return out.slice(0, size);
+}
 
 function QuestionFormDialog({
   onSaved,
@@ -437,15 +444,30 @@ function QuestionFormDialog({
       : ADMIN_SUBJECTS.dtmMain;
   const [subjectId, setSubjectId] = useState(question?.subjectId ?? subjectPool[0].id);
   const [text, setText] = useState(question?.text ?? "");
-  const [opts, setOpts] = useState<string[]>(
-    question ? [...question.options] : ["", "", "", ""],
-  );
   const [questionType, setQuestionType] = useState<FormQuestionType>(
     (question?.questionType as FormQuestionType) ?? "yopiq",
   );
-  const [correctIndex, setCorrectIndex] = useState<0 | 1 | 2 | 3>(
-    (question?.correctIndex as 0 | 1 | 2 | 3) ?? 0,
+  // opts: har doim 6 uzunlikdagi massiv sifatida saqlanadi (A-F).
+  // "Yopiq" turida faqat A-D (0-3) ko'rsatiladi/talab qilinadi.
+  // "Moslashtirish" turida to'ldirilgan barcha katakchalar (bo'sh bo'lmaganlari)
+  // haqiqiy variant sifatida saqlanadi, correctIndex esa o'sha to'ldirilgan
+  // ro'yxat ichidagi o'rniga qarab hisoblanadi.
+  const [opts, setOpts] = useState<string[]>(
+    question ? padOptions(question.options, 6) : ["", "", "", "", "", ""],
   );
+  // rawCorrectSlot — foydalanuvchi bosgan tugma A..F ning 0-5 oralig'idagi indeksi.
+  const [rawCorrectSlot, setRawCorrectSlot] = useState<number>(() => {
+    if (!question || question.correctIndex == null) return 0;
+    // Mavjud savolda correctIndex to'ldirilgan variantlar ro'yxatidagi o'rin edi —
+    // uni xom (A-F) slotga qaytarib beramiz.
+    const filledIdx: number[] = [];
+    question.options.forEach((o, i) => {
+      if (o && o.trim()) filledIdx.push(i);
+    });
+    return filledIdx[question.correctIndex] ?? 0;
+  });
+  const [groupId, setGroupId] = useState(question?.groupId ?? "");
+  const [groupIntro, setGroupIntro] = useState(question?.groupIntro ?? "");
   const [answerText, setAnswerText] = useState(question?.answerText ?? "");
   const [solution, setSolution] = useState(question?.solution ?? "");
   const [passageText, setPassageText] = useState(question?.passageText ?? "");
@@ -460,6 +482,7 @@ function QuestionFormDialog({
   // Ona tili va adabiyot fani tanlanganda "Asosiy matn" maydoni ko'rsatiladi
   // (tahlil/esse savollari uchun o'qish parchasi).
   const showPassageField = subjectId === "ona-tili-adabiyot";
+  const optionSlots = questionType === "yopiq" ? 4 : questionType === "moslashtirish" ? 6 : 0;
 
   // When kind/block changes, sync subject and default points.
   const onKindChange = (v: ExamKind) => {
@@ -496,10 +519,32 @@ function QuestionFormDialog({
 
   const submit = () => {
     if (!text.trim()) return toast.error("Savol matnini kiriting");
-    if (questionType === "yopiq" && opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
-    // Esse turida javob shart emas — u qo'lda baholanadi.
-    if (questionType !== "yopiq" && questionType !== "esse" && !answerText.trim())
-      return toast.error("Javobni kiriting");
+
+    let finalOptions: string[] = [];
+    let finalCorrectIndex: number | undefined;
+
+    if (questionType === "yopiq") {
+      const four = opts.slice(0, 4);
+      if (four.some((o) => !o.trim())) return toast.error("Barcha 4 variantni to'ldiring");
+      finalOptions = four;
+      finalCorrectIndex = rawCorrectSlot;
+    } else if (questionType === "moslashtirish") {
+      const filled = opts
+        .map((o, i) => ({ text: o.trim(), slot: i }))
+        .filter((x) => x.text.length > 0);
+      if (filled.length < 2) return toast.error("Kamida 2 ta variant kiriting (odatda 6 ta: A-F)");
+      const idxInFiltered = filled.findIndex((x) => x.slot === rawCorrectSlot);
+      if (idxInFiltered === -1) return toast.error("To'g'ri javob sifatida bo'sh variantni tanlamang");
+      finalOptions = filled.map((x) => x.text);
+      finalCorrectIndex = idxInFiltered;
+      if (!groupId.trim()) {
+        return toast.error("Moslashtirish savollari uchun Guruh ID kiriting (masalan 33-35)");
+      }
+    } else {
+      // ochiq / esse
+      if (questionType !== "esse" && !answerText.trim()) return toast.error("Javobni kiriting");
+    }
+
     if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
     setSaving(true);
     const payload = {
@@ -510,12 +555,14 @@ function QuestionFormDialog({
       points,
       imageUrl,
       questionType,
-      options: questionType === "yopiq" ? opts : [],
-      correctIndex: questionType === "yopiq" ? correctIndex : undefined,
-      answerText: questionType !== "yopiq" ? answerText.trim() || undefined : undefined,
+      options: finalOptions,
+      correctIndex: questionType === "yopiq" || questionType === "moslashtirish" ? finalCorrectIndex : undefined,
+      answerText: questionType === "ochiq" || questionType === "esse" ? answerText.trim() || undefined : undefined,
       solution: solution.trim() || undefined,
       passageText: passageText.trim() || undefined,
       explanation: explanation.trim() || undefined,
+      groupId: questionType === "moslashtirish" ? groupId.trim() : (groupId.trim() || null),
+      groupIntro: groupIntro.trim() || null,
     };
     (isEdit
       ? questionsRepo.update(question!.id, payload)
@@ -627,12 +674,29 @@ function QuestionFormDialog({
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="yopiq">Yopiq (A/B/C/D variantli)</SelectItem>
-              <SelectItem value="moslashtirish">Moslashtirish (umumiy javob banki)</SelectItem>
+              <SelectItem value="moslashtirish">Moslashtirish (A-F, umumiy javob banki)</SelectItem>
               <SelectItem value="ochiq">Ochiq (yozma javob / bitta javob / to'liq yechim)</SelectItem>
               <SelectItem value="esse">Esse (mavzu, aniq javob shart emas)</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {(questionType === "moslashtirish" || (questionType !== "yopiq" && groupId)) && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="text-xs text-muted-foreground">
+                Guruh ID {questionType === "moslashtirish" ? "(majburiy, masalan 33-35)" : "(ixtiyoriy, masalan 36)"}
+              </label>
+              <Input value={groupId} onChange={(e) => setGroupId(e.target.value)} placeholder="masalan: 33-35" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">
+                Guruh sharti (faqat guruhning 1-savolida ko'rsatiladi, ixtiyoriy)
+              </label>
+              <Input value={groupIntro} onChange={(e) => setGroupIntro(e.target.value)} placeholder="Rasm/shart tavsifi..." />
+            </div>
+          </div>
+        )}
 
         {showPassageField && (
           <div>
@@ -705,15 +769,18 @@ function QuestionFormDialog({
           </div>
         </div>
 
-       {questionType === "yopiq" ? (
+        {questionType === "yopiq" || questionType === "moslashtirish" ? (
           <div className="space-y-2">
-            <label className="text-xs text-muted-foreground">Variantlar (to'g'risini belgilang)</label>
-            {(["A", "B", "C", "D"] as const).map((l, i) => (
+            <label className="text-xs text-muted-foreground">
+              Variantlar (to'g'risini belgilang){" "}
+              {questionType === "moslashtirish" && "— ishlatilmagan katakchalarni bo'sh qoldiring"}
+            </label>
+            {MATCH_LETTERS.slice(0, optionSlots).map((l, i) => (
               <div key={l} className="flex items-start gap-2">
                 <button
                   type="button"
-                  onClick={() => setCorrectIndex(i as 0 | 1 | 2 | 3)}
-                  className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${correctIndex === i ? "gradient-bg text-primary-foreground" : "bg-muted"}`}
+                  onClick={() => setRawCorrectSlot(i)}
+                  className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${rawCorrectSlot === i ? "gradient-bg text-primary-foreground" : "bg-muted"}`}
                 >{l}</button>
                 <div className="flex-1">
                   <RichEditor
@@ -730,11 +797,9 @@ function QuestionFormDialog({
         ) : (
           <div>
             <label className="text-xs text-muted-foreground">
-              {questionType === "moslashtirish"
-                ? "Javob (masalan: A-F dan tanlangan javob)"
-                : questionType === "esse"
-                  ? "Namunaviy javob / tayanch fikrlar (ixtiyoriy)"
-                  : "Javob (masalan: a) 1  b) 5/4)"}
+              {questionType === "esse"
+                ? "Namunaviy javob / tayanch fikrlar (ixtiyoriy)"
+                : "Javob (masalan: a) 1  b) 5/4)"}
             </label>
             <RichEditor
               value={answerText}
