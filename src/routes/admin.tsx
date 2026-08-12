@@ -417,6 +417,8 @@ function subjectNameFor(kind: ExamKind, subjectId: string, block?: DtmBlock | nu
   return pool.find((s) => s.id === subjectId)?.name ?? subjectId;
 }
 
+type FormQuestionType = "yopiq" | "moslashtirish" | "ochiq" | "esse";
+
 function QuestionFormDialog({
   onSaved,
   question,
@@ -438,13 +440,15 @@ function QuestionFormDialog({
   const [opts, setOpts] = useState<string[]>(
     question ? [...question.options] : ["", "", "", ""],
   );
-  const [questionType, setQuestionType] = useState<"yopiq" | "moslashtirish" | "ochiq">(
-    question?.questionType ?? "yopiq",
+  const [questionType, setQuestionType] = useState<FormQuestionType>(
+    (question?.questionType as FormQuestionType) ?? "yopiq",
   );
   const [correctIndex, setCorrectIndex] = useState<0 | 1 | 2 | 3>(
     (question?.correctIndex as 0 | 1 | 2 | 3) ?? 0,
   );
   const [answerText, setAnswerText] = useState(question?.answerText ?? "");
+  const [solution, setSolution] = useState(question?.solution ?? "");
+  const [passageText, setPassageText] = useState(question?.passageText ?? "");
   const [points, setPoints] = useState<number>(
     question?.points ?? defaultPointsFor("dtm", "mandatory"),
   );
@@ -452,6 +456,10 @@ function QuestionFormDialog({
   const [explanation, setExplanation] = useState(question?.explanation ?? "");
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Ona tili va adabiyot fani tanlanganda "Asosiy matn" maydoni ko'rsatiladi
+  // (tahlil/esse savollari uchun o'qish parchasi).
+  const showPassageField = subjectId === "ona-tili-adabiyot";
 
   // When kind/block changes, sync subject and default points.
   const onKindChange = (v: ExamKind) => {
@@ -489,7 +497,9 @@ function QuestionFormDialog({
   const submit = () => {
     if (!text.trim()) return toast.error("Savol matnini kiriting");
     if (questionType === "yopiq" && opts.some((o) => !o.trim())) return toast.error("Barcha variantlarni to'ldiring");
-    if (questionType !== "yopiq" && !answerText.trim()) return toast.error("Javobni kiriting");
+    // Esse turida javob shart emas — u qo'lda baholanadi.
+    if (questionType !== "yopiq" && questionType !== "esse" && !answerText.trim())
+      return toast.error("Javobni kiriting");
     if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
     setSaving(true);
     const payload = {
@@ -499,10 +509,12 @@ function QuestionFormDialog({
       block: kind === "dtm" ? block : null,
       points,
       imageUrl,
-     questionType,
+      questionType,
       options: questionType === "yopiq" ? opts : [],
       correctIndex: questionType === "yopiq" ? correctIndex : undefined,
-      answerText: questionType !== "yopiq" ? answerText.trim() : undefined,
+      answerText: questionType !== "yopiq" ? answerText.trim() || undefined : undefined,
+      solution: solution.trim() || undefined,
+      passageText: passageText.trim() || undefined,
       explanation: explanation.trim() || undefined,
     };
     (isEdit
@@ -611,15 +623,31 @@ function QuestionFormDialog({
 
         <div>
           <label className="text-xs text-muted-foreground">Savol turi</label>
-          <Select value={questionType} onValueChange={(v) => setQuestionType(v as typeof questionType)}>
+          <Select value={questionType} onValueChange={(v) => setQuestionType(v as FormQuestionType)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="yopiq">Yopiq (A/B/C/D variantli)</SelectItem>
               <SelectItem value="moslashtirish">Moslashtirish (umumiy javob banki)</SelectItem>
-              <SelectItem value="ochiq">Ochiq (yozma javob)</SelectItem>
+              <SelectItem value="ochiq">Ochiq (yozma javob / bitta javob / to'liq yechim)</SelectItem>
+              <SelectItem value="esse">Esse (mavzu, aniq javob shart emas)</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {showPassageField && (
+          <div>
+            <label className="text-xs text-muted-foreground">
+              Asosiy matn (o'qish parchasi — tahlil/esse uchun, ixtiyoriy)
+            </label>
+            <RichEditor
+              value={passageText}
+              onChange={setPassageText}
+              placeholder="Tahlil qilinadigan she'r yoki nasriy parchani shu yerga joylashtiring…"
+              minHeight={120}
+              ariaLabel="Asosiy matn"
+            />
+          </div>
+        )}
 
         <div>
           <label className="text-xs text-muted-foreground">Savol matni</label>
@@ -702,7 +730,11 @@ function QuestionFormDialog({
         ) : (
           <div>
             <label className="text-xs text-muted-foreground">
-              {questionType === "moslashtirish" ? "Javob (masalan: A-F dan tanlangan javob)" : "Javob (masalan: a) 1  b) 5/4)"}
+              {questionType === "moslashtirish"
+                ? "Javob (masalan: A-F dan tanlangan javob)"
+                : questionType === "esse"
+                  ? "Namunaviy javob / tayanch fikrlar (ixtiyoriy)"
+                  : "Javob (masalan: a) 1  b) 5/4)"}
             </label>
             <RichEditor
               value={answerText}
@@ -713,6 +745,28 @@ function QuestionFormDialog({
             />
           </div>
         )}
+
+        {(questionType === "ochiq" || questionType === "esse") && (
+          <div>
+            <label className="text-xs text-muted-foreground">
+              {questionType === "esse"
+                ? "Baholash mezoni (ixtiyoriy)"
+                : "Yechim (to'liq yozma yechim, ixtiyoriy)"}
+            </label>
+            <RichEditor
+              value={solution}
+              onChange={setSolution}
+              placeholder={
+                questionType === "esse"
+                  ? "Esse qanday mezonlar bilan baholanishini yozing…"
+                  : "To'liq yechim matnini kiriting…"
+              }
+              minHeight={100}
+              ariaLabel="Yechim"
+            />
+          </div>
+        )}
+
         <div>
           <label className="text-xs text-muted-foreground">Izoh (ixtiyoriy)</label>
           <RichEditor
