@@ -52,6 +52,7 @@ const ALL_COLUMNS = [
   "savol_turi",
   "yechim",
   "asosiy_matn",
+  "imtihon_raqami",
 ];
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
@@ -85,6 +86,7 @@ type PreparedRow = {
   answerText: string;
   solution: string;
   passageText: string;
+  examVariant: number;
   groupId: string | null;
   groupIntro: string | null;
 };
@@ -251,6 +253,8 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         const solution = solutionRaw ? await renderTextWithLatexMarkers(solutionRaw) : "";
         const passageRaw = get("asosiy_matn");
         const passageText = passageRaw ? await renderTextWithLatexMarkers(passageRaw) : "";
+        const examVariantRaw = get("imtihon_raqami");
+        const examVariant = examVariantRaw ? Math.max(1, Number(examVariantRaw) || 1) : 1;
 
         prepared.push({
           rowNumber: i + 2,
@@ -267,6 +271,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
           answerText,
           solution,
           passageText,
+          examVariant,
           groupId,
           groupIntro,
         });
@@ -304,6 +309,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
             r.questionType === "ochiq" || r.questionType === "esse" ? r.answerText : undefined,
           solution: r.solution || undefined,
           passageText: r.passageText || undefined,
+          examVariant: r.kind === "milliy" ? r.examVariant : undefined,
           groupId: r.groupId,
           groupIntro: r.groupIntro,
         });
@@ -340,6 +346,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         "yopiq",
         "",
         "",
+        "",
       ],
       [
         "milliy",
@@ -358,6 +365,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         "moslashtirish",
         "",
         "",
+        "1",
       ],
       [
         "milliy",
@@ -376,6 +384,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         "ochiq_bitta",
         "",
         "",
+        "1",
       ],
       [
         "milliy",
@@ -394,6 +403,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         "yozma",
         "Tuz massasi: 200*0,2=40 g. Yangi eritma massasi 250 g. 40/250*100%=16%",
         "",
+        "1",
       ],
       [
         "milliy",
@@ -412,6 +422,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
         "esse",
         "Baholash mezoni: mavzuga mosligi, mantiqiylik, savodxonlik, hajm.",
         "",
+        "1",
       ],
     ]);
     const wb = XLSX.utils.book_new();
@@ -462,7 +473,12 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
               ustunlariga qarab avtomatik aniqlanadi. <span className="text-foreground">yechim</span>{" "}
               — to'liq yozma yechim (Fizika/Kimyo/Biologiya "yozma" savollar uchun).{" "}
               <span className="text-foreground">asosiy_matn</span> — Ona tilida tahlil/esse uchun
-              o'qish parchasi.
+              o'qish parchasi. <span className="text-foreground">imtihon_raqami</span> — savol
+              qaysi imtihon variantiga tegishli (masalan{" "}
+              <code className="text-foreground">1</code> = Imtihon 1,{" "}
+              <code className="text-foreground">2</code> = Imtihon 2). Bo'sh qoldirilsa,
+              avtomatik <code className="text-foreground">1</code> deb olinadi — turli
+              imtihonlarni aralashtirmaslik uchun buni har doim to'g'ri to'ldiring.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <label className="inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground">
@@ -530,6 +546,7 @@ export function BulkImportDialog({ onImported }: { onImported: () => void }) {
                           : r.questionType === "moslashtirish"
                             ? "Moslashtirish"
                             : "Yopiq"}
+                      {r.kind === "milliy" ? ` · Imtihon ${r.examVariant}` : ""}
                       {r.groupId ? ` · Guruh: ${r.groupId}` : ""}
                     </div>
                     <MathContent latex={r.text} />
