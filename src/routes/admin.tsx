@@ -468,7 +468,10 @@ function QuestionFormDialog({
   });
   const [groupId, setGroupId] = useState(question?.groupId ?? "");
   const [groupIntro, setGroupIntro] = useState(question?.groupIntro ?? "");
-  const [examVariant, setExamVariant] = useState<number>(question?.examVariant ?? 1);
+  const [examCategory, setExamCategory] = useState<"original" | "mashq">(
+    question?.examCategory ?? "original",
+  );
+  const [examLabel, setExamLabel] = useState(question?.examLabel ?? "");
   const [answerText, setAnswerText] = useState(question?.answerText ?? "");
   const [solution, setSolution] = useState(question?.solution ?? "");
   const [passageText, setPassageText] = useState(question?.passageText ?? "");
@@ -547,6 +550,9 @@ function QuestionFormDialog({
     }
 
     if (!(points > 0)) return toast.error("Ball 0 dan katta bo'lsin");
+    if (kind === "milliy" && examCategory === "original" && !examLabel.trim()) {
+      return toast.error("Original savol uchun sana/nomini kiriting (masalan 01.04.2024)");
+    }
     setSaving(true);
     const payload = {
       text: text.trim(),
@@ -564,7 +570,8 @@ function QuestionFormDialog({
       explanation: explanation.trim() || undefined,
       groupId: questionType === "moslashtirish" ? groupId.trim() : (groupId.trim() || null),
       groupIntro: groupIntro.trim() || null,
-      examVariant: kind === "milliy" ? examVariant : undefined,
+      examCategory: kind === "milliy" ? examCategory : undefined,
+      examLabel: kind === "milliy" && examCategory === "original" ? examLabel.trim() : null,
     };
     (isEdit
       ? questionsRepo.update(question!.id, payload)
@@ -671,23 +678,35 @@ function QuestionFormDialog({
         </div>
 
         {kind === "milliy" && (
-          <div className="rounded-xl border border-accent/40 bg-accent/5 p-3">
-            <label className="text-xs font-medium text-foreground">
-              Imtihon raqami (masalan: 1 = Imtihon 1, 2 = Imtihon 2)
-            </label>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Bu savol qaysi imtihon variantiga tegishli ekanini bildiradi. Har bir
-              imtihon uchun aynan shu raqamni to'g'ri kiriting — aks holda savollar
-              boshqa imtihonga aralashib qolishi mumkin.
-            </p>
-            <Input
-              type="number"
-              min="1"
-              step="1"
-              value={examVariant}
-              onChange={(e) => setExamVariant(Math.max(1, Number(e.target.value) || 1))}
-              className="mt-2 w-32"
-            />
+          <div className="rounded-xl border border-accent/40 bg-accent/5 p-3 space-y-3">
+            <div>
+              <label className="text-xs font-medium text-foreground">Bo'lim</label>
+              <Select value={examCategory} onValueChange={(v) => setExamCategory(v as "original" | "mashq")}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="original">Original savollar (haqiqiy imtihondan)</SelectItem>
+                  <SelectItem value="mashq">Mashq qilish (umumiy bank)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {examCategory === "original" && (
+              <div>
+                <label className="text-xs font-medium text-foreground">
+                  Imtihon sanasi / nomi (masalan: 01.04.2024)
+                </label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Bir xil sana/nom bilan kiritilgan savollar bitta imtihon kartasi
+                  sifatida birlashadi. Har bir haqiqiy imtihon uchun aynan bir xil
+                  matn yozing (masalan doim "01.04.2024", boshqacha yozmang).
+                </p>
+                <Input
+                  value={examLabel}
+                  onChange={(e) => setExamLabel(e.target.value)}
+                  placeholder="01.04.2024"
+                  className="mt-2"
+                />
+              </div>
+            )}
           </div>
         )}
 
