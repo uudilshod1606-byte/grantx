@@ -7,12 +7,15 @@ import { FullscreenGate } from "@/components/bluebook/FullscreenGate";
 import { MILLIY_SUBJECTS } from "@/lib/milliy";
 
 const DURATION_MINUTES = 90;
+const LEGACY_LABEL = "Imtihon 1";
+const MASHQ_EXAM_ID = "mashq";
 
 export const Route = createFileRoute("/imtihon/$subjectId/$examId")({
   component: BluebookExamPage,
   head: ({ params }) => {
     const name = MILLIY_SUBJECTS[params.subjectId]?.name ?? "Milliy Sertifikat";
-    const title = `${name} — Imtihon ${params.examId} · INTIL`;
+    const label = params.examId === MASHQ_EXAM_ID ? "Mashq qilish" : params.examId;
+    const title = `${name} — ${label} · INTIL`;
     const description = `${name} fanidan Milliy Sertifikat imtihonini to'liq ekran rejimida topshiring.`;
     return {
       meta: [
@@ -36,7 +39,8 @@ function BluebookExamPage() {
   const [all, setAll] = useState<Question[] | null>(null);
 
   const subject = MILLIY_SUBJECTS[subjectId];
-  const variant = Math.max(1, Number(examId) || 1);
+  const isMashq = examId === MASHQ_EXAM_ID;
+  const examLabel = isMashq ? "Mashq qilish" : examId;
 
   useEffect(() => {
     let alive = true;
@@ -55,17 +59,15 @@ function BluebookExamPage() {
 
   const questions = useMemo(() => {
     if (!all) return [];
-    // Endi savollar TAXMIN qilinmaydi (qo'shilish tartibi bo'yicha kesib
-    // olinmaydi) — har bir savolning o'zida saqlangan aniq "examVariant"
-    // (Imtihon raqami) bo'yicha filtrlanadi. examVariant belgilanmagan
-    // (eski) savollar 1-imtihon deb hisoblanadi — orqaga moslik uchun.
-    const pool = all
-      .filter((q) => q.kind === "milliy" && q.subjectId === subjectId)
-      .filter((q) => (q.examVariant ?? 1) === variant)
-      .slice()
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-    return pool;
-  }, [all, subjectId, variant]);
+    // Savollar endi "qo'shilish tartibi" bo'yicha emas, balki har bir
+    // savolning o'zida saqlangan aniq bo'lim (original/mashq) va — original
+    // bo'lsa — sana/nomi (examLabel) bo'yicha filtrlanadi.
+    const pool = all.filter((q) => q.kind === "milliy" && q.subjectId === subjectId);
+    const matched = isMashq
+      ? pool.filter((q) => q.examCategory === "mashq")
+      : pool.filter((q) => q.examCategory !== "mashq" && (q.examLabel?.trim() || LEGACY_LABEL) === examId);
+    return matched.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }, [all, subjectId, examId, isMashq]);
 
   const exit = () => navigate({ to: "/milliy-sertifikat/$subjectId", params: { subjectId } });
 
@@ -97,7 +99,7 @@ function BluebookExamPage() {
     return (
       <FullscreenGate
         subjectName={subject.name}
-        examTitle={`Imtihon ${variant}`}
+        examTitle={examLabel}
         questionCount={buildQuestionSlots(questions).length}
         durationMinutes={DURATION_MINUTES}
         onContinue={() => setStarted(true)}
@@ -109,8 +111,8 @@ function BluebookExamPage() {
   return (
     <BluebookExam
       subjectName={subject.name}
-      examTitle={`Imtihon ${variant} · ${subject.name}`}
-      moduleLabel={`Bo'lim 1, Modul ${variant}`}
+      examTitle={`${examLabel} · ${subject.name}`}
+      moduleLabel={isMashq ? "Mashq" : `Bo'lim 1 · ${examLabel}`}
       questions={questions}
       durationMinutes={DURATION_MINUTES}
       userName={user?.fullName ?? "Talaba"}
@@ -120,7 +122,7 @@ function BluebookExamPage() {
         if (!user) return;
         attemptsRepo.add({
           userId: user.id,
-          examTitle: `${subject.name} · Imtihon ${variant}`,
+          examTitle: `${subject.name} · ${examLabel}`,
           kind: "milliy",
           subjectIds: [subjectId],
           total: result.total,
