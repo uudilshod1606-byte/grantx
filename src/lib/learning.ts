@@ -27,8 +27,6 @@ export type QuestionAttemptInput = {
   createdAt?: string;
 };
 
-// The generated Database type is refreshed by Supabase separately, so this
-// repository deliberately keeps the new AI tables behind a tiny typed facade.
 const db = supabase as any;
 
 export async function saveStudentProfile(userId: string, input: StudentProfileInput) {
@@ -46,7 +44,6 @@ export async function saveStudentProfile(userId: string, input: StudentProfileIn
     },
     { onConflict: "user_id" },
   );
-
   if (error) throw new Error(`Student profile: ${error.message}`);
 }
 
@@ -57,10 +54,7 @@ export async function generateStudyPlan(payload: {
   weakPoints?: Record<string, string[]>;
   dailyTime?: "15-30" | "30-60" | "1-2" | "2+" | null;
 }) {
-  const { data, error } = await supabase.functions.invoke("generate-study-plan", {
-    body: payload,
-  });
-
+  const { data, error } = await supabase.functions.invoke("generate-study-plan", { body: payload });
   if (error) throw new Error(`AI study plan: ${error.message}`);
   if (data?.error) throw new Error(`AI study plan: ${data.error}`);
   return data;
@@ -68,7 +62,6 @@ export async function generateStudyPlan(payload: {
 
 export async function syncPendingOnboarding(userId: string) {
   if (typeof window === "undefined") return false;
-
   const raw = window.localStorage.getItem("intil_onboarding");
   if (!raw) return false;
 
@@ -80,14 +73,7 @@ export async function syncPendingOnboarding(userId: string) {
       weakPoints?: Record<string, string[]>;
       dailyTime?: "15-30" | "30-60" | "1-2" | "2+" | null;
     };
-
-    const minutesByOption = {
-      "15-30": 22,
-      "30-60": 45,
-      "1-2": 90,
-      "2+": 120,
-    } as const;
-
+    const minutesByOption = { "15-30": 22, "30-60": 45, "1-2": 90, "2+": 120 } as const;
     const subjects = payload.subjects ?? [];
     const weakTopics = subjects.flatMap((subjectId) =>
       (payload.weakPoints?.[subjectId] ?? []).map((topic) => `${subjectId}:${topic}`),
@@ -103,9 +89,6 @@ export async function syncPendingOnboarding(userId: string) {
       onboardingCompleted: true,
     });
 
-    // Generate the first 7-day AI plan only after the student is authenticated.
-    // If generation fails, keep localStorage intact so the next dashboard visit
-    // can retry instead of silently losing the student's onboarding answers.
     await generateStudyPlan({
       examType: payload.examType ?? null,
       examDate: payload.examDate ?? null,
@@ -122,20 +105,26 @@ export async function syncPendingOnboarding(userId: string) {
   }
 }
 
-export async function getStudentProfile(userId: string) {
+export async function getLatestStudyPlan(userId: string) {
   const { data, error } = await db
-    .from("student_profiles")
-    .select("*")
+    .from("study_plans")
+    .select("id, title, summary, plan, model, generated_at, updated_at")
     .eq("user_id", userId)
+    .order("generated_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
+  if (error) throw new Error(`Study plan: ${error.message}`);
+  return data;
+}
 
+export async function getStudentProfile(userId: string) {
+  const { data, error } = await db.from("student_profiles").select("*").eq("user_id", userId).maybeSingle();
   if (error) throw new Error(`Student profile: ${error.message}`);
   return data;
 }
 
 export async function recordQuestionAttempts(userId: string, attempts: QuestionAttemptInput[]) {
   if (!attempts.length) return;
-
   const rows = attempts.map((a) => ({
     user_id: userId,
     attempt_id: a.attemptId ?? null,
@@ -152,20 +141,13 @@ export async function recordQuestionAttempts(userId: string, attempts: QuestionA
     time_spent_seconds: a.timeSpentSeconds ?? null,
     created_at: a.createdAt ?? new Date().toISOString(),
   }));
-
   const { error } = await db.from("question_attempts").insert(rows);
   if (error) throw new Error(`Question attempts: ${error.message}`);
 }
 
 export async function getWeakTopics(userId: string, subjectId?: string) {
-  let query = db
-    .from("topic_mastery")
-    .select("*")
-    .eq("user_id", userId)
-    .order("mastery_score", { ascending: true });
-
+  let query = db.from("topic_mastery").select("*").eq("user_id", userId).order("mastery_score", { ascending: true });
   if (subjectId) query = query.eq("subject_id", subjectId);
-
   const { data, error } = await query;
   if (error) throw new Error(`Topic mastery: ${error.message}`);
   return data ?? [];
