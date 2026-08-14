@@ -50,6 +50,22 @@ export async function saveStudentProfile(userId: string, input: StudentProfileIn
   if (error) throw new Error(`Student profile: ${error.message}`);
 }
 
+export async function generateStudyPlan(payload: {
+  examType?: string | null;
+  examDate?: string | null;
+  subjects?: string[];
+  weakPoints?: Record<string, string[]>;
+  dailyTime?: "15-30" | "30-60" | "1-2" | "2+" | null;
+}) {
+  const { data, error } = await supabase.functions.invoke("generate-study-plan", {
+    body: payload,
+  });
+
+  if (error) throw new Error(`AI study plan: ${error.message}`);
+  if (data?.error) throw new Error(`AI study plan: ${data.error}`);
+  return data;
+}
+
 export async function syncPendingOnboarding(userId: string) {
   if (typeof window === "undefined") return false;
 
@@ -85,6 +101,17 @@ export async function syncPendingOnboarding(userId: string) {
       currentLevel: null,
       selfReportedWeakTopics: weakTopics,
       onboardingCompleted: true,
+    });
+
+    // Generate the first 7-day AI plan only after the student is authenticated.
+    // If generation fails, keep localStorage intact so the next dashboard visit
+    // can retry instead of silently losing the student's onboarding answers.
+    await generateStudyPlan({
+      examType: payload.examType ?? null,
+      examDate: payload.examDate ?? null,
+      subjects,
+      weakPoints: payload.weakPoints ?? {},
+      dailyTime: payload.dailyTime ?? null,
     });
 
     window.localStorage.removeItem("intil_onboarding");
