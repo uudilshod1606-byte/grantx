@@ -12,6 +12,7 @@ import { ProtectedRoute, useAuth } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { attemptsRepo, computeStats, type ExamAttempt } from "@/lib/domain";
 import { MILLIY_SUBJECTS } from "@/lib/milliy";
+import { syncPendingOnboarding } from "@/lib/learning";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -92,7 +93,9 @@ function DashboardContent() {
   const [attempts, setAttempts] = useState<ExamAttempt[] | null>(null);
 
   useEffect(() => {
-    setAttempts(attemptsRepo.list(user?.id));
+    if (!user?.id) return;
+    void syncPendingOnboarding(user.id);
+    setAttempts(attemptsRepo.list(user.id));
   }, [user?.id]);
 
   const list = attempts ?? [];
@@ -127,7 +130,6 @@ function DashboardContent() {
       subtitle={`Xush kelibsiz, ${user?.fullName ?? "talaba"}`}
       streakDays={streak}
     >
-      {/* Kunlik mashqlar */}
       <Card className="p-5 sm:p-6">
         <div className="flex items-start gap-3.5">
           <IconPlate icon={BookOpen} />
@@ -141,15 +143,10 @@ function DashboardContent() {
 
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {features.map((f) => (
-            <div
-              key={f.title}
-              className="flex items-center gap-3 rounded-2xl border border-edge bg-white px-4 py-3.5"
-            >
+            <div key={f.title} className="flex items-center gap-3 rounded-2xl border border-edge bg-white px-4 py-3.5">
               <f.icon className="h-[18px] w-[18px] shrink-0 text-brass" strokeWidth={1.6} />
               <span className="min-w-0">
-                <span className="block truncate text-[14px] font-semibold text-ink-strong">
-                  {f.title}
-                </span>
+                <span className="block truncate text-[14px] font-semibold text-ink-strong">{f.title}</span>
                 <span className="block truncate text-[13px] text-ink-mute">{f.sub}</span>
               </span>
             </div>
@@ -157,7 +154,6 @@ function DashboardContent() {
         </div>
       </Card>
 
-      {/* CTA */}
       <div className="mt-5 flex flex-col gap-4 rounded-[20px] bg-deep px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[18px] font-bold text-white">Mashq qilishga tayyormisiz?</p>
@@ -165,16 +161,12 @@ function DashboardContent() {
             {hasData ? "Keyingi imtihonni tanlab davom eting" : "Shaxsiy tayyorgarlik rejasini yoqing"}
           </p>
         </div>
-        <Link
-          to="/milliy-sertifikat"
-          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-ink-strong transition-colors hover:bg-[#F3EFE6]"
-        >
+        <Link to="/milliy-sertifikat" className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-ink-strong transition-colors hover:bg-[#F3EFE6]">
           {hasData ? "Davom etish" : "Yoqish"}
           <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
         </Link>
       </div>
 
-      {/* Pastki ikkita panel */}
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Card className="p-5 sm:p-6">
           <div className="flex items-center gap-3">
@@ -185,14 +177,10 @@ function DashboardContent() {
             <div className="mt-4">
               <p className="text-[15px] font-medium text-ink-strong">{last.examTitle}</p>
               <p className="mt-1 text-[14px] text-ink-mute">{fmtDate(last.finishedAt)}</p>
-              <p className="tabnum mt-3 text-[14px] text-ink-strong">
-                {last.correct}/{last.total} to'g'ri
-              </p>
+              <p className="tabnum mt-3 text-[14px] text-ink-strong">{last.correct}/{last.total} to'g'ri</p>
             </div>
           ) : (
-            <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">
-              Hozircha yakunlangan imtihon yo'q. Birinchi imtihoningizdan so'ng sana shu yerda ko'rinadi.
-            </p>
+            <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">Hozircha yakunlangan imtihon yo'q. Birinchi imtihoningizdan so'ng sana shu yerda ko'rinadi.</p>
           )}
         </Card>
 
@@ -203,34 +191,16 @@ function DashboardContent() {
           </div>
           {hasData && stats ? (
             <div className="mt-4 grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Imtihonlar</p>
-                <p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">
-                  {stats.totalTests}
-                </p>
-              </div>
-              <div>
-                <p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">O'rtacha</p>
-                <p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">
-                  {stats.averagePercent}%
-                </p>
-              </div>
-              <div>
-                <p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Eng yuqori</p>
-                <p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">
-                  {stats.bestPercent}%
-                </p>
-              </div>
+              <div><p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Imtihonlar</p><p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">{stats.totalTests}</p></div>
+              <div><p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">O'rtacha</p><p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">{stats.averagePercent}%</p></div>
+              <div><p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Eng yuqori</p><p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">{stats.bestPercent}%</p></div>
             </div>
           ) : (
-            <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">
-              Hozircha ma'lumot yo'q. Birinchi imtihon natijasi bu yerda ko'rinadi.
-            </p>
+            <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">Hozircha ma'lumot yo'q. Birinchi imtihon natijasi bu yerda ko'rinadi.</p>
           )}
         </Card>
       </div>
 
-      {/* Fanlar kesimi — faqat real ma'lumot bo'lsa */}
       {hasData && stats && Object.keys(stats.perSubject).length > 0 && (
         <Card className="mt-5 p-5 sm:p-6">
           <h3 className="text-[17px] font-bold text-ink-strong">Fanlar bo'yicha</h3>
@@ -239,13 +209,8 @@ function DashboardContent() {
               const pct = v.total ? Math.round((v.correct / v.total) * 100) : 0;
               return (
                 <li key={sid}>
-                  <div className="flex items-center justify-between text-[13px]">
-                    <span className="text-ink-strong">{MILLIY_SUBJECTS[sid]?.name ?? sid}</span>
-                    <span className="tabnum text-ink-mute">{pct}%</span>
-                  </div>
-                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EDE8DC]">
-                    <div className="h-full rounded-full bg-brass" style={{ width: `${pct}%` }} />
-                  </div>
+                  <div className="flex items-center justify-between text-[13px]"><span className="text-ink-strong">{MILLIY_SUBJECTS[sid]?.name ?? sid}</span><span className="tabnum text-ink-mute">{pct}%</span></div>
+                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EDE8DC]"><div className="h-full rounded-full bg-brass" style={{ width: `${pct}%` }} /></div>
                 </li>
               );
             })}
