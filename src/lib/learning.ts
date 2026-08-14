@@ -50,6 +50,51 @@ export async function saveStudentProfile(userId: string, input: StudentProfileIn
   if (error) throw new Error(`Student profile: ${error.message}`);
 }
 
+export async function syncPendingOnboarding(userId: string) {
+  if (typeof window === "undefined") return false;
+
+  const raw = window.localStorage.getItem("intil_onboarding");
+  if (!raw) return false;
+
+  try {
+    const payload = JSON.parse(raw) as {
+      examType?: string | null;
+      examDate?: string | null;
+      subjects?: string[];
+      weakPoints?: Record<string, string[]>;
+      dailyTime?: "15-30" | "30-60" | "1-2" | "2+" | null;
+    };
+
+    const minutesByOption = {
+      "15-30": 22,
+      "30-60": 45,
+      "1-2": 90,
+      "2+": 120,
+    } as const;
+
+    const subjects = payload.subjects ?? [];
+    const weakTopics = subjects.flatMap((subjectId) =>
+      (payload.weakPoints?.[subjectId] ?? []).map((topic) => `${subjectId}:${topic}`),
+    );
+
+    await saveStudentProfile(userId, {
+      targetExam: payload.examType ?? null,
+      examDate: payload.examDate ?? null,
+      dailyStudyMinutes: payload.dailyTime ? minutesByOption[payload.dailyTime] : null,
+      studyDays: [],
+      currentLevel: null,
+      selfReportedWeakTopics: weakTopics,
+      onboardingCompleted: true,
+    });
+
+    window.localStorage.removeItem("intil_onboarding");
+    return true;
+  } catch (error) {
+    console.error("[INTIL] onboarding sync failed", error);
+    return false;
+  }
+}
+
 export async function getStudentProfile(userId: string) {
   const { data, error } = await db
     .from("student_profiles")
