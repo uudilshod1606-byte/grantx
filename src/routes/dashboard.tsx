@@ -12,23 +12,16 @@ import { ProtectedRoute, useAuth } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { attemptsRepo, computeStats, type ExamAttempt } from "@/lib/domain";
 import { MILLIY_SUBJECTS } from "@/lib/milliy";
-import { syncPendingOnboarding } from "@/lib/learning";
+import { getLatestStudyPlan, syncPendingOnboarding } from "@/lib/learning";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
   head: () => ({
     meta: [
       { title: "Bosh sahifa — INTIL" },
-      {
-        name: "description",
-        content:
-          "INTIL ish maydoni: milliy sertifikat tayyorgarligi, imtihon natijalari va shaxsiy tahlil.",
-      },
+      { name: "description", content: "INTIL ish maydoni: milliy sertifikat tayyorgarligi, imtihon natijalari va shaxsiy tahlil." },
       { property: "og:title", content: "Bosh sahifa — INTIL" },
-      {
-        property: "og:description",
-        content: "Milliy sertifikat tayyorgarligingizni bir joydan boshqaring.",
-      },
+      { property: "og:description", content: "Milliy sertifikat tayyorgarligingizni bir joydan boshqaring." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -45,17 +38,12 @@ function Dashboard() {
 
 function fmtDate(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString("uz-UZ", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+    return new Date(iso).toLocaleDateString("uz-UZ", { day: "2-digit", month: "long", year: "numeric" });
   } catch {
     return "";
   }
 }
 
-/** Consecutive active days derived from real attempt timestamps. */
 function computeStreak(attempts: ExamAttempt[]) {
   if (!attempts.length) return 0;
   const dayKey = (d: Date) => d.toISOString().slice(0, 10);
@@ -75,9 +63,7 @@ function computeStreak(attempts: ExamAttempt[]) {
 }
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`rounded-[20px] border border-edge bg-white ${className}`}>{children}</div>
-  );
+  return <div className={`rounded-[20px] border border-edge bg-white ${className}`}>{children}</div>;
 }
 
 function IconPlate({ icon: Icon }: { icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }) {
@@ -88,14 +74,34 @@ function IconPlate({ icon: Icon }: { icon: React.ComponentType<{ className?: str
   );
 }
 
+type AiTask = { subject?: string; topic?: string; minutes?: number; task?: string };
+type AiDay = { day?: number; focus?: string; total_minutes?: number; tasks?: AiTask[] };
+type AiPlan = { title?: string; summary?: string; days?: AiDay[]; rules?: string[] };
+
 function DashboardContent() {
   const { user } = useAuth();
   const [attempts, setAttempts] = useState<ExamAttempt[] | null>(null);
+  const [studyPlan, setStudyPlan] = useState<{ title?: string; summary?: string; plan?: AiPlan } | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
-    void syncPendingOnboarding(user.id);
+    let cancelled = false;
+    const load = async () => {
+      setPlanLoading(true);
+      try {
+        await syncPendingOnboarding(user.id);
+        const latest = await getLatestStudyPlan(user.id);
+        if (!cancelled) setStudyPlan(latest);
+      } catch (error) {
+        console.error("[INTIL] dashboard AI plan load failed", error);
+      } finally {
+        if (!cancelled) setPlanLoading(false);
+      }
+    };
+    void load();
     setAttempts(attemptsRepo.list(user.id));
+    return () => { cancelled = true; };
   }, [user?.id]);
 
   const list = attempts ?? [];
@@ -103,44 +109,62 @@ function DashboardContent() {
   const hasData = list.length > 0;
   const last = list[0];
   const streak = useMemo(() => computeStreak(list), [attempts]);
+  const aiPlan = studyPlan?.plan;
+  const firstDay = aiPlan?.days?.[0];
 
   const features = [
-    {
-      icon: Check,
-      title: "1 Matematika + 1 Ona tili",
-      sub: "Kunlik maqsadli mashq",
-    },
-    {
-      icon: LineChart,
-      title: "Progressni kuzating",
-      sub: hasData
-        ? `${stats?.totalTests} ta imtihon yakunlangan`
-        : "Rivojlanishni real vaqtda ko'ring",
-    },
-    {
-      icon: Sparkles,
-      title: "Aniq tushuntirish",
-      sub: "Har bir javob uchun izoh",
-    },
+    { icon: Check, title: "1 Matematika + 1 Ona tili", sub: "Kunlik maqsadli mashq" },
+    { icon: LineChart, title: "Progressni kuzating", sub: hasData ? `${stats?.totalTests} ta imtihon yakunlangan` : "Rivojlanishni real vaqtda ko'ring" },
+    { icon: Sparkles, title: "Aniq tushuntirish", sub: "Har bir javob uchun izoh" },
   ];
 
   return (
-    <DashboardShell
-      title="Bosh sahifa"
-      subtitle={`Xush kelibsiz, ${user?.fullName ?? "talaba"}`}
-      streakDays={streak}
-    >
+    <DashboardShell title="Bosh sahifa" subtitle={`Xush kelibsiz, ${user?.fullName ?? "talaba"}`} streakDays={streak}>
       <Card className="p-5 sm:p-6">
         <div className="flex items-start gap-3.5">
-          <IconPlate icon={BookOpen} />
+          <IconPlate icon={Sparkles} />
           <div className="min-w-0">
-            <h2 className="text-[18px] font-bold text-ink-strong">Kunlik mashqlar</h2>
+            <h2 className="text-[18px] font-bold text-ink-strong">AI shaxsiy rejangiz</h2>
             <p className="mt-0.5 text-[14px] text-ink-mute">
-              Milliy sertifikatga har kuni maqsadli savollar bilan tayyorlaning
+              {planLoading ? "Rejangiz tayyorlanmoqda..." : aiPlan?.summary ?? "Onboarding javoblaringiz asosida individual reja shu yerda ko'rinadi."}
             </p>
           </div>
         </div>
 
+        {firstDay ? (
+          <div className="mt-5 rounded-2xl border border-edge bg-[#FAF8F3] p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-brass">Bugungi yo'nalish</p>
+                <p className="mt-1 text-[16px] font-bold text-ink-strong">{firstDay.focus ?? `1-kun`}</p>
+              </div>
+              {firstDay.total_minutes ? <span className="rounded-full bg-deep px-3 py-1 text-[12px] font-semibold text-white">{firstDay.total_minutes} daqiqa</span> : null}
+            </div>
+            <div className="mt-4 space-y-2.5">
+              {(firstDay.tasks ?? []).slice(0, 4).map((task, index) => (
+                <div key={`${task.subject}-${task.topic}-${index}`} className="flex items-start gap-3 rounded-xl bg-white px-3.5 py-3">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-brass" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-semibold text-ink-strong">{task.subject ?? "Fan"}{task.topic ? ` · ${task.topic}` : ""}</p>
+                    <p className="mt-0.5 text-[13px] leading-5 text-ink-mute">{task.task ?? "Mashg'ulot"}</p>
+                  </div>
+                  {task.minutes ? <span className="shrink-0 text-[12px] text-ink-mute">{task.minutes} daq.</span> : null}
+                </div>
+              ))}
+            </div>
+            {aiPlan?.days?.length ? <p className="mt-4 text-[12px] text-ink-mute">AI siz uchun {aiPlan.days.length} kunlik boshlang'ich reja tuzdi.</p> : null}
+          </div>
+        ) : null}
+      </Card>
+
+      <Card className="mt-5 p-5 sm:p-6">
+        <div className="flex items-start gap-3.5">
+          <IconPlate icon={BookOpen} />
+          <div className="min-w-0">
+            <h2 className="text-[18px] font-bold text-ink-strong">Kunlik mashqlar</h2>
+            <p className="mt-0.5 text-[14px] text-ink-mute">Milliy sertifikatga har kuni maqsadli savollar bilan tayyorlaning</p>
+          </div>
+        </div>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {features.map((f) => (
             <div key={f.title} className="flex items-center gap-3 rounded-2xl border border-edge bg-white px-4 py-3.5">
@@ -157,9 +181,7 @@ function DashboardContent() {
       <div className="mt-5 flex flex-col gap-4 rounded-[20px] bg-deep px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[18px] font-bold text-white">Mashq qilishga tayyormisiz?</p>
-          <p className="mt-1 text-[14px] text-white/60">
-            {hasData ? "Keyingi imtihonni tanlab davom eting" : "Shaxsiy tayyorgarlik rejasini yoqing"}
-          </p>
+          <p className="mt-1 text-[14px] text-white/60">{hasData ? "Keyingi imtihonni tanlab davom eting" : "Shaxsiy tayyorgarlik rejasini yoqing"}</p>
         </div>
         <Link to="/milliy-sertifikat" className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-ink-strong transition-colors hover:bg-[#F3EFE6]">
           {hasData ? "Davom etish" : "Yoqish"}
@@ -169,26 +191,16 @@ function DashboardContent() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Card className="p-5 sm:p-6">
-          <div className="flex items-center gap-3">
-            <IconPlate icon={Calendar} />
-            <h3 className="text-[17px] font-bold text-ink-strong">Oxirgi imtihon</h3>
-          </div>
+          <div className="flex items-center gap-3"><IconPlate icon={Calendar} /><h3 className="text-[17px] font-bold text-ink-strong">Oxirgi imtihon</h3></div>
           {hasData ? (
-            <div className="mt-4">
-              <p className="text-[15px] font-medium text-ink-strong">{last.examTitle}</p>
-              <p className="mt-1 text-[14px] text-ink-mute">{fmtDate(last.finishedAt)}</p>
-              <p className="tabnum mt-3 text-[14px] text-ink-strong">{last.correct}/{last.total} to'g'ri</p>
-            </div>
+            <div className="mt-4"><p className="text-[15px] font-medium text-ink-strong">{last.examTitle}</p><p className="mt-1 text-[14px] text-ink-mute">{fmtDate(last.finishedAt)}</p><p className="tabnum mt-3 text-[14px] text-ink-strong">{last.correct}/{last.total} to'g'ri</p></div>
           ) : (
             <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">Hozircha yakunlangan imtihon yo'q. Birinchi imtihoningizdan so'ng sana shu yerda ko'rinadi.</p>
           )}
         </Card>
 
         <Card className="p-5 sm:p-6">
-          <div className="flex items-center gap-3">
-            <IconPlate icon={LineChart} />
-            <h3 className="text-[17px] font-bold text-ink-strong">Natijangiz</h3>
-          </div>
+          <div className="flex items-center gap-3"><IconPlate icon={LineChart} /><h3 className="text-[17px] font-bold text-ink-strong">Natijangiz</h3></div>
           {hasData && stats ? (
             <div className="mt-4 grid grid-cols-3 gap-4">
               <div><p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Imtihonlar</p><p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">{stats.totalTests}</p></div>
