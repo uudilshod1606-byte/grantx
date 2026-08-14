@@ -19,7 +19,7 @@ export function Hero() {
             <li><a href="#yonalish">Yo'nalish</a></li>
             <li><a href="#">Reja</a></li>
           </ul>
-          <Link className="ih-cta-btn" to="/signup">
+          <Link className="ih-cta-btn" to="/onboarding">
             Boshlash
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
               <path d="M5 12h14M13 6l6 6-6 6" />
@@ -51,7 +51,7 @@ export function Hero() {
               </p>
 
               <div className="ih-cta-row">
-                <Link className="ih-primary-btn" to="/signup">
+                <Link className="ih-primary-btn" to="/onboarding">
                   Bepul boshlash
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
                     <path d="M5 12h14M13 6l6 6-6 6" />
