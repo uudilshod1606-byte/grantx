@@ -1,8 +1,7 @@
 /**
  * Single source of truth for how a formula is turned into stored HTML.
  * Both the admin RichEditor ("Formula" toolbar button) and the bulk
- * Excel/CSV importer call these helpers, so imported questions are
- * byte-for-byte identical to hand-authored ones.
+ * Excel/CSV importer call these helpers.
  */
 
 export function escapeAttr(s: string) {
@@ -41,20 +40,60 @@ export async function renderFormulaEmbed(latex: string): Promise<string> {
 export const LATEX_MARKER = /\[\[LATEX:([\s\S]*?)\]\]/g;
 
 /**
- * Convert `[[LATEX: ...]]` markers inside a plain-text cell into the same
- * formula-embed HTML the editor produces. Plain text around the markers is
- * HTML-escaped, newlines become <br>.
+ * Legacy/AI-friendly math delimiters accepted by the importer:
+ *   $x^2+y^2$
+ *   \(x^2+y^2\)
+ *
+ * Dollar delimiters are only promoted when a matching closing `$` exists.
+ * This deliberately leaves ordinary currency such as `250$` untouched.
+ */
+const DOLLAR_MATH = /\$([^$\r\n]+?)\$/g;
+const PAREN_MATH = /\\\(([\s\S]*?)\\\)/g;
+
+function tokenizeMathMarkers(src: string) {
+  const chunks: Array<{ type: "text" | "math"; value: string }> = [];
+  let last = 0;
+
+  const matches = [
+    ...src.matchAll(LATEX_MARKER),
+    ...src.matchAll(DOLLAR_MATH),
+    ...src.matchAll(PAREN_MATH),
+  ]
+    .map((m) => ({
+      start: m.index ?? 0,
+      end: (m.index ?? 0) + m[0].length,
+      latex: m[1] ?? "",
+      priority: m[0].startsWith("[[LATEX:") ? 0 : 1,
+    }))
+    .sort((a, b) => a.start - b.start || a.priority - b.priority);
+
+  for (const m of matches) {
+    if (m.start < last) continue;
+    if (m.start > last) chunks.push({ type: "text", value: src.slice(last, m.start) });
+    chunks.push({ type: "math", value: m.latex });
+    last = m.end;
+  }
+  if (last < src.length) chunks.push({ type: "text", value: src.slice(last) });
+  return chunks;
+}
+
+/**
+ * Convert supported math markers inside a plain-text cell into the same
+ * formula-embed HTML the editor produces. Plain text around formulas is
+ * HTML-escaped and newlines become <br>.
  */
 export async function renderTextWithLatexMarkers(input: string): Promise<string> {
   const src = input ?? "";
-  const parts: string[] = [];
-  let last = 0;
-  const matches = [...src.matchAll(LATEX_MARKER)];
-  for (const m of matches) {
-    parts.push(escapeText(src.slice(last, m.index ?? 0)));
-    parts.push(await renderFormulaEmbed(m[1] ?? ""));
-    last = (m.index ?? 0) + m[0].length;
+  const chunks = tokenizeMathMarkers(src);
+  const html: string[] = [];
+
+  for (const chunk of chunks) {
+    if (chunk.type === "math") {
+      html.push(await renderFormulaEmbed(chunk.value));
+    } else {
+      html.push(escapeText(chunk.value));
+    }
   }
-  parts.push(escapeText(src.slice(last)));
-  return parts.join("").replace(/\r?\n/g, "<br>");
+
+  return html.join("").replace(/\r?\n/g, "<br>");
 }
