@@ -32,6 +32,11 @@ function normalizeMilliyQuestion(question: Question): Question {
       questionType: "ochiq",
       options: [],
       correctIndex: undefined,
+      // For 36–45 the imported `savol_matni` is the actual visible part text.
+      // The old importer also stored that same text in groupIntro, which made
+      // the exam runner display the same question twice. Do not render a
+      // separate shared intro for these open-question groups.
+      groupIntro: null,
     };
   }
 
