@@ -62,7 +62,12 @@ export const Route = createFileRoute("/imtihon/$subjectId/$examId")({
   component: BluebookExamPage,
   head: ({ params }) => {
     const name = MILLIY_SUBJECTS[params.subjectId]?.name ?? "Milliy Sertifikat";
-    const label = params.examId === MASHQ_EXAM_ID ? "Mashq qilish" : params.examId;
+    const label =
+      params.examId === MASHQ_EXAM_ID
+        ? "Mashq qilish"
+        : params.examId.startsWith("mashq-")
+          ? params.examId.slice("mashq-".length)
+          : params.examId;
     const title = `${name} — ${label} · INTIL`;
     const description = `${name} fanidan Milliy Sertifikat imtihonini to'liq ekran rejimida topshiring.`;
     return {
@@ -87,8 +92,9 @@ function BluebookExamPage() {
   const [all, setAll] = useState<Question[] | null>(null);
 
   const subject = MILLIY_SUBJECTS[subjectId];
-  const isMashq = examId === MASHQ_EXAM_ID;
-  const examLabel = isMashq ? "Mashq qilish" : examId;
+  const isMashq = examId === MASHQ_EXAM_ID || examId.startsWith("mashq-");
+  const mashqLabel = examId.startsWith("mashq-") ? examId.slice("mashq-".length) : null;
+  const examLabel = isMashq ? (mashqLabel || "Mashq qilish") : examId;
 
   useEffect(() => {
     let alive = true;
@@ -108,22 +114,31 @@ function BluebookExamPage() {
   const questions = useMemo(() => {
     if (!all) return [];
     const pool = all.filter((q) => q.kind === "milliy" && q.subjectId === subjectId);
-    const matched = isMashq
-      ? pool.filter((q) => q.examCategory === "mashq")
-      : pool.filter(
-          (q) =>
-            q.examCategory !== "mashq" &&
-            (q.examLabel?.trim() || LEGACY_LABEL) === examId,
-        );
+
+    const matched =
+      examId === MASHQ_EXAM_ID
+        ? pool.filter((q) => q.examCategory === "mashq")
+        : isMashq
+          ? pool.filter(
+              (q) =>
+                q.examCategory === "mashq" &&
+                (q.examLabel?.trim() || "Mashq") === mashqLabel,
+            )
+          : pool.filter(
+              (q) =>
+                q.examCategory !== "mashq" &&
+                (q.examLabel?.trim() || LEGACY_LABEL) === examId,
+            );
 
     return matched
       .map(normalizeMilliyQuestion)
       .slice()
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  }, [all, subjectId, examId, isMashq]);
+  }, [all, subjectId, examId, isMashq, mashqLabel]);
 
-  const exit = () =>
+  const exit = () => {
     navigate({ to: "/milliy-sertifikat/$subjectId", params: { subjectId } });
+  };
 
   if (!subject) {
     return (
