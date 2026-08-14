@@ -10,6 +10,54 @@ const DURATION_MINUTES = 90;
 const LEGACY_LABEL = "Imtihon 1";
 const MASHQ_EXAM_ID = "mashq";
 
+/**
+ * Milliy Sertifikat Mathematics has two different grouped formats:
+ * - 33–35: one shared stem + A–F matching choices
+ * - 36–45: open questions, each question containing a) and b) parts
+ *
+ * Older Excel imports could accidentally save a 36–45 row as
+ * "moslashtirish" when option cells were present. The exam runner should
+ * still respect the official question number/group and render it as open.
+ */
+function normalizeMilliyQuestion(question: Question): Question {
+  if (question.kind !== "milliy") return question;
+
+  const groupId = question.groupId?.trim() ?? "";
+  const numberMatch = groupId.match(/^(\d{1,2})(?:[-_].*)?$/);
+  const groupNumber = numberMatch ? Number(numberMatch[1]) : null;
+
+  if (groupNumber !== null && groupNumber >= 36 && groupNumber <= 45) {
+    return {
+      ...question,
+      questionType: "ochiq",
+      options: [],
+      correctIndex: undefined,
+    };
+  }
+
+  if (groupNumber !== null && groupNumber >= 33 && groupNumber <= 35) {
+    return {
+      ...question,
+      questionType: "moslashtirish",
+    };
+  }
+
+  // Also repair an ungrouped open row when the data clearly contains an
+  // answer text and no meaningful multiple-choice options.
+  if (
+    question.answerText?.trim() &&
+    question.options.filter((option) => option.trim()).length === 0
+  ) {
+    return {
+      ...question,
+      questionType: "ochiq",
+      correctIndex: undefined,
+    };
+  }
+
+  return question;
+}
+
 export const Route = createFileRoute("/imtihon/$subjectId/$examId")({
   component: BluebookExamPage,
   head: ({ params }) => {
@@ -59,17 +107,23 @@ function BluebookExamPage() {
 
   const questions = useMemo(() => {
     if (!all) return [];
-    // Savollar endi "qo'shilish tartibi" bo'yicha emas, balki har bir
-    // savolning o'zida saqlangan aniq bo'lim (original/mashq) va — original
-    // bo'lsa — sana/nomi (examLabel) bo'yicha filtrlanadi.
     const pool = all.filter((q) => q.kind === "milliy" && q.subjectId === subjectId);
     const matched = isMashq
       ? pool.filter((q) => q.examCategory === "mashq")
-      : pool.filter((q) => q.examCategory !== "mashq" && (q.examLabel?.trim() || LEGACY_LABEL) === examId);
-    return matched.slice().sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      : pool.filter(
+          (q) =>
+            q.examCategory !== "mashq" &&
+            (q.examLabel?.trim() || LEGACY_LABEL) === examId,
+        );
+
+    return matched
+      .map(normalizeMilliyQuestion)
+      .slice()
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }, [all, subjectId, examId, isMashq]);
 
-  const exit = () => navigate({ to: "/milliy-sertifikat/$subjectId", params: { subjectId } });
+  const exit = () =>
+    navigate({ to: "/milliy-sertifikat/$subjectId", params: { subjectId } });
 
   if (!subject) {
     return (
