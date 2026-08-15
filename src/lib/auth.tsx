@@ -4,10 +4,11 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Auth context for INTIL — backed by real Cloud (Supabase) Auth.
- * Sessions are managed by supabase-js and synced via onAuthStateChange.
+ * Auth context for INTIL — backed by Supabase Auth.
+ * Security-sensitive authorization is enforced server-side with RLS; this
+ * client-side role is only a UI convenience and must never be treated as a
+ * security boundary.
  */
-
 export type AuthUser = {
   id: string;
   email: string;
@@ -40,7 +41,7 @@ function mapUser(u: User | null | undefined): AuthUser | null {
   if (!u) return null;
   const email = (u.email ?? "").trim().toLowerCase();
   const meta = (u.user_metadata ?? {}) as Record<string, unknown>;
-  const fullName = String(meta['full_name'] ?? meta['fullName'] ?? "").trim() || email.split("@")[0] || "INTIL user";
+  const fullName = String(meta["full_name"] ?? meta["fullName"] ?? "").trim() || email.split("@")[0] || "INTIL user";
   return {
     id: u.id,
     email,
@@ -55,27 +56,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let alive = true;
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!alive) return;
       setSession(nextSession);
       setLoading(false);
     });
-    supabase.auth.getSession().then(({ data }) => {
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!alive) return;
       setSession(data.session);
       setLoading(false);
     });
-    return () => sub.subscription.unsubscribe();
+
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const signUp: AuthContextValue["signUp"] = async ({ fullName, email, password }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = fullName.trim();
+
     const { data, error } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password,
       options: {
-        data: { full_name: fullName.trim() },
+        data: { full_name: normalizedName },
         emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
-    if (error) throw new Error(error.message);
+
+    if (error) {
+      // Keep account-existence details generic to reduce email enumeration.
+      if (/already registered|already exists|user already/i.test(error.message)) {
+        throw new Error("Bu email bilan hisob mavjud yoki ro'yxatdan o'tish jarayoni boshlangan. Kirishni yoki parolni tiklashni sinab ko'ring.");
+      }
+      throw new Error("Hisob yaratib bo'lmadi. Ma'lumotlarni tekshirib, qayta urinib ko'ring.");
+    }
+
     return { needsEmailConfirmation: !data.session };
   };
 
@@ -84,27 +105,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: email.trim().toLowerCase(),
       password,
     });
+
     if (error) {
       if (/email not confirmed/i.test(error.message)) {
         throw new Error("Email hali tasdiqlanmagan. Pochtangizdagi tasdiqlash havolasini bosing.");
       }
+      // Deliberately keep login failures generic so the UI does not reveal
+      // whether a particular email exists.
       if (/invalid login credentials/i.test(error.message)) {
         throw new Error("Email yoki parol noto'g'ri");
       }
-      throw new Error(error.message);
+      throw new Error("Kirish amalga oshmadi. Qayta urinib ko'ring.");
     }
   };
 
   const signInWithGoogle: AuthContextValue["signInWithGoogle"] = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error("Google orqali kirish amalga oshmadi. Qayta urinib ko'ring.");
   };
 
   const signOut: AuthContextValue["signOut"] = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error("Hisobdan chiqishda xatolik yuz berdi.");
     setSession(null);
   };
 
@@ -122,11 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGoogle,
   }), [user, session, loading]);
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
