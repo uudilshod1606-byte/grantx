@@ -18,49 +18,6 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
-/**
- * Serve the premium INTIL onboarding HTML from the same origin.
- *
- * The onboarding design is stored in GitHub as a gzip-compressed, self-contained
- * HTML file. Fetching that file from the browser caused a CORS/network failure
- * in the Lovable preview. Fetching it here on the server avoids cross-origin
- * browser requests while keeping the original HTML completely unchanged.
- */
-async function serveIntilOnboarding(request: Request): Promise<Response | null> {
-  const url = new URL(request.url);
-  if (url.pathname !== "/intil-onboarding-loader.html") return null;
-
-  try {
-    const assetUrl =
-      "https://raw.githubusercontent.com/uudilshod1606-byte/grantx/main/public/intil-onboarding-v5-premium.html.gz";
-    const asset = await fetch(assetUrl, { cf: { cacheTtl: 0 } } as RequestInit);
-
-    if (!asset.ok || !asset.body) {
-      throw new Error(`INTIL onboarding asset failed: ${asset.status}`);
-    }
-
-    const htmlStream = asset.body.pipeThrough(new DecompressionStream("gzip"));
-
-    return new Response(htmlStream, {
-      status: 200,
-      headers: {
-        "content-type": "text/html; charset=utf-8",
-        "cache-control": "no-store, max-age=0",
-        "x-intil-onboarding": "premium-v5",
-      },
-    });
-  } catch (error) {
-    console.error("INTIL onboarding asset error:", error);
-    return new Response(
-      "<!doctype html><html lang=\"uz\"><head><meta charset=\"utf-8\"><title>INTIL — Onboarding</title></head><body style=\"margin:0\"><pre style=\"font:14px monospace;padding:24px\">INTIL onboarding yuklanmadi.</pre></body></html>",
-      {
-        status: 503,
-        headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
-      },
-    );
-  }
-}
-
 function brandedErrorResponse(): Response {
   return new Response(renderErrorPage(), {
     status: 500,
@@ -112,9 +69,6 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
-      const onboardingResponse = await serveIntilOnboarding(request);
-      if (onboardingResponse) return onboardingResponse;
-
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
