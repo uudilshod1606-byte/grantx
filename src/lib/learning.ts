@@ -7,6 +7,8 @@ export type StudentProfileInput = {
   dailyStudyMinutes?: number | null;
   studyDays?: number[];
   currentLevel?: string | null;
+  selectedSubjects?: string[];
+  weakPoints?: Record<string, string[]>;
   selfReportedWeakTopics?: string[];
   onboardingCompleted?: boolean;
 };
@@ -39,6 +41,8 @@ export async function saveStudentProfile(userId: string, input: StudentProfileIn
       daily_study_minutes: input.dailyStudyMinutes ?? null,
       study_days: input.studyDays ?? [],
       current_level: input.currentLevel ?? null,
+      selected_subjects: input.selectedSubjects ?? [],
+      weak_points: input.weakPoints ?? {},
       self_reported_weak_topics: input.selfReportedWeakTopics ?? [],
       onboarding_completed: input.onboardingCompleted ?? false,
     },
@@ -50,6 +54,7 @@ export async function saveStudentProfile(userId: string, input: StudentProfileIn
 export async function generateStudyPlan(payload: {
   examType?: string | null;
   examDate?: string | null;
+  targetScore?: number | null;
   subjects?: string[];
   weakPoints?: Record<string, string[]>;
   dailyTime?: "15-30" | "30-60" | "1-2" | "2+" | null;
@@ -69,22 +74,27 @@ export async function syncPendingOnboarding(userId: string) {
     const payload = JSON.parse(raw) as {
       examType?: string | null;
       examDate?: string | null;
+      targetScore?: number | null;
       subjects?: string[];
       weakPoints?: Record<string, string[]>;
       dailyTime?: "15-30" | "30-60" | "1-2" | "2+" | null;
     };
     const minutesByOption = { "15-30": 22, "30-60": 45, "1-2": 90, "2+": 120 } as const;
     const subjects = payload.subjects ?? [];
+    const weakPoints = payload.weakPoints ?? {};
     const weakTopics = subjects.flatMap((subjectId) =>
-      (payload.weakPoints?.[subjectId] ?? []).map((topic) => `${subjectId}:${topic}`),
+      (weakPoints[subjectId] ?? []).map((topic) => `${subjectId}:${topic}`),
     );
 
     await saveStudentProfile(userId, {
       targetExam: payload.examType ?? null,
+      targetScore: payload.targetScore ?? null,
       examDate: payload.examDate ?? null,
       dailyStudyMinutes: payload.dailyTime ? minutesByOption[payload.dailyTime] : null,
       studyDays: [],
       currentLevel: null,
+      selectedSubjects: subjects,
+      weakPoints,
       selfReportedWeakTopics: weakTopics,
       onboardingCompleted: true,
     });
@@ -92,8 +102,9 @@ export async function syncPendingOnboarding(userId: string) {
     await generateStudyPlan({
       examType: payload.examType ?? null,
       examDate: payload.examDate ?? null,
+      targetScore: payload.targetScore ?? null,
       subjects,
-      weakPoints: payload.weakPoints ?? {},
+      weakPoints,
       dailyTime: payload.dailyTime ?? null,
     });
 
