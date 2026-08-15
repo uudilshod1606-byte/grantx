@@ -1,234 +1,32 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowRight,
-  BookOpen,
-  Calendar,
-  Check,
-  LineChart,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Calendar, Check, Clock3, LineChart, Sparkles, Target, TrendingUp, Zap } from "lucide-react";
 import { ProtectedRoute, useAuth } from "@/lib/auth";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { attemptsRepo, computeStats, type ExamAttempt } from "@/lib/domain";
 import { MILLIY_SUBJECTS } from "@/lib/milliy";
-import { getLatestStudyPlan, syncPendingOnboarding } from "@/lib/learning";
+import { getLatestStudyPlan, getStudentProfile, syncPendingOnboarding } from "@/lib/learning";
 
-export const Route = createFileRoute("/dashboard")({
-  component: Dashboard,
-  head: () => ({
-    meta: [
-      { title: "Bosh sahifa — INTIL" },
-      { name: "description", content: "INTIL ish maydoni: milliy sertifikat tayyorgarligi, imtihon natijalari va shaxsiy tahlil." },
-      { property: "og:title", content: "Bosh sahifa — INTIL" },
-      { property: "og:description", content: "Milliy sertifikat tayyorgarligingizni bir joydan boshqaring." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-});
-
-function Dashboard() {
-  return (
-    <ProtectedRoute>
-      <DashboardContent />
-    </ProtectedRoute>
-  );
-}
-
-function fmtDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleDateString("uz-UZ", { day: "2-digit", month: "long", year: "numeric" });
-  } catch {
-    return "";
-  }
-}
-
-function computeStreak(attempts: ExamAttempt[]) {
-  if (!attempts.length) return 0;
-  const dayKey = (d: Date) => d.toISOString().slice(0, 10);
-  const days = new Set(attempts.map((a) => dayKey(new Date(a.finishedAt))));
-  const today = new Date();
-  let cursor = new Date(today);
-  if (!days.has(dayKey(cursor))) {
-    cursor.setDate(cursor.getDate() - 1);
-    if (!days.has(dayKey(cursor))) return 0;
-  }
-  let streak = 0;
-  while (days.has(dayKey(cursor))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
-
-function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-[20px] border border-edge bg-white ${className}`}>{children}</div>;
-}
-
-function IconPlate({ icon: Icon }: { icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }) {
-  return (
-    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-deep">
-      <Icon className="h-[18px] w-[18px] text-brass" strokeWidth={1.6} />
-    </span>
-  );
-}
-
-type AiTask = { subject?: string; topic?: string; minutes?: number; task?: string };
-type AiDay = { day?: number; focus?: string; total_minutes?: number; tasks?: AiTask[] };
-type AiPlan = { title?: string; summary?: string; days?: AiDay[]; rules?: string[] };
-
-function DashboardContent() {
-  const { user } = useAuth();
-  const [attempts, setAttempts] = useState<ExamAttempt[] | null>(null);
-  const [studyPlan, setStudyPlan] = useState<{ title?: string; summary?: string; plan?: AiPlan } | null>(null);
-  const [planLoading, setPlanLoading] = useState(false);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    let cancelled = false;
-    const load = async () => {
-      setPlanLoading(true);
-      try {
-        await syncPendingOnboarding(user.id);
-        const latest = await getLatestStudyPlan(user.id);
-        if (!cancelled) setStudyPlan(latest);
-      } catch (error) {
-        console.error("[INTIL] dashboard AI plan load failed", error);
-      } finally {
-        if (!cancelled) setPlanLoading(false);
-      }
-    };
-    void load();
-    setAttempts(attemptsRepo.list(user.id));
-    return () => { cancelled = true; };
-  }, [user?.id]);
-
-  const list = attempts ?? [];
-  const stats = useMemo(() => (attempts ? computeStats(list) : null), [attempts]);
-  const hasData = list.length > 0;
-  const last = list[0];
-  const streak = useMemo(() => computeStreak(list), [attempts]);
-  const aiPlan = studyPlan?.plan;
-  const firstDay = aiPlan?.days?.[0];
-
-  const features = [
-    { icon: Check, title: "1 Matematika + 1 Ona tili", sub: "Kunlik maqsadli mashq" },
-    { icon: LineChart, title: "Progressni kuzating", sub: hasData ? `${stats?.totalTests} ta imtihon yakunlangan` : "Rivojlanishni real vaqtda ko'ring" },
-    { icon: Sparkles, title: "Aniq tushuntirish", sub: "Har bir javob uchun izoh" },
-  ];
-
-  return (
-    <DashboardShell title="Bosh sahifa" subtitle={`Xush kelibsiz, ${user?.fullName ?? "talaba"}`} streakDays={streak}>
-      <Card className="p-5 sm:p-6">
-        <div className="flex items-start gap-3.5">
-          <IconPlate icon={Sparkles} />
-          <div className="min-w-0">
-            <h2 className="text-[18px] font-bold text-ink-strong">AI shaxsiy rejangiz</h2>
-            <p className="mt-0.5 text-[14px] text-ink-mute">
-              {planLoading ? "Rejangiz tayyorlanmoqda..." : aiPlan?.summary ?? "Onboarding javoblaringiz asosida individual reja shu yerda ko'rinadi."}
-            </p>
-          </div>
-        </div>
-
-        {firstDay ? (
-          <div className="mt-5 rounded-2xl border border-edge bg-[#FAF8F3] p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-[12px] font-semibold uppercase tracking-[0.1em] text-brass">Bugungi yo'nalish</p>
-                <p className="mt-1 text-[16px] font-bold text-ink-strong">{firstDay.focus ?? `1-kun`}</p>
-              </div>
-              {firstDay.total_minutes ? <span className="rounded-full bg-deep px-3 py-1 text-[12px] font-semibold text-white">{firstDay.total_minutes} daqiqa</span> : null}
-            </div>
-            <div className="mt-4 space-y-2.5">
-              {(firstDay.tasks ?? []).slice(0, 4).map((task, index) => (
-                <div key={`${task.subject}-${task.topic}-${index}`} className="flex items-start gap-3 rounded-xl bg-white px-3.5 py-3">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-brass" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-semibold text-ink-strong">{task.subject ?? "Fan"}{task.topic ? ` · ${task.topic}` : ""}</p>
-                    <p className="mt-0.5 text-[13px] leading-5 text-ink-mute">{task.task ?? "Mashg'ulot"}</p>
-                  </div>
-                  {task.minutes ? <span className="shrink-0 text-[12px] text-ink-mute">{task.minutes} daq.</span> : null}
-                </div>
-              ))}
-            </div>
-            {aiPlan?.days?.length ? <p className="mt-4 text-[12px] text-ink-mute">AI siz uchun {aiPlan.days.length} kunlik boshlang'ich reja tuzdi.</p> : null}
-          </div>
-        ) : null}
-      </Card>
-
-      <Card className="mt-5 p-5 sm:p-6">
-        <div className="flex items-start gap-3.5">
-          <IconPlate icon={BookOpen} />
-          <div className="min-w-0">
-            <h2 className="text-[18px] font-bold text-ink-strong">Kunlik mashqlar</h2>
-            <p className="mt-0.5 text-[14px] text-ink-mute">Milliy sertifikatga har kuni maqsadli savollar bilan tayyorlaning</p>
-          </div>
-        </div>
-        <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {features.map((f) => (
-            <div key={f.title} className="flex items-center gap-3 rounded-2xl border border-edge bg-white px-4 py-3.5">
-              <f.icon className="h-[18px] w-[18px] shrink-0 text-brass" strokeWidth={1.6} />
-              <span className="min-w-0">
-                <span className="block truncate text-[14px] font-semibold text-ink-strong">{f.title}</span>
-                <span className="block truncate text-[13px] text-ink-mute">{f.sub}</span>
-              </span>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      <div className="mt-5 flex flex-col gap-4 rounded-[20px] bg-deep px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[18px] font-bold text-white">Mashq qilishga tayyormisiz?</p>
-          <p className="mt-1 text-[14px] text-white/60">{hasData ? "Keyingi imtihonni tanlab davom eting" : "Shaxsiy tayyorgarlik rejasini yoqing"}</p>
-        </div>
-        <Link to="/milliy-sertifikat" className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-6 text-[14px] font-semibold text-ink-strong transition-colors hover:bg-[#F3EFE6]">
-          {hasData ? "Davom etish" : "Yoqish"}
-          <ArrowRight className="h-4 w-4" strokeWidth={1.8} />
-        </Link>
-      </div>
-
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <Card className="p-5 sm:p-6">
-          <div className="flex items-center gap-3"><IconPlate icon={Calendar} /><h3 className="text-[17px] font-bold text-ink-strong">Oxirgi imtihon</h3></div>
-          {hasData ? (
-            <div className="mt-4"><p className="text-[15px] font-medium text-ink-strong">{last.examTitle}</p><p className="mt-1 text-[14px] text-ink-mute">{fmtDate(last.finishedAt)}</p><p className="tabnum mt-3 text-[14px] text-ink-strong">{last.correct}/{last.total} to'g'ri</p></div>
-          ) : (
-            <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">Hozircha yakunlangan imtihon yo'q. Birinchi imtihoningizdan so'ng sana shu yerda ko'rinadi.</p>
-          )}
-        </Card>
-
-        <Card className="p-5 sm:p-6">
-          <div className="flex items-center gap-3"><IconPlate icon={LineChart} /><h3 className="text-[17px] font-bold text-ink-strong">Natijangiz</h3></div>
-          {hasData && stats ? (
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <div><p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Imtihonlar</p><p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">{stats.totalTests}</p></div>
-              <div><p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">O'rtacha</p><p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">{stats.averagePercent}%</p></div>
-              <div><p className="text-[12px] uppercase tracking-[0.1em] text-ink-mute">Eng yuqori</p><p className="tabnum mt-1.5 text-[24px] font-semibold text-ink-strong">{stats.bestPercent}%</p></div>
-            </div>
-          ) : (
-            <p className="mt-4 text-[15px] leading-relaxed text-ink-mute">Hozircha ma'lumot yo'q. Birinchi imtihon natijasi bu yerda ko'rinadi.</p>
-          )}
-        </Card>
-      </div>
-
-      {hasData && stats && Object.keys(stats.perSubject).length > 0 && (
-        <Card className="mt-5 p-5 sm:p-6">
-          <h3 className="text-[17px] font-bold text-ink-strong">Fanlar bo'yicha</h3>
-          <ul className="mt-4 space-y-4">
-            {Object.entries(stats.perSubject).map(([sid, v]) => {
-              const pct = v.total ? Math.round((v.correct / v.total) * 100) : 0;
-              return (
-                <li key={sid}>
-                  <div className="flex items-center justify-between text-[13px]"><span className="text-ink-strong">{MILLIY_SUBJECTS[sid]?.name ?? sid}</span><span className="tabnum text-ink-mute">{pct}%</span></div>
-                  <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EDE8DC]"><div className="h-full rounded-full bg-brass" style={{ width: `${pct}%` }} /></div>
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
-      )}
-    </DashboardShell>
-  );
+export const Route = createFileRoute("/dashboard")({ component: Dashboard, head: () => ({ meta: [{ title: "Bosh sahifa — INTIL" }] }) });
+function Dashboard() { return <ProtectedRoute><DashboardContent /></ProtectedRoute>; }
+function fmtDate(iso?: string | null) { if (!iso) return "—"; try { return new Date(iso).toLocaleDateString("uz-UZ", { day: "2-digit", month: "long", year: "numeric" }); } catch { return "—"; } }
+function computeStreak(attempts: ExamAttempt[]) { if (!attempts.length) return 0; const key=(d:Date)=>d.toISOString().slice(0,10); const days=new Set(attempts.map(a=>key(new Date(a.finishedAt)))); let d=new Date(); if(!days.has(key(d))){d.setDate(d.getDate()-1);if(!days.has(key(d)))return 0;} let n=0;while(days.has(key(d))){n++;d.setDate(d.getDate()-1);}return n; }
+function Card({children,className=""}:{children:React.ReactNode;className?:string}){return <div className={`rounded-[24px] border border-edge bg-white ${className}`}>{children}</div>}
+function IconPlate({icon:Icon}:{icon:React.ComponentType<{className?:string;strokeWidth?:number}>}){return <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#F7F1E5]"><Icon className="h-[18px] w-[18px] text-brass" strokeWidth={1.6}/></span>}
+type AiTask={subject?:string;topic?:string;minutes?:number;task?:string}; type AiDay={day?:number;focus?:string;total_minutes?:number;tasks?:AiTask[]}; type AiPlan={title?:string;summary?:string;days?:AiDay[];rules?:string[]};
+function DashboardContent(){
+ const {user}=useAuth(); const [attempts,setAttempts]=useState<ExamAttempt[]|null>(null); const [plan,setPlan]=useState<AiPlan|null>(null); const [profile,setProfile]=useState<any>(null); const [loading,setLoading]=useState(true);
+ useEffect(()=>{if(!user?.id)return;let cancelled=false;(async()=>{try{await syncPendingOnboarding(user.id);const [p,sp]=await Promise.all([getLatestStudyPlan(user.id),getStudentProfile(user.id)]);if(!cancelled){setPlan(p?.plan??null);setProfile(sp);}}catch(e){console.error("[INTIL] dashboard load",e)}finally{if(!cancelled)setLoading(false)}})();setAttempts(attemptsRepo.list(user.id));return()=>{cancelled=true}},[user?.id]);
+ const list=attempts??[]; const stats=useMemo(()=>attempts?computeStats(list):null,[attempts]); const streak=useMemo(()=>computeStreak(list),[attempts]); const first=plan?.days?.[0];
+ const daysLeft=profile?.exam_date?Math.max(0,Math.ceil((new Date(`${profile.exam_date}T23:59:59`).getTime()-Date.now())/86400000)):null; const minutes=profile?.daily_study_minutes??first?.total_minutes??null;
+ const subjectNames=(profile?.selected_subjects??[]).map((s:string)=>MILLIY_SUBJECTS[s]?.name??({math:"Matematika",physics:"Fizika",history:"Tarix",uzbek:"Ona tili",biology:"Biologiya",chemistry:"Kimyo",english:"Ingliz tili"}[s]??s));
+ const weak=profile?.weak_points??{}; const weakList=Object.entries(weak).flatMap(([s,topics])=>(topics as string[]).map(t=>({subject:MILLIY_SUBJECTS[s]?.name??({math:"Matematika",physics:"Fizika",history:"Tarix",uzbek:"Ona tili",biology:"Biologiya",chemistry:"Kimyo",english:"Ingliz tili"}[s]??s),topic:t}))).slice(0,6);
+ return <DashboardShell title="Bosh sahifa" subtitle={`Xush kelibsiz, ${user?.fullName??"talaba"}`} streakDays={streak}>
+  <section className="relative overflow-hidden rounded-[28px] bg-[#171717] px-6 py-7 text-white sm:px-8 sm:py-8"><div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[#B9975B]/15 blur-3xl"/><div className="relative grid gap-7 lg:grid-cols-[1fr_auto] lg:items-center"><div><div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[.18em] text-[#D8B878]"><Sparkles className="h-4 w-4"/> INTIL AI</div><h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-[-.03em] sm:text-4xl">Sizning tayyorgarligingiz. <span className="text-[#D8B878]">Sizga moslashtirilgan.</span></h1><p className="mt-3 max-w-xl text-[14px] leading-6 text-white/60">{loading?"Shaxsiy ma'lumotlaringiz tahlil qilinmoqda…":plan?.summary??"Onboarding ma'lumotlaringiz asosida shaxsiy reja tayyorlanadi."}</p></div><div className="grid grid-cols-2 gap-2 sm:gap-3"><div className="min-w-[110px] rounded-2xl border border-white/10 bg-white/[.05] px-4 py-4"><Clock3 className="h-4 w-4 text-[#D8B878]"/><p className="mt-3 text-2xl font-semibold">{daysLeft??"—"}</p><p className="mt-1 text-[11px] text-white/50">kun qoldi</p></div><div className="min-w-[110px] rounded-2xl border border-white/10 bg-white/[.05] px-4 py-4"><Target className="h-4 w-4 text-[#D8B878]"/><p className="mt-3 text-2xl font-semibold">{profile?.target_score??"—"}</p><p className="mt-1 text-[11px] text-white/50">target ball</p></div></div></div></section>
+  <div className="mt-5 grid gap-4 sm:grid-cols-3"><Card className="p-5"><div className="flex items-center justify-between"><span className="text-[12px] font-semibold uppercase tracking-[.12em] text-ink-mute">Kunlik vaqt</span><Clock3 className="h-4 w-4 text-brass"/></div><p className="tabnum mt-3 text-2xl font-semibold text-ink-strong">{minutes??"—"}<span className="ml-1 text-sm font-normal text-ink-mute">daq.</span></p></Card><Card className="p-5"><div className="flex items-center justify-between"><span className="text-[12px] font-semibold uppercase tracking-[.12em] text-ink-mute">Fanlar</span><BookOpen className="h-4 w-4 text-brass"/></div><p className="mt-3 text-2xl font-semibold text-ink-strong">{subjectNames.length||"—"}</p></Card><Card className="p-5"><div className="flex items-center justify-between"><span className="text-[12px] font-semibold uppercase tracking-[.12em] text-ink-mute">Streak</span><Zap className="h-4 w-4 text-brass"/></div><p className="tabnum mt-3 text-2xl font-semibold text-ink-strong">{streak}<span className="ml-1 text-sm font-normal text-ink-mute">kun</span></p></Card></div>
+  <div className="mt-5 grid gap-5 lg:grid-cols-[1.4fr_.8fr]"><Card className="p-5 sm:p-6"><div className="flex items-start justify-between gap-4"><div className="flex gap-3.5"><IconPlate icon={Sparkles}/><div><p className="text-[12px] font-semibold uppercase tracking-[.12em] text-brass">AI reja</p><h2 className="mt-1 text-xl font-semibold text-ink-strong">Bugungi fokus</h2></div></div>{first?.total_minutes?<span className="rounded-full bg-[#F7F1E5] px-3 py-1.5 text-[12px] font-semibold text-ink-strong">{first.total_minutes} daqiqa</span>:null}</div>{first?<><div className="mt-5 rounded-2xl bg-[#FAF8F3] p-4"><p className="text-[16px] font-semibold text-ink-strong">{first.focus??"Bugungi mashg'ulot"}</p><div className="mt-4 space-y-2">{(first.tasks??[]).slice(0,4).map((t,i)=><div key={i} className="flex items-start gap-3 rounded-xl bg-white px-3.5 py-3"><span className="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#F7F1E5]"><Check className="h-3 w-3 text-brass"/></span><div className="min-w-0 flex-1"><p className="text-[13px] font-semibold text-ink-strong">{t.subject}{t.topic?` · ${t.topic}`:""}</p><p className="mt-0.5 text-[13px] text-ink-mute">{t.task}</p></div>{t.minutes?<span className="text-[12px] text-ink-mute">{t.minutes} daq.</span>:null}</div>)}</div></div><Link to="/milliy-sertifikat" className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl bg-deep px-5 text-[13px] font-semibold text-white">Bugungi mashqni boshlash <ArrowRight className="h-4 w-4"/></Link></>:<div className="mt-5 rounded-2xl bg-[#FAF8F3] p-5 text-sm leading-6 text-ink-mute">AI reja hali yaratilmagan. Onboardingni yakunlang — INTIL siz uchun boshlang'ich reja yaratadi.</div>}</Card>
+  <Card className="p-5 sm:p-6"><div className="flex items-center gap-3"><IconPlate icon={Target}/><div><p className="text-[12px] font-semibold uppercase tracking-[.12em] text-brass">AI tahlili</p><h2 className="mt-1 text-lg font-semibold text-ink-strong">Kuchsiz nuqtalar</h2></div></div>{weakList.length?<div className="mt-5 space-y-3">{weakList.map((w,i)=><div key={i} className="rounded-xl border border-edge px-3.5 py-3"><p className="text-[11px] font-semibold uppercase tracking-[.08em] text-ink-mute">{w.subject}</p><p className="mt-1 text-[13px] font-semibold text-ink-strong">{w.topic}</p><div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[#EDE8DC]"><div className="h-full w-1/3 rounded-full bg-brass"/></div></div>)}</div>:<p className="mt-5 text-[14px] leading-6 text-ink-mute">Natijalar yig‘ilgani sari INTIL sizning eng ko‘p xato qiladigan mavzularingizni avtomatik aniqlaydi.</p>}</Card></div>
+  <div className="mt-5 grid gap-5 lg:grid-cols-2"><Card className="p-5 sm:p-6"><div className="flex items-center gap-3"><IconPlate icon={LineChart}/><h3 className="text-[17px] font-semibold text-ink-strong">Natijalar</h3></div>{stats&&list.length?<div className="mt-5 grid grid-cols-3 gap-3">{[["Imtihonlar",stats.totalTests],["O‘rtacha",`${stats.averagePercent}%`],["Eng yuqori",`${stats.bestPercent}%`]].map(([l,v])=><div key={l} className="rounded-2xl bg-[#FAF8F3] p-4"><p className="text-[11px] uppercase tracking-[.08em] text-ink-mute">{l}</p><p className="tabnum mt-2 text-xl font-semibold text-ink-strong">{v}</p></div>)}</div>:<p className="mt-4 text-[14px] leading-6 text-ink-mute">Birinchi imtihoningizni tugatganingizdan so‘ng AI bu yerda natijalarni tahlil qiladi.</p>}</Card><Card className="p-5 sm:p-6"><div className="flex items-center gap-3"><IconPlate icon={TrendingUp}/><h3 className="text-[17px] font-semibold text-ink-strong">Tayyorgarlik yo‘nalishi</h3></div><div className="mt-5 flex flex-wrap gap-2">{subjectNames.length?subjectNames.map(s=><span key={s} className="rounded-full border border-edge bg-[#FAF8F3] px-3 py-2 text-[12px] font-medium text-ink-strong">{s}</span>):<span className="text-sm text-ink-mute">Onboarding ma'lumotlari kutilmoqda.</span>}</div><div className="mt-5 rounded-2xl bg-deep p-4 text-white"><p className="text-[13px] font-semibold">INTIL siz bilan birga moslashadi.</p><p className="mt-1 text-[12px] leading-5 text-white/55">Savollarni ishlagan sari natijalaringiz rejaning keyingi kunlariga ta'sir qiladi.</p></div></Card></div>
+  <Card className="mt-5 p-5 sm:p-6"><div className="flex items-center justify-between gap-4"><div className="flex items-center gap-3"><IconPlate icon={Calendar}/><div><h3 className="text-[17px] font-semibold text-ink-strong">Oxirgi imtihon</h3><p className="text-[13px] text-ink-mute">Natijalaringiz va davomiy progress</p></div></div><Link to="/milliy-sertifikat" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink-strong">Mashq qilish <ArrowRight className="h-4 w-4"/></Link></div>{list.length?<div className="mt-4 border-t border-edge pt-4"><p className="text-[14px] font-medium text-ink-strong">{list[0].examTitle}</p><p className="mt-1 text-[13px] text-ink-mute">{fmtDate(list[0].finishedAt)} · {list[0].correct}/{list[0].total} to‘g‘ri</p></div>:<p className="mt-4 border-t border-edge pt-4 text-[14px] text-ink-mute">Hozircha yakunlangan imtihon yo‘q.</p>}</Card>
+ </DashboardShell>
 }
