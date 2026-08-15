@@ -8,20 +8,21 @@
 <body style="margin:0">
 <script>
 (async()=>{
-  const api = 'https://api.github.com/repos/uudilshod1606-byte/grantx/contents/public/intil-onboarding-v5-premium.html.gz?ref=main';
-  const r = await fetch(api, { cache:'no-store', headers:{Accept:'application/vnd.github+json'} });
+  // Keep the premium HTML completely same-origin. The previous version
+  // fetched from raw.githubusercontent.com, which can fail inside Lovable's
+  // preview because of browser/network restrictions.
+  const asset = '/intil-onboarding-v5-premium.html.gz';
+  const r = await fetch(asset, { cache:'no-store' });
   if(!r.ok) throw new Error('Onboarding asset failed: '+r.status);
-  const data = await r.json();
-  if(data.encoding !== 'base64' || !data.content) throw new Error('Onboarding asset content unavailable');
-  const binary = atob(data.content.replace(/\s/g,''));
-  const bytes = new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  if(!r.body) throw new Error('Onboarding asset body unavailable');
+  const ds = new DecompressionStream('gzip');
+  const stream = r.body.pipeThrough(ds);
   const html = await new Response(stream).text();
   document.open();
   document.write(html);
   document.close();
 })().catch(e=>{
+  console.error('INTIL onboarding:', e);
   document.body.innerHTML='<pre style="font:14px monospace;padding:24px">INTIL onboarding yuklanmadi. '+e.message+'</pre>';
 });
 </script>
