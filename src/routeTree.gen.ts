@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestlarRouteImport } from './routes/testlar'
+import { Route as StudyPlanRouteImport } from './routes/study-plan'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MateriallarRouteImport } from './routes/materiallar'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -32,9 +34,19 @@ const TestlarRoute = TestlarRouteImport.update({
   path: '/testlar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudyPlanRoute = StudyPlanRouteImport.update({
+  id: '/study-plan',
+  path: '/study-plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MateriallarRoute = MateriallarRouteImport.update({
@@ -125,7 +137,9 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/materiallar': typeof MateriallarRoute
+  '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/study-plan': typeof StudyPlanRoute
   '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
   '/qollanmalar/$slug': typeof QollanmalarSlugRoute
@@ -144,7 +158,9 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/materiallar': typeof MateriallarRoute
+  '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/study-plan': typeof StudyPlanRoute
   '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
   '/qollanmalar/$slug': typeof QollanmalarSlugRoute
@@ -164,7 +180,9 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/materiallar': typeof MateriallarRoute
+  '/onboarding': typeof OnboardingRoute
   '/signup': typeof SignupRoute
+  '/study-plan': typeof StudyPlanRoute
   '/testlar': typeof TestlarRoute
   '/milliy-sertifikat/$subjectId': typeof MilliySertifikatSubjectIdRoute
   '/qollanmalar/$slug': typeof QollanmalarSlugRoute
@@ -185,7 +203,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/materiallar'
+    | '/onboarding'
     | '/signup'
+    | '/study-plan'
     | '/testlar'
     | '/milliy-sertifikat/$subjectId'
     | '/qollanmalar/$slug'
@@ -204,7 +224,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/materiallar'
+    | '/onboarding'
     | '/signup'
+    | '/study-plan'
     | '/testlar'
     | '/milliy-sertifikat/$subjectId'
     | '/qollanmalar/$slug'
@@ -223,7 +245,9 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/materiallar'
+    | '/onboarding'
     | '/signup'
+    | '/study-plan'
     | '/testlar'
     | '/milliy-sertifikat/$subjectId'
     | '/qollanmalar/$slug'
@@ -243,7 +267,9 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   MateriallarRoute: typeof MateriallarRoute
+  OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
+  StudyPlanRoute: typeof StudyPlanRoute
   TestlarRoute: typeof TestlarRoute
   MilliySertifikatSubjectIdRoute: typeof MilliySertifikatSubjectIdRoute
   QollanmalarSlugRoute: typeof QollanmalarSlugRoute
@@ -261,11 +287,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestlarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/study-plan': {
+      id: '/study-plan'
+      path: '/study-plan'
+      fullPath: '/study-plan'
+      preLoaderRoute: typeof StudyPlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/materiallar': {
@@ -387,7 +427,9 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   MateriallarRoute: MateriallarRoute,
+  OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
+  StudyPlanRoute: StudyPlanRoute,
   TestlarRoute: TestlarRoute,
   MilliySertifikatSubjectIdRoute: MilliySertifikatSubjectIdRoute,
   QollanmalarSlugRoute: QollanmalarSlugRoute,
@@ -398,3 +440,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

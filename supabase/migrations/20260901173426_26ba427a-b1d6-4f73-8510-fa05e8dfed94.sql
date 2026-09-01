@@ -1,0 +1,4 @@
+CREATE POLICY "question_images_read" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'question-images');
+CREATE POLICY "question_images_admin_insert" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'question-images' AND lower(coalesce(auth.jwt() ->> 'email','')) = 'dilshoduktamov34@gmail.com');
+CREATE POLICY "question_images_admin_update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'question-images' AND lower(coalesce(auth.jwt() ->> 'email','')) = 'dilshoduktamov34@gmail.com');
+CREATE POLICY "question_images_admin_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'question-images' AND lower(coalesce(auth.jwt() ->> 'email','')) = 'dilshoduktamov34@gmail.com');
