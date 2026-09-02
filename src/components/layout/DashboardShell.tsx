@@ -8,12 +8,12 @@ export function DashboardShell({
   children,
   title,
   subtitle,
-  streakDays,
+  streakDays = 0,
 }: {
   children: React.ReactNode;
   title: string;
   subtitle?: string;
-  streakDays: number;
+  streakDays?: number;
 }) {
   return (
     <div className="min-h-screen bg-page">
