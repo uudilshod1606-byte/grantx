@@ -107,6 +107,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
   const [block, setBlock] = useState<DtmBlock>("mandatory");
   const [subjectId, setSubjectId] = useState("matematika");
   const [examLabel, setExamLabel] = useState("");
+  const [examCategory, setExamCategory] = useState<"original" | "mashq">("original");
   const [withImages, setWithImages] = useState(true);
   const [running, setRunning] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -213,7 +214,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
 
   const start = async () => {
     if (files.length === 0) return toast.error("Avval PDF fayl tanlang");
-    if (kind === "milliy" && !examLabel.trim()) {
+    if (kind === "milliy" && examCategory === "original" && !examLabel.trim()) {
       return toast.error("Imtihon sanasi/nomini kiriting");
     }
     setRunning(true);
@@ -294,8 +295,9 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
           solution: solution || undefined,
           passageText: passageText || undefined,
           imageUrl: r.imageUrl || undefined,
-          examCategory: kind === "milliy" ? "original" : undefined,
-          examLabel: kind === "milliy" ? examLabel.trim() : null,
+          examCategory: kind === "milliy" ? examCategory : undefined,
+          examLabel:
+            kind === "milliy" && examCategory === "original" ? examLabel.trim() : null,
           groupId: r.groupId,
           groupIntro: r.groupId && passageText ? passageText : null,
         });
