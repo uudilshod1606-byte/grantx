@@ -391,16 +391,34 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
               </Select>
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">
-                Imtihon sanasi / nomi
-              </label>
-              <Input
-                value={examLabel}
-                onChange={(e) => setExamLabel(e.target.value)}
-                placeholder="01.04.2024"
-              />
-            </div>
+            {kind === "milliy" && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Bo'lim</label>
+                <Select
+                  value={examCategory}
+                  onValueChange={(v) => setExamCategory(v as "original" | "mashq")}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="original">Original imtihon</SelectItem>
+                    <SelectItem value="mashq">Mashq</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {kind === "milliy" && examCategory === "original" && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  Imtihon sanasi / nomi
+                </label>
+                <Input
+                  value={examLabel}
+                  onChange={(e) => setExamLabel(e.target.value)}
+                  placeholder="01.04.2024"
+                />
+              </div>
+            )}
           </div>
 
           {/* Fayl tanlash */}
