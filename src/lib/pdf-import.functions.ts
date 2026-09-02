@@ -74,6 +74,10 @@ export const extractQuestionsFromPdf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { fileName: string; fileBase64: string; mimeType?: string }) => {
     if (!input?.fileBase64) throw new Error("Fayl bo'sh");
+    // ~15 MB base64 ≈ 11 MB PDF: kattaroq so'rovlar server tomonidan rad etiladi.
+    if (input.fileBase64.length > 15_000_000) {
+      throw new Error("PDF hajmi juda katta (11 MB dan oshmasin). Faylni bo'lib yuboring.");
+    }
     return input;
   })
   .handler(async ({ data, context }): Promise<ExtractedQuestion[]> => {
@@ -83,7 +87,9 @@ export const extractQuestionsFromPdf = createServerFn({ method: "POST" })
     if (email !== ADMIN_EMAIL) throw new Error("Forbidden");
 
     const apiKey = process.env["LOVABLE_API_KEY"];
-    if (!apiKey) throw new Error("AI kaliti sozlanmagan");
+    if (!apiKey) {
+      throw new Error("API kalit sozlanmagan — administratorga murojaat qiling");
+    }
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -113,6 +119,18 @@ export const extractQuestionsFromPdf = createServerFn({ method: "POST" })
 
     if (!res.ok) {
       const body = await res.text();
+      const contentType = res.headers.get("content-type") ?? "";
+      const looksHtml = contentType.includes("text/html") || /^\s*<(!doctype|html)/i.test(body);
+      if (looksHtml) {
+        if (res.status === 401 || res.status === 403) {
+          throw new Error(
+            "AI xizmatiga kirish rad etildi (API kalit noto'g'ri yoki sozlanmagan) — administratorga murojaat qiling",
+          );
+        }
+        throw new Error(
+          `AI xizmati kutilmagan javob qaytardi (${res.status}). Keyinroq qayta urinib ko'ring.`,
+        );
+      }
       let message = body.slice(0, 400);
       try {
         const j = JSON.parse(body) as { error?: { message?: string }; message?: string };
@@ -122,7 +140,11 @@ export const extractQuestionsFromPdf = createServerFn({ method: "POST" })
       }
       if (res.status === 429) throw new Error("So'rovlar chegarasi (429). Biroz kutib qayta urining.");
       if (res.status === 402) throw new Error(`AI krediti yetarli emas: ${message}`);
-      if (res.status === 403) throw new Error(`AI bloklangan: ${message}`);
+      if (res.status === 401 || res.status === 403) {
+        throw new Error(
+          `AI xizmatiga kirish rad etildi (${res.status}) — administratorga murojaat qiling: ${message}`,
+        );
+      }
       throw new Error(`AI xatosi (${res.status}): ${message}`);
     }
 
