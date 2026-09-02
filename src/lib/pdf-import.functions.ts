@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ADMIN_EMAIL = "dilshoduktamov34@gmail.com";
-const MODEL = "google/gemini-3.6-flash";
+const MODEL = "gemini-3.6-flash";
 
 export type ExtractedQuestion = {
   savol_turi: string;
@@ -86,36 +86,38 @@ export const extractQuestionsFromPdf = createServerFn({ method: "POST" })
     ).toLowerCase();
     if (email !== ADMIN_EMAIL) throw new Error("Forbidden");
 
-    const apiKey = process.env["LOVABLE_API_KEY"];
+    const apiKey = process.env["GEMINI_API_KEY"];
     if (!apiKey) {
-      throw new Error("API kalit sozlanmagan — administratorga murojaat qiling");
+      throw new Error("GEMINI_API_KEY sozlanmagan");
     }
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: PROMPT },
-              {
-                type: "file",
-                file: {
-                  filename: data.fileName || "savollar.pdf",
-                  file_data: `data:${data.mimeType || "application/pdf"};base64,${data.fileBase64}`,
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: PROMPT },
+                {
+                  inline_data: {
+                    mime_type: data.mimeType || "application/pdf",
+                    data: data.fileBase64,
+                  },
                 },
-              },
-            ],
-          },
-        ],
-      }),
-    });
+              ],
+            },
+          ],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      },
+    );
 
     if (!res.ok) {
       const body = await res.text();
@@ -149,9 +151,14 @@ export const extractQuestionsFromPdf = createServerFn({ method: "POST" })
     }
 
     const json = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
+      candidates?: Array<{
+        content?: { parts?: Array<{ text?: string }> };
+      }>;
     };
-    const content = json.choices?.[0]?.message?.content ?? "";
+    const content =
+      json.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text ?? "")
+        .join("") ?? "";
     if (!content) throw new Error("AI bo'sh javob qaytardi");
 
     const parsed = parseLoose(content);
