@@ -107,6 +107,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
   const [block, setBlock] = useState<DtmBlock>("mandatory");
   const [subjectId, setSubjectId] = useState("matematika");
   const [examLabel, setExamLabel] = useState("");
+  const [examCategory, setExamCategory] = useState<"original" | "mashq">("original");
   const [withImages, setWithImages] = useState(true);
   const [running, setRunning] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -213,7 +214,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
 
   const start = async () => {
     if (files.length === 0) return toast.error("Avval PDF fayl tanlang");
-    if (kind === "milliy" && !examLabel.trim()) {
+    if (kind === "milliy" && examCategory === "original" && !examLabel.trim()) {
       return toast.error("Imtihon sanasi/nomini kiriting");
     }
     setRunning(true);
@@ -294,8 +295,9 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
           solution: solution || undefined,
           passageText: passageText || undefined,
           imageUrl: r.imageUrl || undefined,
-          examCategory: kind === "milliy" ? "original" : undefined,
-          examLabel: kind === "milliy" ? examLabel.trim() : null,
+          examCategory: kind === "milliy" ? examCategory : undefined,
+          examLabel:
+            kind === "milliy" && examCategory === "original" ? examLabel.trim() : null,
           groupId: r.groupId,
           groupIntro: r.groupId && passageText ? passageText : null,
         });
@@ -391,16 +393,34 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
               </Select>
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs text-muted-foreground">
-                Imtihon sanasi / nomi
-              </label>
-              <Input
-                value={examLabel}
-                onChange={(e) => setExamLabel(e.target.value)}
-                placeholder="01.04.2024"
-              />
-            </div>
+            {kind === "milliy" && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Bo'lim</label>
+                <Select
+                  value={examCategory}
+                  onValueChange={(v) => setExamCategory(v as "original" | "mashq")}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="original">Original imtihon</SelectItem>
+                    <SelectItem value="mashq">Mashq</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {kind === "milliy" && examCategory === "original" && (
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">
+                  Imtihon sanasi / nomi
+                </label>
+                <Input
+                  value={examLabel}
+                  onChange={(e) => setExamLabel(e.target.value)}
+                  placeholder="01.04.2024"
+                />
+              </div>
+            )}
           </div>
 
           {/* Fayl tanlash */}
