@@ -40,6 +40,7 @@ import { ProtectedRoute, useAuth } from "@/lib/auth";
 import { RichEditor } from "@/components/math/RichEditor";
 import { MathContent } from "@/components/math/MathContent";
 import { BulkImportDialog } from "@/components/admin/BulkImportDialog";
+import { PdfImportDialog } from "@/components/admin/PdfImportDialog";
 import {
   ADMIN_SUBJECTS,
   SUBJECTS,
@@ -302,6 +303,7 @@ function QuestionsTab() {
           <QuestionFormDialog onSaved={() => { refresh(); setOpen(false); }} />
         </Dialog>
         <BulkImportDialog onImported={refresh} />
+        <PdfImportDialog onImported={refresh} />
       </div>
 
       <Dialog open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
