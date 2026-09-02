@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -546,8 +546,8 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                   </thead>
                   <tbody>
                     {visible.map((r) => (
-                      <>
-                        <tr key={r.id} className="border-t border-border align-top">
+                      <Fragment key={r.id}>
+                        <tr className="border-t border-border align-top">
                           <td className="px-3 py-2">
                             <input
                               type="checkbox"
@@ -610,7 +610,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                           </td>
                         </tr>
                         {expanded === r.id && (
-                          <tr key={r.id + "-edit"} className="border-t border-border bg-muted/30">
+                          <tr className="border-t border-border bg-muted/30">
                             <td></td>
                             <td colSpan={5} className="space-y-2 px-3 py-3">
                               <div>
@@ -671,7 +671,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
