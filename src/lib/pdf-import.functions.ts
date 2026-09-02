@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ADMIN_EMAIL = "dilshoduktamov34@gmail.com";
-const MODEL = "google/gemini-3.6-flash";
+const MODEL = "gemini-3.6-flash";
 
 export type ExtractedQuestion = {
   savol_turi: string;
@@ -151,9 +151,14 @@ export const extractQuestionsFromPdf = createServerFn({ method: "POST" })
     }
 
     const json = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
+      candidates?: Array<{
+        content?: { parts?: Array<{ text?: string }> };
+      }>;
     };
-    const content = json.choices?.[0]?.message?.content ?? "";
+    const content =
+      json.candidates?.[0]?.content?.parts
+        ?.map((p) => p.text ?? "")
+        .join("") ?? "";
     if (!content) throw new Error("AI bo'sh javob qaytardi");
 
     const parsed = parseLoose(content);
