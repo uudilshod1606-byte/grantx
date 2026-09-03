@@ -621,18 +621,26 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                                 }
                               />
                             ) : (
-                              <Input
-                                className="h-8"
-                                value={r.answerText}
-                                onChange={(e) =>
-                                  patch(r.id, {
-                                    answerText: e.target.value,
-                                    needsReview: !e.target.value,
-                                  })
-                                }
-                              />
+                              <div className="space-y-1">
+                                <Input
+                                  className="h-8"
+                                  value={r.answerText}
+                                  onChange={(e) =>
+                                    patch(r.id, {
+                                      answerText: e.target.value,
+                                      needsReview: !e.target.value,
+                                    })
+                                  }
+                                />
+                                {r.answerText && (
+                                  <div className="text-xs">
+                                    <MarkerContent text={r.answerText} />
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </td>
+
                           <td className="px-3 py-2 text-xs">
                             {r.needsReview ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-600">
