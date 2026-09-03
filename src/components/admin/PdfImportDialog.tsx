@@ -593,9 +593,13 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                               className="text-left hover:underline"
                               onClick={() => setExpanded(expanded === r.id ? null : r.id)}
                             >
-                              {plain(r.text).slice(0, 110) || "(bo'sh)"}
-                              {plain(r.text).length > 110 ? "…" : ""}
+                              {plain(r.text) ? (
+                                <MarkerContent text={plain(r.text).slice(0, 220)} />
+                              ) : (
+                                "(bo'sh)"
+                              )}
                             </button>
+
                             <div className="mt-0.5 text-[11px] text-muted-foreground">
                               {r.fileName}
                               {r.page ? ` · ${r.page}-sahifa` : ""}
