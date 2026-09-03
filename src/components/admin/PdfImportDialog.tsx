@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useRef, useState } from "react";
+import { MarkerContent } from "@/components/math/MarkerContent";
 import {
   AlertTriangle,
   CheckCircle2,
