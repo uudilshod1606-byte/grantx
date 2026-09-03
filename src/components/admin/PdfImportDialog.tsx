@@ -26,11 +26,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
 import {
   extractQuestionsFromPdf,
   type ExtractedQuestion,
-} from "@/lib/pdf-import.functions";
+} from "@/lib/pdf-import-client";
+
 import { renderTextWithLatexMarkers } from "@/components/math/formula";
 import {
   ADMIN_SUBJECTS,
