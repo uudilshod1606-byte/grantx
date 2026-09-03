@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useRef, useState } from "react";
+import { MarkerContent } from "@/components/math/MarkerContent";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -593,9 +594,13 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                               className="text-left hover:underline"
                               onClick={() => setExpanded(expanded === r.id ? null : r.id)}
                             >
-                              {plain(r.text).slice(0, 110) || "(bo'sh)"}
-                              {plain(r.text).length > 110 ? "…" : ""}
+                              {plain(r.text) ? (
+                                <MarkerContent text={plain(r.text).slice(0, 220)} />
+                              ) : (
+                                "(bo'sh)"
+                              )}
                             </button>
+
                             <div className="mt-0.5 text-[11px] text-muted-foreground">
                               {r.fileName}
                               {r.page ? ` · ${r.page}-sahifa` : ""}
@@ -617,18 +622,26 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                                 }
                               />
                             ) : (
-                              <Input
-                                className="h-8"
-                                value={r.answerText}
-                                onChange={(e) =>
-                                  patch(r.id, {
-                                    answerText: e.target.value,
-                                    needsReview: !e.target.value,
-                                  })
-                                }
-                              />
+                              <div className="space-y-1">
+                                <Input
+                                  className="h-8"
+                                  value={r.answerText}
+                                  onChange={(e) =>
+                                    patch(r.id, {
+                                      answerText: e.target.value,
+                                      needsReview: !e.target.value,
+                                    })
+                                  }
+                                />
+                                {r.answerText && (
+                                  <div className="text-xs">
+                                    <MarkerContent text={r.answerText} />
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </td>
+
                           <td className="px-3 py-2 text-xs">
                             {r.needsReview ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-amber-600">
@@ -652,6 +665,11 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                                   value={r.text}
                                   onChange={(e) => patch(r.id, { text: e.target.value })}
                                 />
+                                {r.text && (
+                                  <div className="mt-1 rounded-md border border-border bg-background px-2 py-1 text-sm">
+                                    <MarkerContent text={plain(r.text)} inline={false} />
+                                  </div>
+                                )}
                               </div>
                               {r.passageText && (
                                 <div>
@@ -663,27 +681,40 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                                     value={r.passageText}
                                     onChange={(e) => patch(r.id, { passageText: e.target.value })}
                                   />
+                                  <div className="mt-1 rounded-md border border-border bg-background px-2 py-1 text-sm">
+                                    <MarkerContent text={plain(r.passageText)} inline={false} />
+                                  </div>
                                 </div>
                               )}
                               {r.options.length > 0 && (
                                 <div className="grid gap-2 sm:grid-cols-2">
                                   {r.options.map((o, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                      <span className="w-4 text-xs font-semibold">{LETTERS[i]}</span>
-                                      <Input
-                                        value={o}
-                                        onChange={(e) =>
-                                          patch(r.id, {
-                                            options: r.options.map((x, xi) =>
-                                              xi === i ? e.target.value : x,
-                                            ),
-                                          })
-                                        }
-                                      />
+                                    <div key={i} className="flex items-start gap-2">
+                                      <span className="mt-2 w-4 text-xs font-semibold">
+                                        {LETTERS[i]}
+                                      </span>
+                                      <div className="flex-1 space-y-1">
+                                        <Input
+                                          value={o}
+                                          onChange={(e) =>
+                                            patch(r.id, {
+                                              options: r.options.map((x, xi) =>
+                                                xi === i ? e.target.value : x,
+                                              ),
+                                            })
+                                          }
+                                        />
+                                        {o && (
+                                          <div className="rounded-md border border-border bg-background px-2 py-1 text-sm">
+                                            <MarkerContent text={plain(o)} />
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
                               )}
+
                               <div>
                                 <label className="text-xs text-muted-foreground">Yechim</label>
                                 <Textarea
