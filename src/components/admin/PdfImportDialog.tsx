@@ -664,6 +664,11 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                                   value={r.text}
                                   onChange={(e) => patch(r.id, { text: e.target.value })}
                                 />
+                                {r.text && (
+                                  <div className="mt-1 rounded-md border border-border bg-background px-2 py-1 text-sm">
+                                    <MarkerContent text={plain(r.text)} inline={false} />
+                                  </div>
+                                )}
                               </div>
                               {r.passageText && (
                                 <div>
@@ -675,27 +680,40 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                                     value={r.passageText}
                                     onChange={(e) => patch(r.id, { passageText: e.target.value })}
                                   />
+                                  <div className="mt-1 rounded-md border border-border bg-background px-2 py-1 text-sm">
+                                    <MarkerContent text={plain(r.passageText)} inline={false} />
+                                  </div>
                                 </div>
                               )}
                               {r.options.length > 0 && (
                                 <div className="grid gap-2 sm:grid-cols-2">
                                   {r.options.map((o, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                      <span className="w-4 text-xs font-semibold">{LETTERS[i]}</span>
-                                      <Input
-                                        value={o}
-                                        onChange={(e) =>
-                                          patch(r.id, {
-                                            options: r.options.map((x, xi) =>
-                                              xi === i ? e.target.value : x,
-                                            ),
-                                          })
-                                        }
-                                      />
+                                    <div key={i} className="flex items-start gap-2">
+                                      <span className="mt-2 w-4 text-xs font-semibold">
+                                        {LETTERS[i]}
+                                      </span>
+                                      <div className="flex-1 space-y-1">
+                                        <Input
+                                          value={o}
+                                          onChange={(e) =>
+                                            patch(r.id, {
+                                              options: r.options.map((x, xi) =>
+                                                xi === i ? e.target.value : x,
+                                              ),
+                                            })
+                                          }
+                                        />
+                                        {o && (
+                                          <div className="rounded-md border border-border bg-background px-2 py-1 text-sm">
+                                            <MarkerContent text={plain(o)} />
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
                               )}
+
                               <div>
                                 <label className="text-xs text-muted-foreground">Yechim</label>
                                 <Textarea
