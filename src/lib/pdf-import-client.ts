@@ -4,7 +4,8 @@
  * The request is sent DIRECTLY from the admin's browser to
  * generativelanguage.googleapis.com, because Google blocks the server
  * data-centre IPs with "User location is not supported".
- * Key: import.meta.env.VITE_GEMINI_API_KEY (admin-only internal tool).
+ * Key: GEMINI_API_KEY, handed to the admin browser by the admin-only
+ * server function getGeminiApiKey (never bundled publicly).
  */
 
 const MODEL = "gemini-3.6-flash";
@@ -78,15 +79,16 @@ function str(v: unknown) {
 export async function extractQuestionsFromPdf(input: {
   fileBase64: string;
   mimeType?: string;
+  apiKey: string;
 }): Promise<ExtractedQuestion[]> {
   if (!input.fileBase64) throw new Error("Fayl bo'sh");
   if (input.fileBase64.length > 25_000_000) {
     throw new Error("PDF hajmi juda katta. Faylni bo'lib yuboring.");
   }
 
-  const apiKey = import.meta.env["VITE_GEMINI_API_KEY"] as string | undefined;
+  const apiKey = input.apiKey;
   if (!apiKey) {
-    throw new Error("VITE_GEMINI_API_KEY sozlanmagan — administratorga murojaat qiling");
+    throw new Error("GEMINI_API_KEY sozlanmagan — administratorga murojaat qiling");
   }
 
   const res = await fetch(
