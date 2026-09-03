@@ -100,7 +100,6 @@ function plain(html: string) {
 }
 
 export function PdfImportDialog({ onImported }: { onImported: () => void }) {
-  const extract = useServerFn(extractQuestionsFromPdf);
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [kind, setKind] = useState<ExamKind>("milliy");
@@ -238,8 +237,9 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                   })
               : Promise.resolve([]),
           ]);
-          const items = await extract({
-            data: { fileName: file.name, fileBase64: base64, mimeType: "application/pdf" },
+          const items = await extractQuestionsFromPdf({
+            fileBase64: base64,
+            mimeType: "application/pdf",
           });
           const pageMap: Record<number, string> = {};
           for (const img of images) pageMap[img.page] = img.url;
