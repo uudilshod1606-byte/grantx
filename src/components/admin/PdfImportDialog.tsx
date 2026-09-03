@@ -26,11 +26,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
 import {
   extractQuestionsFromPdf,
   type ExtractedQuestion,
-} from "@/lib/pdf-import.functions";
+} from "@/lib/pdf-import-client";
+import { useServerFn } from "@tanstack/react-start";
+import { getGeminiApiKey } from "@/lib/gemini-key.functions";
+
 import { renderTextWithLatexMarkers } from "@/components/math/formula";
 import {
   ADMIN_SUBJECTS,
@@ -100,7 +102,7 @@ function plain(html: string) {
 }
 
 export function PdfImportDialog({ onImported }: { onImported: () => void }) {
-  const extract = useServerFn(extractQuestionsFromPdf);
+  const fetchGeminiKey = useServerFn(getGeminiApiKey);
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [kind, setKind] = useState<ExamKind>("milliy");
@@ -219,6 +221,14 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
     }
     setRunning(true);
     setRows([]);
+    let apiKey: string;
+    try {
+      apiKey = await fetchGeminiKey({ data: undefined });
+    } catch (e) {
+      setRunning(false);
+      toast.error(e instanceof Error ? e.message : "Gemini kaliti olinmadi");
+      return;
+    }
     setFileStates(files.map((f) => ({ name: f.name, status: "ishlanmoqda" })));
 
     const setState = (name: string, s: Partial<FileState>) =>
@@ -238,8 +248,10 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                   })
               : Promise.resolve([]),
           ]);
-          const items = await extract({
-            data: { fileName: file.name, fileBase64: base64, mimeType: "application/pdf" },
+          const items = await extractQuestionsFromPdf({
+            fileBase64: base64,
+            mimeType: "application/pdf",
+            apiKey,
           });
           const pageMap: Record<number, string> = {};
           for (const img of images) pageMap[img.page] = img.url;
