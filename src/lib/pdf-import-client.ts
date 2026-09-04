@@ -23,6 +23,13 @@ export type ExtractedQuestion = {
   togri_javob: string;
   yechim: string;
   sahifa: number | null;
+  /** true only when the question genuinely has a diagram/graph/drawing */
+  rasm_bor: boolean;
+  /** Diagram bounding box in page percentages (0-100), null when unknown */
+  rasm_x: number | null;
+  rasm_y: number | null;
+  rasm_kengligi: number | null;
+  rasm_balandligi: number | null;
 };
 
 const PROMPT = `Sen O'zbekiston imtihon savollarini raqamlashtiruvchi yordamchisan.
@@ -36,7 +43,9 @@ Har bir element quyidagi maydonlarga ega bo'lsin:
   "variant_a": "", "variant_b": "", "variant_c": "", "variant_d": "", "variant_e": "", "variant_f": "",
   "togri_javob": "A/B/C/D/E/F yoki ochiq savol javobi",
   "yechim": "yechim yoki izoh (bo'lmasa bo'sh satr)",
-  "sahifa": savol joylashgan sahifa raqami (butun son)
+  "sahifa": savol joylashgan sahifa raqami (butun son),
+  "rasm_bor": true/false,
+  "rasm_x": 0-100, "rasm_y": 0-100, "rasm_kengligi": 0-100, "rasm_balandligi": 0-100
 }
 
 QOIDALAR:
@@ -44,7 +53,14 @@ QOIDALAR:
 - Variantlari yo'q savollar uchun variant maydonlarini bo'sh satr qoldir va savol_turi'ni "ochiq" yoki "yozma" qil.
 - Agar hujjatda javob kaliti bo'lmasa: "togri_javob" ni bo'sh satr qoldir va "yechim" ga "TEKSHIRISH KERAK" deb yoz.
 - Savol matni boshidagi tartib raqamini olib tashla.
-- Hech qanday savolni o'ylab topma — faqat hujjatdagi haqiqiy savollarni chiqar.`;
+- Hech qanday savolni o'ylab topma — faqat hujjatdagi haqiqiy savollarni chiqar.
+
+RASMLAR (juda muhim):
+- Faqat savolda HAQIQATAN diagramma, grafik, chizma, jadval-rasm yoki geometrik shakl bo'lsa, savol_matni ichida o'sha joyga [RASM: qisqacha tavsif] belgisini qo'y va "rasm_bor": true qil.
+- Sof matn yoki faqat formuladan iborat savollarda [RASM: ...] belgisi BO'LMASIN va "rasm_bor": false bo'lsin, koordinatalar null bo'lsin.
+- "rasm_bor": true bo'lganda o'sha diagrammaning sahifadagi TAXMINIY joylashuvini foizda ber: rasm_x va rasm_y — sahifaning CHAP-YUQORI burchagidan boshlab diagrammaning chap-yuqori nuqtasi (sahifa kengligi/balandligiga nisbatan %), rasm_kengligi va rasm_balandligi — diagrammaning o'lchami (% da). Butun sahifani (0,0,100,100) berma.
+- Agar joylashuvni aniq ayta olmasang, koordinatalarni null qoldir.`;
+
 
 function stripFences(s: string) {
   return s
