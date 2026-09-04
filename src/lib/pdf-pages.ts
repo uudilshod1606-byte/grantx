@@ -93,3 +93,103 @@ export async function renderAndUploadPdfPages(
   }
   return out;
 }
+
+/** A single diagram crop request expressed in page percentages (0-100). */
+export type CropRequest = {
+  key: string;
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+/**
+ * Crops ONLY the requested diagram regions out of the PDF pages, whitens the
+ * background, uploads each crop and returns { key -> signed url }.
+ * Invalid or full-page-sized regions are skipped (no whole-page fallback).
+ */
+export async function cropAndUploadRegions(
+  file: File,
+  requests: CropRequest[],
+  opts: { scale?: number } = {},
+): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  if (requests.length === 0) return out;
+
+  const pdfjs = await loadPdfjs();
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjs.getDocument({ data: buf }).promise;
+  const scale = opts.scale ?? 2;
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const safeName = file.name.replace(/[^\w.-]+/g, "_");
+
+  const byPage = new Map<number, CropRequest[]>();
+  for (const r of requests) {
+    if (r.page < 1 || r.page > doc.numPages) continue;
+    byPage.set(r.page, [...(byPage.get(r.page) ?? []), r]);
+  }
+
+  for (const [pageNum, reqs] of byPage) {
+    let pageCanvas: HTMLCanvasElement;
+    try {
+      const page = await doc.getPage(pageNum);
+      const viewport = page.getViewport({ scale });
+      pageCanvas = document.createElement("canvas");
+      pageCanvas.width = Math.ceil(viewport.width);
+      pageCanvas.height = Math.ceil(viewport.height);
+      const ctx = pageCanvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) continue;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+      await page.render({ canvasContext: ctx, viewport, background: "#ffffff" }).promise;
+    } catch (e) {
+      console.error(`PDF sahifa ${pageNum} render qilinmadi`, e);
+      continue;
+    }
+
+    for (const r of reqs) {
+      try {
+        // Small padding so the diagram is not clipped by AI estimation error.
+        const pad = 2;
+        const x0 = Math.max(0, r.x - pad) / 100;
+        const y0 = Math.max(0, r.y - pad) / 100;
+        const w0 = Math.min(100, r.width + pad * 2) / 100;
+        const h0 = Math.min(100, r.height + pad * 2) / 100;
+
+        const sx = Math.round(x0 * pageCanvas.width);
+        const sy = Math.round(y0 * pageCanvas.height);
+        const sw = Math.min(Math.round(w0 * pageCanvas.width), pageCanvas.width - sx);
+        const sh = Math.min(Math.round(h0 * pageCanvas.height), pageCanvas.height - sy);
+        if (sw < 24 || sh < 24) continue;
+
+        const crop = document.createElement("canvas");
+        crop.width = sw;
+        crop.height = sh;
+        const cctx = crop.getContext("2d", { willReadFrequently: true });
+        if (!cctx) continue;
+        cctx.fillStyle = "#ffffff";
+        cctx.fillRect(0, 0, sw, sh);
+        cctx.drawImage(pageCanvas, sx, sy, sw, sh, 0, 0, sw, sh);
+        normaliseContrast(cctx, sw, sh);
+
+        const blob = await canvasToBlob(crop);
+        const path = `pdf/${stamp}/${safeName}-p${pageNum}-${r.key.replace(/[^\w-]+/g, "_")}.png`;
+        const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
+          contentType: "image/png",
+          upsert: true,
+        });
+        if (error) throw error;
+        const { data: signed } = await supabase.storage
+          .from(BUCKET)
+          .createSignedUrl(path, TEN_YEARS);
+        if (signed?.signedUrl) out[r.key] = signed.signedUrl;
+      } catch (e) {
+        console.error(`Diagramma kesilmadi (${r.key})`, e);
+      }
+    }
+  }
+
+  return out;
+}
+
