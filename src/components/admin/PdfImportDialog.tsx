@@ -639,11 +639,21 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                               )}
                             </button>
 
+                            {r.imageUrl && (
+                              <img
+                                src={r.imageUrl}
+                                alt="Kesib olingan diagramma"
+                                className="mt-1 max-h-24 rounded-md border border-border bg-white"
+                                loading="lazy"
+                              />
+                            )}
+
                             <div className="mt-0.5 text-[11px] text-muted-foreground">
                               {r.fileName}
                               {r.page ? ` · ${r.page}-sahifa` : ""}
                               {r.groupId ? " · guruh" : ""}
                             </div>
+
                           </td>
                           <td className="px-3 py-2 text-xs">{subject.name}</td>
                           <td className="px-3 py-2 text-xs">{r.questionType}</td>
