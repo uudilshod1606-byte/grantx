@@ -250,25 +250,50 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
     const results = await Promise.all(
       files.map(async (file) => {
         try {
-          const [base64, images] = await Promise.all([
-            toBase64(file),
-            withImages
-              ? import("@/lib/pdf-pages")
-                  .then((m) => m.renderAndUploadPdfPages(file))
-                  .catch((e) => {
-                    console.error("Rasm chiqarish xatosi", e);
-                    return [];
-                  })
-              : Promise.resolve([]),
-          ]);
+          const base64 = await toBase64(file);
           const items = await extractQuestionsFromPdf({
             fileBase64: base64,
             mimeType: "application/pdf",
             apiKey,
           });
-          const pageMap: Record<number, string> = {};
-          for (const img of images) pageMap[img.page] = img.url;
-          const built = buildRows(file.name, items, pageMap);
+
+          // Only questions that really contain a diagram AND have usable
+          // coordinates get a crop. No whole-page fallback.
+          let cropUrls: Record<string, string> = {};
+          if (withImages) {
+            const requests = items
+              .map((q, i) => ({ q, key: `${file.name}-${i}` }))
+              .filter(
+                ({ q }) =>
+                  q.rasm_bor &&
+                  q.sahifa != null &&
+                  q.rasm_x != null &&
+                  q.rasm_y != null &&
+                  q.rasm_kengligi != null &&
+                  q.rasm_balandligi != null &&
+                  q.rasm_kengligi > 3 &&
+                  q.rasm_balandligi > 3 &&
+                  !(q.rasm_kengligi >= 97 && q.rasm_balandligi >= 97),
+              )
+              .map(({ q, key }) => ({
+                key,
+                page: q.sahifa as number,
+                x: q.rasm_x as number,
+                y: q.rasm_y as number,
+                width: q.rasm_kengligi as number,
+                height: q.rasm_balandligi as number,
+              }));
+            if (requests.length > 0) {
+              cropUrls = await import("@/lib/pdf-pages")
+                .then((m) => m.cropAndUploadRegions(file, requests))
+                .catch((e) => {
+                  console.error("Diagramma kesish xatosi", e);
+                  return {} as Record<string, string>;
+                });
+            }
+          }
+
+          const built = buildRows(file.name, items, cropUrls);
           setState(file.name, { status: "tayyor", count: built.length });
           return built;
         } catch (e) {
@@ -280,6 +305,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
         }
       }),
     );
+
 
     setRows(results.flat());
     setRunning(false);
