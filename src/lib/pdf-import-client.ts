@@ -157,14 +157,23 @@ export async function extractQuestionsFromPdf(input: {
   const parsed = parseLoose(content);
   if (!Array.isArray(parsed)) throw new Error("AI javobi JSON massiv emas");
 
+  const pct = (v: unknown): number | null => {
+    const n = Number(v);
+    if (!Number.isFinite(n) || n < 0 || n > 100) return null;
+    return n;
+  };
+
   return parsed
     .filter((r): r is Record<string, unknown> => !!r && typeof r === "object")
     .map((r) => {
       const pageRaw = Number(r["sahifa"]);
+      const text = str(r["savol_matni"]);
+      const hasMarker = /\[RASM:/i.test(text) || /\[RASM:/i.test(str(r["asosiy_matn"]));
+      const flag = r["rasm_bor"] === true || String(r["rasm_bor"]).toLowerCase() === "true";
       return {
         savol_turi: str(r["savol_turi"]).toLowerCase(),
         asosiy_matn: str(r["asosiy_matn"]),
-        savol_matni: str(r["savol_matni"]),
+        savol_matni: text,
         variant_a: str(r["variant_a"]),
         variant_b: str(r["variant_b"]),
         variant_c: str(r["variant_c"]),
@@ -174,7 +183,13 @@ export async function extractQuestionsFromPdf(input: {
         togri_javob: str(r["togri_javob"]),
         yechim: str(r["yechim"]),
         sahifa: Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : null,
+        rasm_bor: hasMarker || flag,
+        rasm_x: pct(r["rasm_x"]),
+        rasm_y: pct(r["rasm_y"]),
+        rasm_kengligi: pct(r["rasm_kengligi"]),
+        rasm_balandligi: pct(r["rasm_balandligi"]),
       };
     })
     .filter((q) => q.savol_matni.length > 0);
+
 }
