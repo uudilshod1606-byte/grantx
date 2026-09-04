@@ -764,7 +764,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                               {r.imageUrl && (
                                 <img
                                   src={r.imageUrl}
-                                  alt={`${r.page}-sahifa rasmi`}
+                                  alt="Kesib olingan diagramma"
                                   className="max-h-64 rounded-lg border border-border"
                                   loading="lazy"
                                 />
