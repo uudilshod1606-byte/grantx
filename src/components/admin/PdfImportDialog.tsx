@@ -163,7 +163,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
   const buildRows = (
     fileName: string,
     items: ExtractedQuestion[],
-    pageImages: Record<number, string>,
+    cropUrls: Record<string, string>,
   ): Row[] => {
     let groupSeq = 0;
     let lastPassage = "";
@@ -192,12 +192,23 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
         currentGroup = null;
       }
 
+      const id = `${fileName}-${i}`;
+      const imageUrl = q.rasm_bor ? (cropUrls[id] ?? "") : "";
+      const imageMissing = q.rasm_bor && !imageUrl;
+
       const needsReview =
+        imageMissing ||
         q.yechim.toUpperCase().includes(NEEDS_REVIEW) ||
         (!q.togri_javob && questionType !== "esse");
 
+      const solution = imageMissing
+        ? [q.yechim, `${NEEDS_REVIEW}: rasm avtomatik topilmadi, qo'lda qo'shing`]
+            .filter(Boolean)
+            .join(" ")
+        : q.yechim;
+
       return {
-        id: `${fileName}-${i}`,
+        id,
         fileName,
         selected: true,
         questionType,
@@ -206,14 +217,15 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
         options,
         answerLetter: q.togri_javob.trim().toUpperCase().slice(0, 1),
         answerText: q.togri_javob,
-        solution: q.yechim,
+        solution,
         page: q.sahifa,
-        imageUrl: (q.sahifa && pageImages[q.sahifa]) || "",
+        imageUrl,
         groupId: currentGroup,
         needsReview,
       };
     });
   };
+
 
   const start = async () => {
     if (files.length === 0) return toast.error("Avval PDF fayl tanlang");
