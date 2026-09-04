@@ -508,7 +508,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                   checked={withImages}
                   onChange={(e) => setWithImages(e.target.checked)}
                 />
-                Sahifa rasmlarini ham chiqarish (kontrast oshirilgan)
+                Diagrammali savollarga rasm biriktirish (faqat kesilgan diagramma)
               </label>
             </div>
 
