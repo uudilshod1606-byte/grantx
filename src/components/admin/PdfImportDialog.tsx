@@ -732,7 +732,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                         {expanded === r.id && (
                           <tr className="border-t border-border bg-muted/30">
                             <td></td>
-                            <td colSpan={5} className="space-y-2 px-3 py-3">
+                            <td colSpan={6} className="space-y-2 px-3 py-3">
                               <div>
                                 <label className="text-xs text-muted-foreground">Savol matni</label>
                                 <Textarea
