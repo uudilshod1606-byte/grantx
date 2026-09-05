@@ -42,6 +42,7 @@ import {
   type DtmBlock,
   type ExamKind,
 } from "@/lib/domain";
+import { pointsForOrder } from "@/lib/exam-points";
 
 const MAX_FILES = 10;
 const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
@@ -63,6 +64,7 @@ type Row = {
   page: number | null;
   imageUrl: string;
   groupId: string | null;
+  points: number;
   needsReview: boolean;
 };
 
@@ -168,6 +170,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
     let groupSeq = 0;
     let lastPassage = "";
     let currentGroup: string | null = null;
+    let closedSeq = 0;
 
     return items.map((q, i) => {
       const options = [
@@ -179,6 +182,16 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
         q.variant_f,
       ].filter((o) => o.trim().length > 0);
       const questionType = mapType(q.savol_turi, options.length);
+      const isOpen = questionType === "ochiq" || questionType === "esse";
+      if (!isOpen) closedSeq++;
+      const points =
+        pointsForOrder({
+          kind,
+          subjectId,
+          order: isOpen ? 36 : closedSeq,
+          questionType,
+          text: q.savol_matni,
+        }) ?? defaultPointsFor(kind, kind === "dtm" ? block : null);
 
       const passage = q.asosiy_matn.trim();
       if (passage) {
@@ -221,6 +234,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
         page: q.sahifa,
         imageUrl,
         groupId: currentGroup,
+        points,
         needsReview,
       };
     });
@@ -338,7 +352,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
           subjectId: subject.id,
           kind,
           block: kind === "dtm" ? block : null,
-          points: defaultPointsFor(kind, kind === "dtm" ? block : null),
+          points: r.points,
           questionType: r.questionType,
           options,
           correctIndex: isChoice ? (letterIndex >= 0 ? letterIndex : 0) : undefined,
@@ -611,6 +625,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                       <th className="px-3 py-2">Savol</th>
                       <th className="px-3 py-2">Fan</th>
                       <th className="px-3 py-2">Tur</th>
+                      <th className="px-3 py-2">Ball</th>
                       <th className="px-3 py-2">Javob</th>
                       <th className="px-3 py-2">Holat</th>
                     </tr>
@@ -657,6 +672,18 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
                           </td>
                           <td className="px-3 py-2 text-xs">{subject.name}</td>
                           <td className="px-3 py-2 text-xs">{r.questionType}</td>
+                          <td className="px-3 py-2">
+                            <Input
+                              className="h-8 w-20"
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              value={r.points}
+                              onChange={(e) =>
+                                patch(r.id, { points: Number(e.target.value) || 0 })
+                              }
+                            />
+                          </td>
                           <td className="px-3 py-2">
                             {r.questionType === "yopiq" || r.questionType === "moslashtirish" ? (
                               <Input
