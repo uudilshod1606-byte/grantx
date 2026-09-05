@@ -8,9 +8,11 @@ import {
   Flag,
   ChevronUp,
   X,
+  Sigma,
 } from "lucide-react";
 import { buildQuestionSlots, type Question } from "@/lib/domain";
 import { MathContent } from "@/components/math/MathContent";
+import { MathQuestionField } from "@/components/math/MathQuestionField";
 import { ReferencePanel } from "./ReferencePanel";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
@@ -481,10 +483,7 @@ function SingleQuestion({
       <div className="text-[17px] leading-relaxed text-black"><MathContent latex={question.text} /></div>
       {question.imageUrl && <img src={question.imageUrl} alt="Savol rasmi" className="mt-4 max-h-80 rounded border border-gray-300" />}
       {question.questionType === "ochiq" ? (
-        <div className="mt-6">
-          <label className="mb-2 block text-sm font-medium text-gray-700">Javobingizni yozing:</label>
-          <input type="text" value={answer?.kind === "text" ? answer.value : ""} onChange={(e) => onChangeText(e.target.value)} placeholder="Javob..." className="w-full max-w-md rounded-lg border border-gray-400 px-4 py-3 text-[16px] outline-none focus:border-black" />
-        </div>
+        <OpenAnswerField value={answer?.kind === "text" ? answer.value : ""} onChange={onChangeText} />
       ) : (
         <div className="mt-6 space-y-3">
           {question.options.slice(0, 4).map((opt, i) => {
