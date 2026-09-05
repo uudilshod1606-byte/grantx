@@ -579,13 +579,103 @@ function OpenGroup({
             <div className="mb-2 text-base font-bold text-black">{partLabel}</div>
             <div className="text-[16px] leading-relaxed text-black"><MathContent latex={q.text} /></div>
             {q.imageUrl && <img src={q.imageUrl} alt="Savol rasmi" className="mt-4 max-h-72 rounded border border-gray-300" />}
-            <div className="mt-4">
-              <label className="mb-2 block text-sm font-medium text-gray-700">Javob: {partLabel}</label>
-              <input type="text" value={a?.kind === "text" ? a.value : ""} onChange={(e) => onChangeText(q.id, e.target.value)} placeholder={`${partLabel} javob...`} className="w-full max-w-md rounded-lg border border-gray-400 px-4 py-3 text-[16px] outline-none focus:border-black" />
-            </div>
+            <OpenAnswerField value={a?.kind === "text" ? a.value : ""} onChange={(v) => onChangeText(q.id, v)} label={`Javob: ${partLabel}`} placeholder={`${partLabel} javob...`} />
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Open-question answer input with an optional MathLive formula helper.
+ * Students can keep typing plain numbers/text directly, or press the "fx"
+ * button to open the same MathLive editor the admin question form uses;
+ * the formula is appended to the answer as a [[LATEX: ...]] marker.
+ */
+function OpenAnswerField({
+  value,
+  onChange,
+  label = "Javobingizni yozing:",
+  placeholder = "Javob...",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label?: string;
+  placeholder?: string;
+}) {
+  const [mathOpen, setMathOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const insertFormula = () => {
+    const latex = draft.trim();
+    if (latex) {
+      const marker = `[[LATEX: ${latex}]]`;
+      onChange(value ? `${value} ${marker}` : marker);
+    }
+    setDraft("");
+    setMathOpen(false);
+  };
+
+  return (
+    <div className="mt-6">
+      <label className="mb-2 block text-sm font-medium text-gray-700">{label}</label>
+      <div className="flex max-w-md items-center gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full rounded-lg border border-gray-400 px-4 py-3 text-[16px] outline-none focus:border-black"
+        />
+        <button
+          type="button"
+          onClick={() => setMathOpen((v) => !v)}
+          title="Formula kiritish"
+          aria-label="Formula kiritish"
+          aria-expanded={mathOpen}
+          className={[
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border text-sm font-bold transition",
+            mathOpen ? "border-black bg-black text-white" : "border-gray-400 text-gray-700 hover:bg-gray-50",
+          ].join(" ")}
+        >
+          <Sigma className="h-5 w-5" />
+        </button>
+      </div>
+      {mathOpen && (
+        <div className="mt-3 max-w-md rounded-lg border border-gray-300 bg-white p-3 shadow-lg">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Formula kiritish</span>
+            <button type="button" onClick={() => setMathOpen(false)} aria-label="Yopish" className="text-gray-500 hover:text-black">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <MathQuestionField
+            value={draft}
+            onChange={setDraft}
+            placeholder="Formulani yozing (masalan: x^2 + 1)"
+            minHeight={56}
+            ariaLabel="Formula kiritish maydoni"
+          />
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => { setDraft(""); setMathOpen(false); }}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Bekor qilish
+            </button>
+            <button
+              type="button"
+              onClick={insertFormula}
+              disabled={!draft.trim()}
+              className="rounded-md bg-black px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+            >
+              Qo'shish
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
