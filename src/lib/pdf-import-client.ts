@@ -64,7 +64,8 @@ RASMLAR (ENG MUHIM QISM):
 - DIAGRAMMA TASHQARISIDAGI oddiy savol gaplari, "(π ≈ 3 deb oling)" kabi alohida izohlar, variantlar, sahifa sarlavhasi, savol raqami va boshqa matnlarni bounding box ichiga KIRITMA.
 - Rasm yonidagi yoki ostidagi savol jumlasi rasmga tegishli bo'lsa ham, u diagrammaning o'zi bo'lmasa bounding box'dan tashqarida qolsin.
 - Diagramma ichidagi label va o'lchov yozuvlarini kesib yuborma. Buning uchun kerak bo'lsa box'ni 1-2% kengaytir, lekin oddiy savol matnini qo'shish hisobiga emas.
-- Agar bitta diagramma a) va b) qismlariga umumiy bo'lsa, ikkala qism uchun ham bir xil diagramma koordinatalarini ber.
+- Agar bitta diagramma a) va b) qismlariga umumiy bo'lsa, rasmni FAQAT birinchi (odatda a)) qismga biriktir: birinchi qismda "rasm_bor": true va koordinatalar berilsin; keyingi b)/c) qismlarda aynan shu diagramma takrorlanmasin, "rasm_bor": false va koordinatalar null bo'lsin.
+- Agar bitta diagramma bir nechta qismlarga umumiy bo'lsa, diagrammani savol guruhining umumiy matnidan KEYIN, a) qismidan OLDIN ko'rsatish uchun uni birinchi qismga tegishli deb hisobla.
 - Agar joylashuvni ishonchli aniqlay olmasang, koordinatalarni null qoldir. Noto'g'ri katta box berishdan ko'ra null yaxshiroq.`;
 
 function stripFences(s: string) {
