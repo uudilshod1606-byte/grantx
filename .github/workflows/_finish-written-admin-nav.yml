@@ -18,22 +18,40 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("src/routes/admin.tsx")
           text = path.read_text(encoding="utf-8")
 
-          old_tabs = '''              <TabsTrigger value="overview"><LayoutDashboard className="mr-2 h-4 w-4" /> Umumiy</TabsTrigger>
+          if 'TabsTrigger value="written"' in text:
+              print("Written admin tab already exists; cleaning temporary workflows.")
+          else:
+              tabs_pattern = re.compile(
+                  r'(?m)^\s*<TabsTrigger value="overview">.*\n'
+                  r'\s*<TabsTrigger value="questions">.*\n'
+                  r'\s*<TabsTrigger value="exams">.*\n'
+                  r'\s*<TabsTrigger value="users">.*$'
+              )
+              tabs_replacement = '''              <TabsTrigger value="overview"><LayoutDashboard className="mr-2 h-4 w-4" /> Umumiy</TabsTrigger>
               <TabsTrigger value="questions"><FileQuestion className="mr-2 h-4 w-4" /> Savollar</TabsTrigger>
               <TabsTrigger value="exams"><ClipboardList className="mr-2 h-4 w-4" /> Imtihonlar</TabsTrigger>
-              <TabsTrigger value="users"><Users className="mr-2 h-4 w-4" /> Foydalanuvchilar</TabsTrigger>'''
-          new_tabs = old_tabs + '''
+              <TabsTrigger value="users"><Users className="mr-2 h-4 w-4" /> Foydalanuvchilar</TabsTrigger>
               <TabsTrigger value="written"><Pencil className="mr-2 h-4 w-4" /> Yozma ishlar</TabsTrigger>'''
 
-          old_content = '''            <TabsContent value="overview"><Overview /></TabsContent>
+              if not tabs_pattern.search(text):
+                  raise SystemExit("admin.tsx tabs block not found")
+              text = tabs_pattern.sub(tabs_replacement, text, count=1)
+
+              content_pattern = re.compile(
+                  r'(?m)^\s*<TabsContent value="overview"><Overview /></TabsContent>\n'
+                  r'\s*<TabsContent value="questions"><QuestionsTab /></TabsContent>\n'
+                  r'\s*<TabsContent value="exams"><ExamsTab /></TabsContent>\n'
+                  r'\s*<TabsContent value="users"><UsersTab /></TabsContent>$'
+              )
+              content_replacement = '''            <TabsContent value="overview"><Overview /></TabsContent>
             <TabsContent value="questions"><QuestionsTab /></TabsContent>
             <TabsContent value="exams"><ExamsTab /></TabsContent>
-            <TabsContent value="users"><UsersTab /></TabsContent>'''
-          new_content = old_content + '''
+            <TabsContent value="users"><UsersTab /></TabsContent>
             <TabsContent value="written">
               <div className="glass rounded-2xl p-6 animate-fade-up">
                 <h2 className="text-lg font-semibold">Yozma ishlarni tekshirish</h2>
@@ -47,24 +65,18 @@ jobs:
               </div>
             </TabsContent>'''
 
-          if old_tabs not in text:
-              raise SystemExit("admin.tsx tabs block not found")
-          if old_content not in text:
-              raise SystemExit("admin.tsx content block not found")
-          if "TabsTrigger value=\"written\"" in text:
-              raise SystemExit("written admin tab already exists")
+              if not content_pattern.search(text):
+                  raise SystemExit("admin.tsx content block not found")
+              text = content_pattern.sub(content_replacement, text, count=1)
+              path.write_text(text, encoding="utf-8")
 
-          text = text.replace(old_tabs, new_tabs, 1)
-          text = text.replace(old_content, new_content, 1)
-          path.write_text(text, encoding="utf-8")
+          Path(".github/workflows/_apply-open-group-image-fix.yml").unlink(missing_ok=True)
+          Path(".github/workflows/_finish-written-admin-nav.yml").unlink(missing_ok=True)
           PY
-
-          rm -f .github/workflows/_apply-open-group-image-fix.yml
-          rm -f .github/workflows/_finish-written-admin-nav.yml
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/routes/admin.tsx .github/workflows/_apply-open-group-image-fix.yml .github/workflows/_finish-written-admin-nav.yml
+          git add -A
           git diff --cached --quiet && exit 0
           git commit -m "feat: add written-work admin navigation"
           git push
