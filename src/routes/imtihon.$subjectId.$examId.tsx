@@ -6,8 +6,8 @@ import { recalculateAdaptivePlan } from "@/lib/learning";
 import { BluebookExam } from "@/components/bluebook/BluebookExam";
 import { FullscreenGate } from "@/components/bluebook/FullscreenGate";
 import { MILLIY_SUBJECTS } from "@/lib/milliy";
-import { getQuestionPoints, gradeFor75, SCORE_DISCLAIMER } from "@/lib/exam-scoring";
-import { writtenRepo } from "@/lib/written-submissions";
+import { getQuestionPoints } from "@/lib/exam-scoring";
+import { writtenRepo, type NewSubmission } from "@/lib/written-submissions";
 
 const DURATION_MINUTES = 90;
 const LEGACY_LABEL = "Imtihon 1";
@@ -44,10 +44,9 @@ function currentQuestionNumber() {
 
 function findQuestionForNumber(questions: Question[], number: number) {
   const indexed = questions.map((q, index) => ({ q, index, n: questionNumber(q, index) }));
-  const exact = indexed.find((item) => item.n === number && item.q.questionType !== "moslashtirish");
-  if (exact) return exact.q;
-  const group = indexed.filter((item) => item.n === number);
-  return group[0]?.q ?? null;
+  const matching = indexed.filter((item) => item.n === number && item.q.questionType === "moslashtirish");
+  if (matching.length) return matching[0].q;
+  return indexed.find((item) => item.n === number)?.q ?? null;
 }
 
 function findOpenQuestionForPart(questions: Question[], number: number, part: "a" | "b") {
@@ -163,36 +162,35 @@ function BluebookExamPage() {
         if (correct) testRaw += points;
       }
 
+      const attemptId = crypto.randomUUID();
       const written = questions.filter((q, i) => isWrittenNumber(questionNumber(q, i)));
-      const submissions = written.map((q, i) => {
+      const submissions: NewSubmission[] = written.map((q, i) => {
         const n = questionNumber(q, i);
         const captured = capturedAnswers.current[q.id];
+        const reference = q.solution?.trim() || q.answerText?.trim() || "";
         return {
           userId: user.id,
           userEmail: user.email ?? "",
           userName: user.fullName ?? "Talaba",
-          attemptId: crypto.randomUUID(),
+          attemptId,
           subjectId,
           subjectName: subject.name,
           examLabel,
-          submissionKind: subjectId === "ona-tili-adabiyot" ? "esse" as const : "yozma" as const,
+          submissionKind: subjectId === "ona-tili-adabiyot" ? "esse" : "yozma",
           questionNumber: n,
-          questionText: [q.groupIntro, q.text].filter(Boolean).join("\n\n"),
+          questionText: [q.groupIntro, q.text, reference ? `ETALON/TAYANCH JAVOB (ADMIN UCHUN):\n${reference}` : ""].filter(Boolean).join("\n\n"),
           answerText: captured?.kind === "text" ? captured.value : "",
           maxPoints: subjectId === "ona-tili-adabiyot" ? 24 : 25,
           testRaw,
           testMax,
-          scoringMethod: "B" as const,
         };
       }).filter((item) => item.answerText.trim().length > 0);
 
-      if (submissions.length) {
-        try {
-          await Promise.all(submissions.map((submission) => writtenRepo.submit(submission)));
-        } catch (error) {
-          setSubmitError(error instanceof Error ? error.message : "Yozma ishni saqlab bo'lmadi.");
-          return;
-        }
+      try {
+        if (submissions.length) await writtenRepo.submit(submissions);
+      } catch (error) {
+        setSubmitError(error instanceof Error ? error.message : "Yozma ishni saqlab bo'lmadi.");
+        return;
       }
       attemptsRepo.add({ userId: user.id, examTitle: `${subject.name} · ${examLabel}`, kind: "milliy", subjectIds: [subjectId], total: result.total, correct: result.correct, incorrect: result.incorrect, unanswered: result.unanswered, percent: result.percent, durationSeconds: result.durationSeconds, startedAt: result.startedAt, finishedAt: result.finishedAt });
       setWrittenSubmitted(true);
