@@ -42,7 +42,8 @@ import {
   type DtmBlock,
   type ExamKind,
 } from "@/lib/domain";
-import { pointsForOrder } from "@/lib/exam-points";
+import { detectPart, pointsForOrder } from "@/lib/exam-points";
+import { slotTypeFor } from "@/lib/exam-scoring";
 
 const MAX_FILES = 10;
 const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
