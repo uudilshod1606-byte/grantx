@@ -11,6 +11,7 @@ import {
   Flame,
   PanelLeft,
   LogOut,
+  Layers,
 } from "lucide-react";
 import { IntilLogo } from "@/components/brand/IntilLogo";
 import { useAuth } from "@/lib/auth";
@@ -22,6 +23,7 @@ export const NAV = [
   { to: "/dashboard", label: "Bosh sahifa", icon: Home },
   { to: "/dtm", label: "DTM", icon: Sparkles },
   { to: "/milliy-sertifikat", label: "Milliy Sertifikat", icon: Target },
+  { to: "/savollar-banki", label: "Savollar banki", icon: Layers },
   { to: "/qollanmalar", label: "Qo'llanma", icon: BookOpen },
   { to: "/study-plan", label: "Study Plan", icon: Braces },
 ] as const;
