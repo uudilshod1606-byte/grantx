@@ -27,7 +27,7 @@ import {
  */
 
 export type Difficulty = "easy" | "medium" | "hard";
-export type ExamKind = "dtm" | "milliy";
+export type ExamKind = "dtm" | "milliy" | "bank";
 export type DtmBlock = "mandatory" | "main1" | "main2";
 
 /** DTM scoring constants (real Uzbekistan DTM format). */
@@ -52,13 +52,13 @@ export type Subject = {
 };
 
 export const SUBJECTS: Subject[] = [
-  { id: "ona-tili", name: "Ona tili", icon: Languages, kinds: ["dtm"] },
+  { id: "ona-tili", name: "Ona tili", icon: Languages, kinds: ["dtm", "bank"] },
   { id: "ona-tili-adabiyot", name: "Ona tili va adabiyot", icon: BookOpen, kinds: ["milliy"] },
-  { id: "matematika", name: "Matematika", icon: Calculator, kinds: ["dtm", "milliy"] },
-  { id: "tarix", name: "Tarix", icon: Landmark, kinds: ["dtm", "milliy"] },
-  { id: "fizika", name: "Fizika", icon: Atom, kinds: ["dtm", "milliy"] },
-  { id: "kimyo", name: "Kimyo", icon: FlaskConical, kinds: ["dtm", "milliy"] },
-  { id: "biologiya", name: "Biologiya", icon: Leaf, kinds: ["dtm", "milliy"] },
+  { id: "matematika", name: "Matematika", icon: Calculator, kinds: ["dtm", "milliy", "bank"] },
+  { id: "tarix", name: "Tarix", icon: Landmark, kinds: ["dtm", "milliy", "bank"] },
+  { id: "fizika", name: "Fizika", icon: Atom, kinds: ["dtm", "milliy", "bank"] },
+  { id: "kimyo", name: "Kimyo", icon: FlaskConical, kinds: ["dtm", "milliy", "bank"] },
+  { id: "biologiya", name: "Biologiya", icon: Leaf, kinds: ["dtm", "milliy", "bank"] },
   { id: "ingliz-tili", name: "Ingliz tili", icon: Languages, kinds: ["dtm"] },
   { id: "cefr-english", name: "CEFR English", icon: Languages, kinds: ["milliy"] },
 ];
@@ -478,6 +478,7 @@ export const ADMIN_SUBJECTS: {
   dtmMandatory: AdminSubject[];
   dtmMain: AdminSubject[];
   milliy: AdminSubject[];
+  bank: AdminSubject[];
 } = {
   dtmMandatory: [
     { id: "ona-tili", name: "Ona tili" },
@@ -505,6 +506,43 @@ export const ADMIN_SUBJECTS: {
     { id: "biologiya", name: "Biologiya" },
     { id: "kimyo", name: "Kimyo" },
   ],
+  bank: [
+    { id: "ona-tili", name: "Ona tili" },
+    { id: "matematika", name: "Matematika" },
+    { id: "fizika", name: "Fizika" },
+    { id: "tarix", name: "Tarix" },
+    { id: "kimyo", name: "Kimyo" },
+    { id: "biologiya", name: "Biologiya" },
+  ],
+};
+
+/* -------------------------------------------------------------------------- */
+/*  Savollar banki (Question Bank) catalog                                    */
+/* -------------------------------------------------------------------------- */
+
+/** Savollar banki uchun 6 ta fan — shu tartibda tepada tab sifatida chiqadi. */
+export const BANK_SUBJECTS: { id: string; name: string; icon: LucideIcon; live: boolean }[] = [
+  { id: "ona-tili", name: "Ona tili", icon: Languages, live: false },
+  { id: "matematika", name: "Matematika", icon: Calculator, live: false },
+  { id: "fizika", name: "Fizika", icon: Atom, live: true },
+  { id: "tarix", name: "Tarix", icon: Landmark, live: false },
+  { id: "kimyo", name: "Kimyo", icon: FlaskConical, live: false },
+  { id: "biologiya", name: "Biologiya", icon: Leaf, live: false },
+];
+
+/** Fizika uchun mavzu (kategoriya) ro'yxati — TTP'dagi "domain" bo'limining o'rnini bosadi. */
+export const FIZIKA_BANK_CATEGORIES: { id: string; name: string }[] = [
+  { id: "mexanika", name: "Mexanika" },
+  { id: "termodinamika", name: "Molekulyar fizika va termodinamika" },
+  { id: "elektr-magnit", name: "Elektr va magnetizm" },
+  { id: "tebranish-tolqin", name: "Tebranishlar va to'lqinlar" },
+  { id: "optika", name: "Optika" },
+  { id: "atom-yadro", name: "Atom va yadro fizikasi" },
+];
+
+/** Fan bo'yicha bank kategoriyalari — hozircha faqat fizika to'ldirilgan. */
+export const BANK_CATEGORIES: Record<string, { id: string; name: string }[]> = {
+  fizika: FIZIKA_BANK_CATEGORIES,
 };
 
 export function defaultPointsFor(kind: ExamKind, block?: DtmBlock | null): number {
