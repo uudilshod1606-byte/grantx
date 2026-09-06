@@ -43,6 +43,7 @@ import { BulkImportDialog } from "@/components/admin/BulkImportDialog";
 import { PdfImportDialog } from "@/components/admin/PdfImportDialog";
 import {
   ADMIN_SUBJECTS,
+  BANK_CATEGORIES,
   SUBJECTS,
   defaultPointsFor,
   questionsRepo,
@@ -295,6 +296,7 @@ function QuestionsTab() {
             <SelectItem value="all">Barcha turlar</SelectItem>
             <SelectItem value="dtm">DTM</SelectItem>
             <SelectItem value="milliy">Milliy Sertifikat</SelectItem>
+            <SelectItem value="bank">Savollar banki</SelectItem>
           </SelectContent>
         </Select>
         {kindFilter === "dtm" && (
@@ -374,7 +376,7 @@ function QuestionsTab() {
                     </td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                        {q.kind === "dtm" ? "DTM" : "Milliy"}
+                        {q.kind === "dtm" ? "DTM" : q.kind === "milliy" ? "Milliy" : "Bank"}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{subjName}</td>
@@ -425,6 +427,8 @@ function subjectNameFor(kind: ExamKind, subjectId: string, block?: DtmBlock | nu
   const pool =
     kind === "milliy"
       ? ADMIN_SUBJECTS.milliy
+      : kind === "bank"
+      ? ADMIN_SUBJECTS.bank
       : block === "mandatory"
       ? ADMIN_SUBJECTS.dtmMandatory
       : ADMIN_SUBJECTS.dtmMain;
@@ -453,10 +457,14 @@ function QuestionFormDialog({
   const subjectPool =
     kind === "milliy"
       ? ADMIN_SUBJECTS.milliy
+      : kind === "bank"
+      ? ADMIN_SUBJECTS.bank
       : block === "mandatory"
       ? ADMIN_SUBJECTS.dtmMandatory
       : ADMIN_SUBJECTS.dtmMain;
   const [subjectId, setSubjectId] = useState(question?.subjectId ?? subjectPool[0].id);
+  const bankCategoryPool = BANK_CATEGORIES[subjectId] ?? [];
+  const [category, setCategory] = useState(question?.category ?? bankCategoryPool[0]?.id ?? "");
   const [text, setText] = useState(question?.text ?? "");
   const [questionType, setQuestionType] = useState<FormQuestionType>(
     (question?.questionType as FormQuestionType) ?? "yopiq",
@@ -505,13 +513,19 @@ function QuestionFormDialog({
   // When kind/block changes, sync subject and default points.
   const onKindChange = (v: ExamKind) => {
     setKind(v);
-    const pool = v === "milliy" ? ADMIN_SUBJECTS.milliy : ADMIN_SUBJECTS.dtmMandatory;
+    const pool = v === "milliy" ? ADMIN_SUBJECTS.milliy : v === "bank" ? ADMIN_SUBJECTS.bank : ADMIN_SUBJECTS.dtmMandatory;
     setSubjectId(pool[0].id);
-    if (v === "milliy") setPoints(1);
-    else {
+    if (v === "milliy" || v === "bank") {
+      setPoints(1);
+      setCategory(BANK_CATEGORIES[pool[0].id]?.[0]?.id ?? "");
+    } else {
       setBlock("mandatory");
       setPoints(defaultPointsFor("dtm", "mandatory"));
     }
+  };
+  const onSubjectIdChange = (v: string) => {
+    setSubjectId(v);
+    if (kind === "bank") setCategory(BANK_CATEGORIES[v]?.[0]?.id ?? "");
   };
   const onBlockChange = (v: DtmBlock) => {
     setBlock(v);
@@ -567,12 +581,16 @@ function QuestionFormDialog({
     if (kind === "milliy" && examCategory === "original" && !examLabel.trim()) {
       return toast.error("Original savol uchun sana/nomini kiriting (masalan 01.04.2024)");
     }
+    if (kind === "bank" && !category.trim()) {
+      return toast.error("Mavzu (kategoriya)ni tanlang yoki kiriting");
+    }
     setSaving(true);
     const payload = {
       text: text.trim(),
       subjectId,
       kind,
       block: kind === "dtm" ? block : null,
+      category: kind === "bank" ? category.trim() : undefined,
       points,
       imageUrl,
       questionType,
@@ -670,7 +688,7 @@ function QuestionFormDialog({
           )}
           <div>
             <label className="text-xs text-muted-foreground">Fan</label>
-            <Select value={subjectId} onValueChange={setSubjectId}>
+            <Select value={subjectId} onValueChange={onSubjectIdChange}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {subjectPool.map((s) => (
@@ -720,6 +738,34 @@ function QuestionFormDialog({
                   className="mt-2"
                 />
               </div>
+            )}
+          </div>
+        )}
+
+        {kind === "bank" && (
+          <div className="rounded-xl border border-accent/40 bg-accent/5 p-3">
+            <label className="text-xs font-medium text-foreground">Mavzu (kategoriya)</label>
+            {bankCategoryPool.length > 0 ? (
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {bankCategoryPool.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Bu fan uchun tayyor mavzu ro'yxati hali yo'q — mavzu nomini qo'lda kiriting.
+                </p>
+                <Input
+                  className="mt-2"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="masalan: Grammatika"
+                />
+              </>
             )}
           </div>
         )}
