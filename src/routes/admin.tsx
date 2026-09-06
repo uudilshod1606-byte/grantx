@@ -103,15 +103,27 @@ function AdminContent() {
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="glass h-auto flex-wrap gap-1 bg-transparent p-1">
               <TabsTrigger value="overview"><LayoutDashboard className="mr-2 h-4 w-4" /> Umumiy</TabsTrigger>
-              <TabsTrigger value="questions"><FileQuestion className="mr-2 h-4 w-4" /> Savollar</TabsTrigger>
-              <TabsTrigger value="exams"><ClipboardList className="mr-2 h-4 w-4" /> Imtihonlar</TabsTrigger>
-              <TabsTrigger value="users"><Users className="mr-2 h-4 w-4" /> Foydalanuvchilar</TabsTrigger>
+    <TabsTrigger value="questions"><FileQuestion className="mr-2 h-4 w-4" /> Savollar</TabsTrigger>
+    <TabsTrigger value="exams"><ClipboardList className="mr-2 h-4 w-4" /> Imtihonlar</TabsTrigger>
+    <TabsTrigger value="users"><Users className="mr-2 h-4 w-4" /> Foydalanuvchilar</TabsTrigger>
+    <TabsTrigger value="written"><Pencil className="mr-2 h-4 w-4" /> Yozma ishlar</TabsTrigger>
             </TabsList>
-
             <TabsContent value="overview"><Overview /></TabsContent>
-            <TabsContent value="questions"><QuestionsTab /></TabsContent>
-            <TabsContent value="exams"><ExamsTab /></TabsContent>
-            <TabsContent value="users"><UsersTab /></TabsContent>
+  <TabsContent value="questions"><QuestionsTab /></TabsContent>
+  <TabsContent value="exams"><ExamsTab /></TabsContent>
+  <TabsContent value="users"><UsersTab /></TabsContent>
+  <TabsContent value="written">
+    <div className="glass rounded-2xl p-6 animate-fade-up">
+      <h2 className="text-lg font-semibold">Yozma ishlarni tekshirish</h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Ona tili esse va Kimyo/Biologiya yozma javoblarini ko'rish, AI taklifini olish,
+        ballarni tahrirlash va tasdiqlash uchun maxsus tekshiruv sahifasini oching.
+      </p>
+      <Button asChild className="gradient-bg mt-5 text-primary-foreground">
+        <Link to="/admin/yozma-ishlar">Yozma ishlarni ochish</Link>
+      </Button>
+    </div>
+  </TabsContent>
           </Tabs>
         )}
       </main>
