@@ -42,7 +42,8 @@ import {
   type DtmBlock,
   type ExamKind,
 } from "@/lib/domain";
-import { pointsForOrder } from "@/lib/exam-points";
+import { detectPart, pointsForOrder } from "@/lib/exam-points";
+import { slotTypeFor } from "@/lib/exam-scoring";
 
 const MAX_FILES = 10;
 const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
@@ -170,7 +171,8 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
     let groupSeq = 0;
     let lastPassage = "";
     let currentGroup: string | null = null;
-    let closedSeq = 0;
+    let questionNumber = 0;
+    let lastPart: "a" | "b" | null = null;
 
     return items.map((q, i) => {
       const options = [
@@ -181,17 +183,28 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
         q.variant_e,
         q.variant_f,
       ].filter((o) => o.trim().length > 0);
-      const questionType = mapType(q.savol_turi, options.length);
-      const isOpen = questionType === "ochiq" || questionType === "esse";
-      if (!isOpen) closedSeq++;
+
+      // PDF'dagi asl tartib raqami: a/b qismlar bitta savol raqamini bo'lishadi.
+      const part = detectPart(q.savol_matni);
+      if (!(part === "b" && lastPart === "a" && questionNumber > 0)) questionNumber++;
+      lastPart = part;
+
+      const slotType = kind === "milliy" ? slotTypeFor(subjectId, questionNumber) : null;
+      const questionType: QuestionType =
+        slotType === "yopiq"
+          ? "yopiq"
+          : slotType === "moslashtirish"
+            ? "moslashtirish"
+            : slotType === "ochiq" || slotType === "qisqa-ochiq"
+              ? "ochiq"
+              : slotType === "yozma" || slotType === "esse"
+                ? "esse"
+                : mapType(q.savol_turi, options.length);
       const points =
-        pointsForOrder({
-          kind,
-          subjectId,
-          order: isOpen ? 36 : closedSeq,
-          questionType,
-          text: q.savol_matni,
-        }) ?? defaultPointsFor(kind, kind === "dtm" ? block : null);
+        (kind === "milliy"
+          ? pointsForOrder({ subjectId, questionNumber, part })
+          : null) ?? defaultPointsFor(kind, kind === "dtm" ? block : null);
+
 
       const passage = q.asosiy_matn.trim();
       if (passage) {

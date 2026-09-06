@@ -14,13 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      written_submissions: {
+        Row: {
+          ai_suggestion: Json | null
+          answer_text: string
+          approved_criteria: Json | null
+          approved_score: number | null
+          attempt_id: string
+          created_at: string
+          exam_label: string | null
+          final_grade: string | null
+          final_score: number | null
+          id: string
+          max_points: number
+          question_number: number
+          question_text: string
+          reviewed_at: string | null
+          scoring_method: string
+          status: string
+          subject_id: string
+          subject_name: string
+          submission_kind: string
+          test_max: number
+          test_raw: number
+          updated_at: string
+          user_email: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          ai_suggestion?: Json | null
+          answer_text?: string
+          approved_criteria?: Json | null
+          approved_score?: number | null
+          attempt_id: string
+          created_at?: string
+          exam_label?: string | null
+          final_grade?: string | null
+          final_score?: number | null
+          id?: string
+          max_points?: number
+          question_number: number
+          question_text?: string
+          reviewed_at?: string | null
+          scoring_method?: string
+          status?: string
+          subject_id: string
+          subject_name: string
+          submission_kind: string
+          test_max?: number
+          test_raw?: number
+          updated_at?: string
+          user_email?: string
+          user_id: string
+          user_name?: string
+        }
+        Update: {
+          ai_suggestion?: Json | null
+          answer_text?: string
+          approved_criteria?: Json | null
+          approved_score?: number | null
+          attempt_id?: string
+          created_at?: string
+          exam_label?: string | null
+          final_grade?: string | null
+          final_score?: number | null
+          id?: string
+          max_points?: number
+          question_number?: number
+          question_text?: string
+          reviewed_at?: string | null
+          scoring_method?: string
+          status?: string
+          subject_id?: string
+          subject_name?: string
+          submission_kind?: string
+          test_max?: number
+          test_raw?: number
+          updated_at?: string
+          user_email?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_intil_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
