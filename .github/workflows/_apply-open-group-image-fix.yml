@@ -4,12 +4,16 @@ on:
   push:
     branches:
       - feature/fix-open-question-shared-images
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
