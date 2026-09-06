@@ -25,7 +25,8 @@ function stripFences(raw: string) {
 
 function parseJson(raw: string): unknown {
   const cleaned = stripFences(raw);
-  const first = Math.min(...[cleaned.indexOf("{"), cleaned.indexOf("[")].filter((n) => n >= 0));
+  const positions = [cleaned.indexOf("{"), cleaned.indexOf("[")].filter((n) => n >= 0);
+  const first = positions.length ? Math.min(...positions) : -1;
   const last = Math.max(cleaned.lastIndexOf("}"), cleaned.lastIndexOf("]"));
   const body = first >= 0 && last > first ? cleaned.slice(first, last + 1) : cleaned;
   try {
@@ -94,7 +95,7 @@ MUHIM:
 - Bu faqat DASTLABKI AI taklifi. Yakuniy ballni admin tasdiqlaydi.
 - Esse mazmunini qayta yozma.
 - Har bir mezon uchun aynan bitta score va errors massivini qaytar.
-- FaqAT JSON qaytar.
+- FAQAT JSON qaytar.
 
 12 MEZON:
 ${CRITERIA_PROMPT}
@@ -118,9 +119,10 @@ JSON shakli:
   const criteria = ESSAY_CRITERIA.map((criterion) => {
     const item = (byId.get(criterion.id) ?? {}) as Record<string, unknown>;
     const rawScore = numberOf(item.score, 0);
-    const score = [0, 0.5, 1, 1.5, 2].reduce((best, allowed) =>
-      Math.abs(allowed - rawScore) < Math.abs(best - rawScore) ? allowed : best,
-    , 0);
+    const score = [0, 0.5, 1, 1.5, 2].reduce(
+      (best, allowed) => Math.abs(allowed - rawScore) < Math.abs(best - rawScore) ? allowed : best,
+      0,
+    );
     const errors = Array.isArray(item.errors)
       ? item.errors.map(textOf).filter(Boolean)
       : textOf(item.errors) ? [textOf(item.errors)] : [];
