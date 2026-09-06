@@ -1,7 +1,7 @@
 /**
  * Single source of truth for how a formula is turned into stored HTML.
  * Both the admin RichEditor ("Formula" toolbar button) and the bulk
- * Excel/CSV importer call these helpers.
+ * Excel/CSV/PDF importer call these helpers.
  */
 
 export function escapeAttr(s: string) {
@@ -32,23 +32,23 @@ export async function renderFormulaEmbed(latex: string): Promise<string> {
   } catch (e) {
     console.error("MathLive render failed", e);
   }
-  return `<span class="formula-embed" data-latex="${escapeAttr(
-    clean,
-  )}" contenteditable="false">${markup}</span>`;
+  return `<span class="formula-embed" data-latex="${escapeAttr(clean)}" contenteditable="false">${markup}</span>`;
 }
 
 export const LATEX_MARKER = /\[\[LATEX:([\s\S]*?)\]\]/g;
 
 /**
- * Legacy/AI-friendly math delimiters accepted by the importer:
- *   $x^2+y^2$
- *   \(x^2+y^2\)
- *
- * Dollar delimiters are only promoted when a matching closing `$` exists.
- * This deliberately leaves ordinary currency such as `250$` untouched.
+ * Math delimiters accepted from AI/PDF importers:
+ *   [[LATEX: x^2 ]]
+ *   $x^2$
+ *   $$x^2$$
+ *   \(x^2\)
+ *   \[x^2\]
  */
+const DOUBLE_DOLLAR_MATH = /\$\$([\s\S]*?)\$\$/g;
 const DOLLAR_MATH = /\$([^$\r\n]+?)\$/g;
 const PAREN_MATH = /\\\(([\s\S]*?)\\\)/g;
+const BRACKET_MATH = /\\\[([\s\S]*?)\\\]/g;
 
 function tokenizeMathMarkers(src: string) {
   const chunks: Array<{ type: "text" | "math"; value: string }> = [];
@@ -56,8 +56,10 @@ function tokenizeMathMarkers(src: string) {
 
   const matches = [
     ...src.matchAll(LATEX_MARKER),
+    ...src.matchAll(DOUBLE_DOLLAR_MATH),
     ...src.matchAll(DOLLAR_MATH),
     ...src.matchAll(PAREN_MATH),
+    ...src.matchAll(BRACKET_MATH),
   ]
     .map((m) => ({
       start: m.index ?? 0,
