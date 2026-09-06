@@ -564,21 +564,28 @@ function OpenGroup({
   answers: Record<string, AnswerValue>;
   onChangeText: (questionId: string, v: string) => void;
 }) {
+  const sharedIntro = group[0]?.groupIntro?.trim() ?? "";
+  const sharedImage = group.find((q) => q.imageUrl)?.imageUrl;
+
   return (
     <div className="space-y-8">
+      {sharedIntro && (
+        <div className="text-[16px] leading-relaxed text-black"><MathContent latex={sharedIntro} /></div>
+      )}
+      {sharedImage && (
+        <img
+          src={sharedImage}
+          alt="Savol rasmi"
+          className="max-h-72 rounded border border-gray-300"
+        />
+      )}
       {group.map((q, i) => {
         const a = answers[q.id];
         const partLabel = `${PART_LABELS[i] ?? String.fromCharCode(97 + i)})`;
-        const sharedIntro = i === 0 ? q.groupIntro?.trim() : "";
-        const showSharedIntro = !!sharedIntro && sharedIntro !== q.text.trim();
         return (
           <div key={q.id} className={i > 0 ? "border-t border-gray-200 pt-6" : ""}>
-            {showSharedIntro && (
-              <div className="mb-5 text-[16px] leading-relaxed text-black"><MathContent latex={sharedIntro!} /></div>
-            )}
             <div className="mb-2 text-base font-bold text-black">{partLabel}</div>
             <div className="text-[16px] leading-relaxed text-black"><MathContent latex={q.text} /></div>
-            {q.imageUrl && <img src={q.imageUrl} alt="Savol rasmi" className="mt-4 max-h-72 rounded border border-gray-300" />}
             <OpenAnswerField value={a?.kind === "text" ? a.value : ""} onChange={(v) => onChangeText(q.id, v)} label={`Javob: ${partLabel}`} placeholder={`${partLabel} javob...`} />
           </div>
         );
