@@ -25,7 +25,7 @@ export type ExtractedQuestion = {
   sahifa: number | null;
   /** true only when the question genuinely has a diagram/graph/drawing */
   rasm_bor: boolean;
-  /** Diagram bounding box in page percentages (0-100), null when unknown */
+  /** Tight diagram bounding box in page percentages (0-100). */
   rasm_x: number | null;
   rasm_y: number | null;
   rasm_kengligi: number | null;
@@ -55,12 +55,17 @@ QOIDALAR:
 - Savol matni boshidagi tartib raqamini olib tashla.
 - Hech qanday savolni o'ylab topma — faqat hujjatdagi haqiqiy savollarni chiqar.
 
-RASMLAR (juda muhim):
+RASMLAR (ENG MUHIM QISM):
 - Faqat savolda HAQIQATAN diagramma, grafik, chizma, jadval-rasm yoki geometrik shakl bo'lsa, savol_matni ichida o'sha joyga [RASM: qisqacha tavsif] belgisini qo'y va "rasm_bor": true qil.
 - Sof matn yoki faqat formuladan iborat savollarda [RASM: ...] belgisi BO'LMASIN va "rasm_bor": false bo'lsin, koordinatalar null bo'lsin.
-- "rasm_bor": true bo'lganda o'sha diagrammaning sahifadagi TAXMINIY joylashuvini foizda ber: rasm_x va rasm_y — sahifaning CHAP-YUQORI burchagidan boshlab diagrammaning chap-yuqori nuqtasi (sahifa kengligi/balandligiga nisbatan %), rasm_kengligi va rasm_balandligi — diagrammaning o'lchami (% da). Butun sahifani (0,0,100,100) berma.
-- Agar joylashuvni aniq ayta olmasang, koordinatalarni null qoldir.`;
-
+- "rasm_bor": true bo'lganda rasm koordinatasi BUTUN SAHIFA emas, FAQAT RASMNING O'ZINI qamrab olsin.
+- rasm_x va rasm_y — rasmning CHAP-YUQORI nuqtasi; rasm_kengligi va rasm_balandligi — rasmning o'lchami. Hammasi sahifa o'lchamiga nisbatan 0-100%.
+- Bounding box'ni maksimal darajada TIGHT qil: diagramma/chizma/grafikning barcha chiziqlari, nuqtalari, strelkalari, o'qlari va diagramma ICHIDAGI muhim belgilar (masalan 10 cm, 20 cm, x, y, A, B, C, pi) qolsin.
+- DIAGRAMMA TASHQARISIDAGI oddiy savol gaplari, "(π ≈ 3 deb oling)" kabi alohida izohlar, variantlar, sahifa sarlavhasi, savol raqami va boshqa matnlarni bounding box ichiga KIRITMA.
+- Rasm yonidagi yoki ostidagi savol jumlasi rasmga tegishli bo'lsa ham, u diagrammaning o'zi bo'lmasa bounding box'dan tashqarida qolsin.
+- Diagramma ichidagi label va o'lchov yozuvlarini kesib yuborma. Buning uchun kerak bo'lsa box'ni 1-2% kengaytir, lekin oddiy savol matnini qo'shish hisobiga emas.
+- Agar bitta diagramma a) va b) qismlariga umumiy bo'lsa, ikkala qism uchun ham bir xil diagramma koordinatalarini ber.
+- Agar joylashuvni ishonchli aniqlay olmasang, koordinatalarni null qoldir. Noto'g'ri katta box berishdan ko'ra null yaxshiroq.`;
 
 function stripFences(s: string) {
   return s
@@ -191,5 +196,4 @@ export async function extractQuestionsFromPdf(input: {
       };
     })
     .filter((q) => q.savol_matni.length > 0);
-
 }
