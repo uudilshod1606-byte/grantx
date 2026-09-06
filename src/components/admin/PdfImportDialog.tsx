@@ -123,6 +123,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
     let currentGroup: string | null = null;
     let questionNumber = 0;
     let lastPart: "a" | "b" | null = null;
+    const seenImageSignatures = new Set<string>();
 
     return items.map((q, i) => {
       const options = [q.variant_a, q.variant_b, q.variant_c, q.variant_d, q.variant_e, q.variant_f].filter((o) => o.trim().length > 0);
@@ -147,8 +148,13 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
       }
 
       const id = `${fileName}-${i}`;
-      const imageUrl = q.rasm_bor ? cropUrls[id] ?? "" : "";
-      const imageMissing = q.rasm_bor && !imageUrl;
+      const imageSignature = q.rasm_bor && q.sahifa != null && q.rasm_x != null && q.rasm_y != null && q.rasm_kengligi != null && q.rasm_balandligi != null
+        ? [q.sahifa, q.rasm_x, q.rasm_y, q.rasm_kengligi, q.rasm_balandligi].map((v) => Math.round(Number(v) * 2) / 2).join(":")
+        : "";
+      const isSharedImageDuplicate = Boolean(imageSignature && seenImageSignatures.has(imageSignature));
+      if (imageSignature && !isSharedImageDuplicate) seenImageSignatures.add(imageSignature);
+      const imageUrl = q.rasm_bor && !isSharedImageDuplicate ? cropUrls[id] ?? "" : "";
+      const imageMissing = q.rasm_bor && !isSharedImageDuplicate && !imageUrl;
       const answer = findAnswer(answerKey, questionNumber, part);
       const isChoice = questionType === "yopiq" || questionType === "moslashtirish";
       const answerLetter = isChoice ? answer.toUpperCase().replace(/[^A-F]/g, "").slice(0, 1) : "";
@@ -197,9 +203,16 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
           const items = await extractQuestionsFromPdf({ fileBase64: base64, mimeType: "application/pdf", apiKey });
           let cropUrls: Record<string, string> = {};
           if (withImages) {
+            const seenCropSignatures = new Set<string>();
             const requests = items
               .map((q, i) => ({ q, key: `${file.name}-${i}` }))
               .filter(({ q }) => q.rasm_bor && q.sahifa != null && q.rasm_x != null && q.rasm_y != null && q.rasm_kengligi != null && q.rasm_balandligi != null && q.rasm_kengligi > 3 && q.rasm_balandligi > 3 && !(q.rasm_kengligi >= 97 && q.rasm_balandligi >= 97))
+              .filter(({ q }) => {
+                const signature = [q.sahifa, q.rasm_x, q.rasm_y, q.rasm_kengligi, q.rasm_balandligi].map((v) => Math.round(Number(v) * 2) / 2).join(":");
+                if (seenCropSignatures.has(signature)) return false;
+                seenCropSignatures.add(signature);
+                return true;
+              })
               .map(({ q, key }) => ({ key, page: q.sahifa as number, x: q.rasm_x as number, y: q.rasm_y as number, width: q.rasm_kengligi as number, height: q.rasm_balandligi as number }));
             if (requests.length) {
               cropUrls = await import("@/lib/pdf-pages").then((m) => m.cropAndUploadRegions(file, requests)).catch((e) => {
