@@ -32,14 +32,16 @@ export type ExtractedQuestion = {
   rasm_balandligi: number | null;
 };
 
-const PROMPT = `Sen O'zbekiston imtihon savollarini raqamlashtiruvchi yordamchisan.
-Berilgan PDF hujjatdagi BARCHA savollarni to'liq ajratib ol va FAQAT JSON massiv qaytar (hech qanday izoh, markdown yoki \`\`\` belgilarisiz).
+const PROMPT = `Sen O'zbekiston imtihon savollarini raqamlashtiruvchi juda aniq PDF extraction yordamchisan.
 
-Har bir element quyidagi maydonlarga ega bo'lsin:
+VAZIFA:
+Berilgan PDF hujjatdagi BARCHA haqiqiy savollarni to'liq ajratib ol. Matnni mazmunan o'zgartirma, qisqartirma va yangi ma'lumot o'ylab topma. FAQAT JSON massiv qaytar.
+
+HAR BIR ELEMENT:
 {
   "savol_turi": "yopiq" | "ochiq" | "moslashtirish" | "yozma",
   "asosiy_matn": "savollar guruhiga umumiy bo'lgan matn/parcha (bo'lmasa bo'sh satr)",
-  "savol_matni": "savol matni",
+  "savol_matni": "savolning o'z matni",
   "variant_a": "", "variant_b": "", "variant_c": "", "variant_d": "", "variant_e": "", "variant_f": "",
   "togri_javob": "A/B/C/D/E/F yoki ochiq savol javobi",
   "yechim": "yechim yoki izoh (bo'lmasa bo'sh satr)",
@@ -48,25 +50,30 @@ Har bir element quyidagi maydonlarga ega bo'lsin:
   "rasm_x": 0-100, "rasm_y": 0-100, "rasm_kengligi": 0-100, "rasm_balandligi": 0-100
 }
 
-QOIDALAR:
-- Matematik formulalarni [[LATEX: ...]] ko'rinishida yoz. JSON ichida backslash'larni IKKI marta escape qil (masalan "[[LATEX: \\\\frac{1}{2}]]").
-- Variantlari yo'q savollar uchun variant maydonlarini bo'sh satr qoldir va savol_turi'ni "ochiq" yoki "yozma" qil.
-- Agar hujjatda javob kaliti bo'lmasa: "togri_javob" ni bo'sh satr qoldir va "yechim" ga "TEKSHIRISH KERAK" deb yoz.
-- Savol matni boshidagi tartib raqamini olib tashla.
-- Hech qanday savolni o'ylab topma — faqat hujjatdagi haqiqiy savollarni chiqar.
+MATN VA FORMULA QOIDALARI:
+- Savol matnidagi oddiy so'zlarni aynan PDFdagidek saqla.
+- Savol boshidagi tartib raqamini olib tashla.
+- Matematik formulalarni [[LATEX: ...]] ko'rinishida yoz.
+- JSON ichidagi backslash'larni to'g'ri escape qil.
+- Hech qachon "LaTeX", "LATEX", "LaTeX kodi" kabi so'zlarni foydalanuvchiga ko'rinadigan savol matniga yozma.
+- Hech qachon \`[LATEX: ...]\`, "latex:", "LATEX:" yoki code fence ishlatma. Faqat [[LATEX: formula ]] markeridan foydalan.
+- Variantlari yo'q savollar uchun variant maydonlarini bo'sh qoldir.
+- Javob kaliti bo'lmasa "togri_javob" bo'sh, "yechim" esa "TEKSHIRISH KERAK" bo'lsin.
 
-RASMLAR (ENG MUHIM QISM):
-- Faqat savolda HAQIQATAN diagramma, grafik, chizma, jadval-rasm yoki geometrik shakl bo'lsa, savol_matni ichida o'sha joyga [RASM: qisqacha tavsif] belgisini qo'y va "rasm_bor": true qil.
-- Sof matn yoki faqat formuladan iborat savollarda [RASM: ...] belgisi BO'LMASIN va "rasm_bor": false bo'lsin, koordinatalar null bo'lsin.
-- "rasm_bor": true bo'lganda rasm koordinatasi BUTUN SAHIFA emas, FAQAT RASMNING O'ZINI qamrab olsin.
-- rasm_x va rasm_y — rasmning CHAP-YUQORI nuqtasi; rasm_kengligi va rasm_balandligi — rasmning o'lchami. Hammasi sahifa o'lchamiga nisbatan 0-100%.
-- Bounding box'ni maksimal darajada TIGHT qil: diagramma/chizma/grafikning barcha chiziqlari, nuqtalari, strelkalari, o'qlari va diagramma ICHIDAGI muhim belgilar (masalan 10 cm, 20 cm, x, y, A, B, C, pi) qolsin.
-- DIAGRAMMA TASHQARISIDAGI oddiy savol gaplari, "(π ≈ 3 deb oling)" kabi alohida izohlar, variantlar, sahifa sarlavhasi, savol raqami va boshqa matnlarni bounding box ichiga KIRITMA.
-- Rasm yonidagi yoki ostidagi savol jumlasi rasmga tegishli bo'lsa ham, u diagrammaning o'zi bo'lmasa bounding box'dan tashqarida qolsin.
-- Diagramma ichidagi label va o'lchov yozuvlarini kesib yuborma. Buning uchun kerak bo'lsa box'ni 1-2% kengaytir, lekin oddiy savol matnini qo'shish hisobiga emas.
-- Agar bitta diagramma a) va b) qismlariga umumiy bo'lsa, rasmni FAQAT birinchi (odatda a)) qismga biriktir: birinchi qismda "rasm_bor": true va koordinatalar berilsin; keyingi b)/c) qismlarda aynan shu diagramma takrorlanmasin, "rasm_bor": false va koordinatalar null bo'lsin.
-- Agar bitta diagramma bir nechta qismlarga umumiy bo'lsa, diagrammani savol guruhining umumiy matnidan KEYIN, a) qismidan OLDIN ko'rsatish uchun uni birinchi qismga tegishli deb hisobla.
-- Agar joylashuvni ishonchli aniqlay olmasang, koordinatalarni null qoldir. Noto'g'ri katta box berishdan ko'ra null yaxshiroq.`;
+RASMLAR — JUDA MUHIM:
+- [RASM: ...] belgisi faqat savolda HAQIQATAN ko'rinadigan diagramma, grafik, geometrik chizma yoki rasm bo'lsa ishlatiladi.
+- Sof matn, formula, oddiy jadval yoki faqat belgilar bo'lsa rasm deb hisoblama.
+- Agar HAQIQIY rasm bo'lsa, savol_matni ichida rasm joylashgan joyga aynan [RASM: qisqa tavsif] qo'y va rasm_bor=true qil.
+- Agar HAQIQIY rasm bo'lmasa, [RASM: ...] yozma va rasm_bor=false qil.
+- Agar rasm bor bo'lsa, koordinatalar FAQAT rasmning o'zini qamrab olsin: x/y chap-yuqori burchak, kenglik/balandlik rasm o'lchami, barchasi 0-100%.
+- Bounding box maksimal darajada TIGHT bo'lsin. Rasm ichidagi A, B, C, x, y, pi, o'lchovlar va boshqa muhim label'lar qolsin.
+- Oddiy savol jumlasi, variantlar, sarlavha, savol raqami va rasmga tegishli bo'lmagan matn box ichiga kirmasin.
+- Rasmning koordinatasini ishonchli topa olmasang, rasm_bor=true bo'lib qoladi, lekin koordinatalarni null qil. Hech qachon butun sahifani rasm deb belgilama.
+- Bitta diagramma a) va b) ga umumiy bo'lsa, uni faqat birinchi qismga biriktir. Keyingi qismda rasm_bor=false va koordinatalar null bo'lsin.
+- Rasm tavsifi [RASM: ...] — faqat import jarayoni uchun ichki marker. U saqlanadigan savol matnida ko'rinmasligi kerak.
+
+ENG MUHIM TEKSHIRUV:
+Har bir savolni PDFning VISUAL ko'rinishi bilan solishtir. Diagramma bor joyda uni o'tkazib yuborma; diagramma yo'q joyda rasm o'ylab topma.`;
 
 function stripFences(s: string) {
   return s
@@ -96,6 +103,27 @@ function parseLoose(raw: string): unknown {
 
 function str(v: unknown) {
   return typeof v === "string" ? v.trim() : v == null ? "" : String(v).trim();
+}
+
+/** Remove internal image annotations from student-visible question text. */
+function stripImageMarkers(value: string) {
+  return value
+    .replace(/\s*\[RASM:\s*[^\]]*\]\s*/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/** Normalize common AI LaTeX wrappers into the single marker understood by INTIL. */
+function normalizeLatex(value: string) {
+  return value
+    .replace(/\[\[\s*LATEX\s*:\s*([\s\S]*?)\]\]/gi, "[[LATEX: $1]]")
+    .replace(/\\\[([\s\S]*?)\\\]/g, "[[LATEX: $1]]")
+    .replace(/\\\(([\s\S]*?)\\\)/g, "[[LATEX: $1]]")
+    .replace(/\$\$([\s\S]*?)\$\$/g, "[[LATEX: $1]]");
+}
+
+function cleanQuestionText(value: unknown) {
+  return normalizeLatex(stripImageMarkers(str(value)));
 }
 
 /**
@@ -179,7 +207,10 @@ export async function extractQuestionsFromPdf(input: {
             ],
           },
         ],
-        generationConfig: { responseMimeType: "application/json" },
+        generationConfig: {
+          responseMimeType: "application/json",
+          media_resolution: "MEDIA_RESOLUTION_MEDIUM",
+        },
       }),
     },
   );
@@ -219,27 +250,29 @@ export async function extractQuestionsFromPdf(input: {
     .filter((r): r is Record<string, unknown> => !!r && typeof r === "object")
     .map((r) => {
       const pageRaw = Number(r["sahifa"]);
-      const text = str(r["savol_matni"]);
-      const hasMarker = /\[RASM:/i.test(text) || /\[RASM:/i.test(str(r["asosiy_matn"]));
+      const text = cleanQuestionText(r["savol_matni"]);
+      const passage = cleanQuestionText(r["asosiy_matn"]);
+      const hasMarker = /\[RASM:/i.test(str(r["savol_matni"])) || /\[RASM:/i.test(str(r["asosiy_matn"]));
       const flag = r["rasm_bor"] === true || String(r["rasm_bor"]).toLowerCase() === "true";
+      const hasValidBox = [r["rasm_x"], r["rasm_y"], r["rasm_kengligi"], r["rasm_balandligi"]].every((v) => pct(v) != null);
       return {
         savol_turi: str(r["savol_turi"]).toLowerCase(),
-        asosiy_matn: str(r["asosiy_matn"]),
+        asosiy_matn: passage,
         savol_matni: text,
-        variant_a: str(r["variant_a"]),
-        variant_b: str(r["variant_b"]),
-        variant_c: str(r["variant_c"]),
-        variant_d: str(r["variant_d"]),
-        variant_e: str(r["variant_e"]),
-        variant_f: str(r["variant_f"]),
+        variant_a: cleanQuestionText(r["variant_a"]),
+        variant_b: cleanQuestionText(r["variant_b"]),
+        variant_c: cleanQuestionText(r["variant_c"]),
+        variant_d: cleanQuestionText(r["variant_d"]),
+        variant_e: cleanQuestionText(r["variant_e"]),
+        variant_f: cleanQuestionText(r["variant_f"]),
         togri_javob: str(r["togri_javob"]),
-        yechim: str(r["yechim"]),
+        yechim: cleanQuestionText(r["yechim"]),
         sahifa: Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : null,
         rasm_bor: hasMarker || flag,
-        rasm_x: pct(r["rasm_x"]),
-        rasm_y: pct(r["rasm_y"]),
-        rasm_kengligi: pct(r["rasm_kengligi"]),
-        rasm_balandligi: pct(r["rasm_balandligi"]),
+        rasm_x: hasValidBox ? pct(r["rasm_x"]) : null,
+        rasm_y: hasValidBox ? pct(r["rasm_y"]) : null,
+        rasm_kengligi: hasValidBox ? pct(r["rasm_kengligi"]) : null,
+        rasm_balandligi: hasValidBox ? pct(r["rasm_balandligi"]) : null,
       };
     })
     .filter((q) => q.savol_matni.length > 0);
