@@ -51,6 +51,13 @@ function MyExams() {
         <div className="gold-rule mt-8 w-40" />
       </header>
 
+      <div className="mt-8 flex flex-wrap gap-3">
+        <ButtonLink to="/natijalar" size="md">
+          Yozma natijalarim
+          <ArrowRight className="h-4 w-4" />
+        </ButtonLink>
+      </div>
+
       <section className="mt-10">
         <SectionHeader eyebrow="Natijalar" title="Yakunlangan imtihonlar" />
         {attempts === null ? null : attempts.length === 0 ? (
