@@ -98,6 +98,52 @@ function str(v: unknown) {
   return typeof v === "string" ? v.trim() : v == null ? "" : String(v).trim();
 }
 
+/**
+ * Gemini sometimes returns a two-part national-certificate open question as
+ * one record, e.g. "... a) ... b) ...". The exam UI needs each part to have
+ * its own answer field. Normalize that shape here while preserving the
+ * shared intro and attaching a shared diagram only to the first part.
+ */
+function splitCompoundOpenQuestion(question: ExtractedQuestion): ExtractedQuestion[] {
+  const type = question.savol_turi.toLowerCase();
+  if (type !== "ochiq" && type !== "yozma") return [question];
+  if (question.variant_a || question.variant_b || question.variant_c || question.variant_d || question.variant_e || question.variant_f) {
+    return [question];
+  }
+
+  const text = question.savol_matni.trim();
+  const aMatch = /(?:^|\s)a\)\s+/i.exec(text);
+  if (!aMatch) return [question];
+  const aStart = aMatch.index + aMatch[0].length;
+  const bMatch = /(?:^|\s)b\)\s+/i.exec(text.slice(aStart));
+  if (!bMatch) return [question];
+
+  const prefix = text.slice(0, aMatch.index).trim();
+  const aText = text.slice(aStart, aStart + bMatch.index).trim();
+  const bText = text.slice(aStart + bMatch.index + bMatch[0].length).trim();
+  if (!aText || !bText) return [question];
+
+  const sharedIntro = question.asosiy_matn.trim() || prefix;
+  const first: ExtractedQuestion = {
+    ...question,
+    asosiy_matn: sharedIntro,
+    savol_matni: aText,
+  };
+  const second: ExtractedQuestion = {
+    ...question,
+    asosiy_matn: sharedIntro,
+    savol_matni: bText,
+    togri_javob: "",
+    rasm_bor: false,
+    rasm_x: null,
+    rasm_y: null,
+    rasm_kengligi: null,
+    rasm_balandligi: null,
+  };
+
+  return [first, second];
+}
+
 export async function extractQuestionsFromPdf(input: {
   fileBase64: string;
   mimeType?: string;
@@ -169,7 +215,7 @@ export async function extractQuestionsFromPdf(input: {
     return n;
   };
 
-  return parsed
+  const normalized = parsed
     .filter((r): r is Record<string, unknown> => !!r && typeof r === "object")
     .map((r) => {
       const pageRaw = Number(r["sahifa"]);
@@ -197,4 +243,6 @@ export async function extractQuestionsFromPdf(input: {
       };
     })
     .filter((q) => q.savol_matni.length > 0);
+
+  return normalized.flatMap(splitCompoundOpenQuestion);
 }
