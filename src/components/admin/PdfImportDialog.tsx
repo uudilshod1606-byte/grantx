@@ -12,7 +12,7 @@ import { extractQuestionsFromPdf, type ExtractedQuestion } from "@/lib/pdf-impor
 import { extractAnswerKeyFromPdf, type AnswerKeyItem } from "@/lib/pdf-answer-key-client";
 import { getGeminiApiKey } from "@/lib/gemini-key.functions";
 import { renderTextWithLatexMarkers } from "@/components/math/formula";
-import { ADMIN_SUBJECTS, defaultPointsFor, questionsRepo, type DtmBlock, type ExamKind } from "@/lib/domain";
+import { ADMIN_SUBJECTS, BANK_CATEGORIES, defaultPointsFor, questionsRepo, type DtmBlock, type ExamKind } from "@/lib/domain";
 import { detectPart, pointsForOrder } from "@/lib/exam-points";
 import { slotTypeFor } from "@/lib/exam-scoring";
 
@@ -81,6 +81,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
   const [subjectId, setSubjectId] = useState("matematika");
   const [examLabel, setExamLabel] = useState("");
   const [examCategory, setExamCategory] = useState<"original" | "mashq">("original");
+  const [category, setCategory] = useState("");
   const [withImages, setWithImages] = useState(true);
   const [running, setRunning] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -89,8 +90,10 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
   const [onlyReview, setOnlyReview] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const subjectPool = kind === "milliy" ? ADMIN_SUBJECTS.milliy : block === "mandatory" ? ADMIN_SUBJECTS.dtmMandatory : ADMIN_SUBJECTS.dtmMain;
+  const subjectPool =
+    kind === "milliy" ? ADMIN_SUBJECTS.milliy : kind === "bank" ? ADMIN_SUBJECTS.bank : block === "mandatory" ? ADMIN_SUBJECTS.dtmMandatory : ADMIN_SUBJECTS.dtmMain;
   const subject = subjectPool.find((s) => s.id === subjectId) ?? subjectPool[0]!;
+  const bankCategoryPool = BANK_CATEGORIES[subject.id] ?? [];
   const visible = useMemo(() => (onlyReview ? rows.filter((r) => r.needsReview) : rows), [rows, onlyReview]);
   const selectedCount = rows.filter((r) => r.selected).length;
   const reviewCount = rows.filter((r) => r.needsReview).length;
@@ -185,6 +188,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
     if (!files.length) return toast.error("Avval savollar PDF faylini tanlang");
     if (!answerPdf) return toast.error("Avval Javoblar PDF faylini tanlang");
     if (kind === "milliy" && examCategory === "original" && !examLabel.trim()) return toast.error("Imtihon sanasi/nomini kiriting");
+    if (kind === "bank" && !category.trim()) return toast.error("Avval mavzuni tanlang yoki kiriting");
 
     setRunning(true);
     setRows([]);
@@ -271,6 +275,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
           imageUrl: r.imageUrl || undefined,
           examCategory: kind === "milliy" ? examCategory : undefined,
           examLabel: kind === "milliy" && examCategory === "original" ? examLabel.trim() : null,
+          category: kind === "bank" ? category.trim() : undefined,
           groupId: r.groupId,
           groupIntro: r.groupId && passageText ? passageText : null,
         });
@@ -295,9 +300,9 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Imtihon turi</label>
-              <Select value={kind} onValueChange={(v) => { const next = v as ExamKind; setKind(next); const pool = next === "milliy" ? ADMIN_SUBJECTS.milliy : block === "mandatory" ? ADMIN_SUBJECTS.dtmMandatory : ADMIN_SUBJECTS.dtmMain; setSubjectId(pool[0]!.id); }}>
+              <Select value={kind} onValueChange={(v) => { const next = v as ExamKind; setKind(next); const pool = next === "milliy" ? ADMIN_SUBJECTS.milliy : next === "bank" ? ADMIN_SUBJECTS.bank : block === "mandatory" ? ADMIN_SUBJECTS.dtmMandatory : ADMIN_SUBJECTS.dtmMain; setSubjectId(pool[0]!.id); setCategory(BANK_CATEGORIES[pool[0]!.id]?.[0]?.id ?? ""); }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="milliy">Milliy Sertifikat</SelectItem><SelectItem value="dtm">DTM</SelectItem></SelectContent>
+                <SelectContent><SelectItem value="milliy">Milliy Sertifikat</SelectItem><SelectItem value="dtm">DTM</SelectItem><SelectItem value="bank">Savollar banki</SelectItem></SelectContent>
               </Select>
             </div>
             {kind === "dtm" && <div>
@@ -309,7 +314,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
             </div>}
             <div>
               <label className="mb-1 block text-xs text-muted-foreground">Fan</label>
-              <Select value={subject.id} onValueChange={setSubjectId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{subjectPool.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
+              <Select value={subject.id} onValueChange={(v) => { setSubjectId(v); if (kind === "bank") setCategory(BANK_CATEGORIES[v]?.[0]?.id ?? ""); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{subjectPool.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select>
             </div>
             {kind === "milliy" && <div>
               <label className="mb-1 block text-xs text-muted-foreground">Bo'lim</label>
@@ -318,6 +323,14 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
             {kind === "milliy" && examCategory === "original" && <div>
               <label className="mb-1 block text-xs text-muted-foreground">Imtihon sanasi / nomi</label>
               <Input value={examLabel} onChange={(e) => setExamLabel(e.target.value)} placeholder="01.04.2024" />
+            </div>}
+            {kind === "bank" && <div>
+              <label className="mb-1 block text-xs text-muted-foreground">Mavzu (kategoriya)</label>
+              {bankCategoryPool.length > 0 ? (
+                <Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{bankCategoryPool.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select>
+              ) : (
+                <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="masalan: Grammatika" />
+              )}
             </div>}
           </div>
 
@@ -331,7 +344,11 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
             </div>
             <div className="rounded-xl border border-dashed border-primary/40 p-4">
               <div className="font-medium">Javoblar PDF</div>
-              <p className="mt-1 text-xs text-muted-foreground">1–35 uchun A/B/C/D/E, 36–45 uchun a) va b) javoblari.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {kind === "bank"
+                  ? "Har bir savol raqami va to'g'ri javob harfi jadval ko'rinishida (masalan bob oxiridagi javoblar jadvali)."
+                  : "1–35 uchun A/B/C/D/E, 36–45 uchun a) va b) javoblari."}
+              </p>
               <label className="mt-3 inline-flex cursor-pointer items-center rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground"><Upload className="mr-2 h-3.5 w-3.5" /> Javoblar PDF tanlash<input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => { setAnswerPdf(e.target.files?.[0] ?? null); e.target.value = ""; }} /></label>
               {answerPdf && <div className="mt-3 flex items-center gap-2 text-xs"><FileText className="h-3.5 w-3.5 text-muted-foreground" /><span className="truncate">{answerPdf.name}</span>{!running && <button type="button" className="ml-auto text-muted-foreground hover:text-rose-400" onClick={() => setAnswerPdf(null)}><Trash2 className="h-3.5 w-3.5" /></button>}</div>}
             </div>
