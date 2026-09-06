@@ -6,7 +6,7 @@ import { recalculateAdaptivePlan } from "@/lib/learning";
 import { BluebookExam } from "@/components/bluebook/BluebookExam";
 import { FullscreenGate } from "@/components/bluebook/FullscreenGate";
 import { MILLIY_SUBJECTS } from "@/lib/milliy";
-import { getQuestionPoints } from "@/lib/exam-scoring";
+import { pointsForQuestionNumber } from "@/lib/exam-scoring";
 import { writtenRepo, type NewSubmission } from "@/lib/written-submissions";
 
 const DURATION_MINUTES = 90;
@@ -45,7 +45,10 @@ function currentQuestionNumber() {
 function findQuestionForNumber(questions: Question[], number: number) {
   const indexed = questions.map((q, index) => ({ q, index, n: questionNumber(q, index) }));
   const matching = indexed.filter((item) => item.n === number && item.q.questionType === "moslashtirish");
-  if (matching.length) return matching[0].q;
+  if (matching.length) {
+    const start = Number(matching[0].q.groupId?.match(/^(\d{1,2})/)?.[1] ?? number);
+    return matching[Math.max(0, Math.min(matching.length - 1, number - start))]?.q ?? matching[0].q;
+  }
   return indexed.find((item) => item.n === number)?.q ?? null;
 }
 
@@ -153,7 +156,7 @@ function BluebookExamPage() {
         const q = questions[i];
         const n = questionNumber(q, i);
         if (n < 1 || n > testEnd || isWrittenNumber(n)) continue;
-        const points = getQuestionPoints(subjectId, n, q.points ?? 0);
+        const points = pointsForQuestionNumber(subjectId, n) ?? q.points ?? 0;
         testMax += points;
         const captured = capturedAnswers.current[q.id];
         const correct = captured?.kind === "option"
