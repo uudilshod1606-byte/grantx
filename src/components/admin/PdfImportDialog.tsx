@@ -200,7 +200,6 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
               : slotType === "yozma" || slotType === "esse"
                 ? "esse"
                 : mapType(q.savol_turi, options.length);
-      const isOpen = questionType === "ochiq" || questionType === "esse";
       const points =
         (kind === "milliy"
           ? pointsForOrder({ subjectId, questionNumber, part })
