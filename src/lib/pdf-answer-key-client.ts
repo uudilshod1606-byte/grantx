@@ -3,7 +3,7 @@
  * The answer key is intentionally parsed separately from question extraction.
  */
 
-const MODEL = "gemini-3.6-flash";
+const MODEL = "gemini-2.5-flash";
 
 export type AnswerKeyItem = {
   questionNumber: number;
@@ -43,16 +43,40 @@ function extractJsonArray(raw: string) {
 
 function parseLoose(raw: string): unknown {
   const body = extractJsonArray(raw);
-  try {
-    return JSON.parse(body);
-  } catch {
-    const fixed = body.replace(/\\(?!["\\/bfnrtu])/g, "\\\\");
-    return JSON.parse(fixed);
+  const attempts = [
+    body,
+    body.replace(/\\(?!["\\/bfnrtu])/g, "\\\\"),
+    body.replace(/,(\s*,)+/g, ",").replace(/,(\s*[\]}])/g, "$1"),
+    body
+      .replace(/\\(?!["\\/bfnrtu])/g, "\\\\")
+      .replace(/,(\s*,)+/g, ",")
+      .replace(/,(\s*[\]}])/g, "$1"),
+  ];
+  let lastError: unknown;
+  for (const attempt of attempts) {
+    try {
+      return JSON.parse(attempt);
+    } catch (e) {
+      lastError = e;
+    }
   }
+  throw lastError;
 }
 
 function str(v: unknown) {
   return typeof v === "string" ? v.trim() : v == null ? "" : String(v).trim();
+}
+
+/** Waits, retrying transient 429 (rate limit) responses with backoff before giving up. */
+async function fetchGeminiWithRetry(url: string, opts: RequestInit, maxAttempts = 4): Promise<Response> {
+  const delays = [6000, 15000, 30000];
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await fetch(url, opts);
+    if (res.status !== 429 && res.status !== 503) return res;
+    if (attempt === maxAttempts - 1) return res;
+    await new Promise((r) => setTimeout(r, delays[attempt] ?? 30000));
+  }
+  return fetch(url, opts);
 }
 
 export async function extractAnswerKeyFromPdf(input: {
@@ -66,7 +90,7 @@ export async function extractAnswerKeyFromPdf(input: {
   }
   if (!input.apiKey) throw new Error("GEMINI_API_KEY sozlanmagan");
 
-  const res = await fetch(
+  const res = await fetchGeminiWithRetry(
     `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
     {
       method: "POST",
@@ -103,7 +127,8 @@ export async function extractAnswerKeyFromPdf(input: {
     } catch {
       /* keep raw text */
     }
-    if (res.status === 429) throw new Error("Javoblar PDFi uchun AI so'rovlari chegarasiga yetildi (429).");
+    if (res.status === 429) throw new Error("Javoblar PDFi uchun AI so'rovlari chegarasiga yetildi (429). Bir necha marta qayta urinildi — 1-2 daqiqa kutib qaytadan urining.");
+    if (res.status === 503) throw new Error("Javoblar PDFi uchun AI serveri hozir band (503). Bir necha marta qayta urinildi, baribir band edi — 2-3 daqiqadan so'ng qaytadan urining.");
     if (res.status === 401 || res.status === 403) {
       throw new Error(`Gemini kaliti rad etildi (${res.status}): ${message}`);
     }
