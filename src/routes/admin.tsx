@@ -382,7 +382,7 @@ function QuestionsTab() {
                     <td className="px-4 py-3 text-muted-foreground">{subjName}</td>
                     <td className="px-4 py-3 text-muted-foreground">{blockLabel}</td>
                     <td className="px-4 py-3 font-semibold gradient-text">
-                      {(q.points ?? defaultPointsFor(q.kind, q.block ?? null)).toFixed(1)}
+                      {q.kind === "bank" ? "—" : (q.points ?? defaultPointsFor(q.kind, q.block ?? null)).toFixed(1)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button
@@ -697,16 +697,18 @@ function QuestionFormDialog({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground">Ball</label>
-            <Input
-              type="number"
-              step="0.1"
-              min="0"
-              value={points}
-              onChange={(e) => setPoints(Number(e.target.value))}
-            />
-          </div>
+          {kind !== "bank" && (
+            <div>
+              <label className="text-xs text-muted-foreground">Ball</label>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                value={points}
+                onChange={(e) => setPoints(Number(e.target.value))}
+              />
+            </div>
+          )}
         </div>
 
         {kind === "milliy" && (

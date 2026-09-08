@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   CheckCircle2,
   Clock3,
   Flag,
@@ -82,6 +83,7 @@ function BankSessionPage() {
   const [stage, setStage] = useState<Stage>("loading");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [secondsLeft, setSecondsLeft] = useState(0);
   const finishedRef = useRef(false);
 
@@ -154,6 +156,7 @@ function BankSessionPage() {
     finishedRef.current = false;
     setIndex(0);
     setAnswers({});
+    setChecked({});
     setSecondsLeft(pool.length * SECONDS_PER_QUESTION);
     setStage("running");
   };
@@ -321,7 +324,6 @@ function BankSessionPage() {
   // running
   const question = pool[index];
   const isLast = index === pool.length - 1;
-  const answeredCount = Object.keys(answers).length;
 
   return (
     <div className="min-h-screen bg-page">
@@ -343,7 +345,7 @@ function BankSessionPage() {
               <Timer className="h-4 w-4" /> {formatTime(Math.max(0, secondsLeft))}
             </span>
           ) : (
-            <span className="text-sm text-ink-soft">{answeredCount} javob berildi</span>
+            <span className="text-sm text-ink-soft">{Object.keys(checked).length} tekshirildi</span>
           )}
         </div>
         <div className="h-1 w-full bg-obsidian/[0.06]">
@@ -372,31 +374,68 @@ function BankSessionPage() {
           <div className="mt-6 space-y-2.5">
             {question.options.map((option, i) => {
               const selected = answers[question.id] === i;
+              const isChecked = !!checked[question.id];
+              const isCorrectOption = i === question.correctIndex;
+              let stateClass = selected
+                ? "border-obsidian bg-obsidian text-ivory"
+                : "border-hairline bg-card text-ink hover:border-gold/40 hover:bg-ivory";
+              if (isChecked) {
+                if (isCorrectOption) stateClass = "border-emerald-500 bg-emerald-50 text-emerald-900";
+                else if (selected) stateClass = "border-red-400 bg-red-50 text-red-700";
+                else stateClass = "border-hairline bg-card text-ink-soft opacity-70";
+              }
               return (
                 <button
                   key={i}
                   type="button"
+                  disabled={isChecked}
                   onClick={() => setAnswers((prev) => ({ ...prev, [question.id]: i }))}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-[15px] transition-colors",
-                    selected
-                      ? "border-obsidian bg-obsidian text-ivory"
-                      : "border-hairline bg-card text-ink hover:border-gold/40 hover:bg-ivory",
+                    "flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-[15px] transition-colors disabled:cursor-default",
+                    stateClass,
                   )}
                 >
                   <span
                     className={cn(
                       "grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-semibold",
-                      selected ? "border-ivory/60 text-ivory" : "border-hairline text-ink-soft",
+                      isChecked
+                        ? isCorrectOption
+                          ? "border-emerald-500 text-emerald-700"
+                          : selected
+                          ? "border-red-400 text-red-600"
+                          : "border-hairline text-ink-soft"
+                        : selected
+                        ? "border-ivory/60 text-ivory"
+                        : "border-hairline text-ink-soft",
                     )}
                   >
-                    {LETTERS[i]}
+                    {isChecked && isCorrectOption ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : isChecked && selected ? <XCircle className="h-3.5 w-3.5" /> : LETTERS[i]}
                   </span>
                   <MathContent latex={option} inline className="text-[15px]" />
                 </button>
               );
             })}
           </div>
+
+          {checked[question.id] && (
+            <div
+              className={cn(
+                "mt-5 rounded-xl border p-4",
+                answers[question.id] === question.correctIndex
+                  ? "border-emerald-200 bg-emerald-50"
+                  : "border-red-200 bg-red-50",
+              )}
+            >
+              <p className={cn("text-sm font-medium", answers[question.id] === question.correctIndex ? "text-emerald-800" : "text-red-700")}>
+                {answers[question.id] === question.correctIndex
+                  ? "To'g'ri javob!"
+                  : `Noto'g'ri. To'g'ri javob: ${question.correctIndex !== undefined ? LETTERS[question.correctIndex] : "—"}`}
+              </p>
+              {question.explanation && (
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{question.explanation}</p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mt-6 flex items-center justify-between gap-3">
@@ -409,7 +448,16 @@ function BankSessionPage() {
             <ArrowLeft className="h-4 w-4" /> Oldingi
           </button>
 
-          {isLast ? (
+          {!checked[question.id] ? (
+            <button
+              type="button"
+              onClick={() => setChecked((prev) => ({ ...prev, [question.id]: true }))}
+              disabled={answers[question.id] === undefined}
+              className="flex h-11 items-center gap-1.5 rounded-xl bg-obsidian px-5 text-sm font-medium text-ivory transition-colors hover:bg-obsidian-soft disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Check className="h-4 w-4" /> Tekshirish
+            </button>
+          ) : isLast ? (
             <button
               type="button"
               onClick={finish}
