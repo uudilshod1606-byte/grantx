@@ -3,7 +3,7 @@
  * The answer key is intentionally parsed separately from question extraction.
  */
 
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.6-flash";
 
 export type AnswerKeyItem = {
   questionNumber: number;
@@ -68,8 +68,8 @@ function str(v: unknown) {
 }
 
 /** Waits, retrying transient 429 (rate limit) responses with backoff before giving up. */
-async function fetchGeminiWithRetry(url: string, opts: RequestInit, maxAttempts = 4): Promise<Response> {
-  const delays = [6000, 15000, 30000];
+async function fetchGeminiWithRetry(url: string, opts: RequestInit, maxAttempts = 5): Promise<Response> {
+  const delays = [5000, 10000, 20000, 40000];
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const res = await fetch(url, opts);
     if (res.status !== 429 && res.status !== 503) return res;
