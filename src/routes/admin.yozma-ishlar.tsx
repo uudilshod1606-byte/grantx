@@ -73,7 +73,8 @@ function WrittenAdminPage() {
     if (!selected) return;
     setBusy(true);
     try {
-      const apiKey = await getGeminiApiKey();
+      const apiKeys = await getGeminiApiKey();
+      const apiKey = apiKeys[0];
       if (selected.submissionKind === "esse") {
         const ai = await evaluateEssay({
           apiKey,
