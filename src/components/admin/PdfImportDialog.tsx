@@ -193,9 +193,9 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
     setRunning(true);
     setRows([]);
     try {
-      const apiKey = await fetchGeminiKey({ data: undefined });
+      const apiKeys = await fetchGeminiKey({ data: undefined });
       const answerBase64 = await toBase64(answerPdf);
-      const answerKey = await extractAnswerKeyFromPdf({ fileBase64: answerBase64, mimeType: "application/pdf", apiKey });
+      const answerKey = await extractAnswerKeyFromPdf({ fileBase64: answerBase64, mimeType: "application/pdf", apiKeys });
       if (!answerKey.length) throw new Error("Javoblar PDFidan javoblar topilmadi");
 
       setFileStates(files.map((f) => ({ name: f.name, status: "ishlanmoqda" })));
@@ -204,7 +204,7 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
       const results = await Promise.all(files.map(async (file) => {
         try {
           const base64 = await toBase64(file);
-          const items = await extractQuestionsFromPdf({ fileBase64: base64, mimeType: "application/pdf", apiKey });
+          const items = await extractQuestionsFromPdf({ fileBase64: base64, mimeType: "application/pdf", apiKeys });
           let cropUrls: Record<string, string> = {};
           if (withImages) {
             const seenCropSignatures = new Set<string>();
@@ -280,7 +280,8 @@ export function PdfImportDialog({ onImported }: { onImported: () => void }) {
           groupIntro: r.groupId && passageText ? passageText : null,
         });
         ok++;
-      } catch {
+      } catch (e) {
+        console.error("Savol saqlashda xato:", e);
         failed.push(r.id);
       }
     }
