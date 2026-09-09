@@ -67,35 +67,48 @@ function str(v: unknown) {
   return typeof v === "string" ? v.trim() : v == null ? "" : String(v).trim();
 }
 
-/** Waits, retrying transient 429 (rate limit) responses with backoff before giving up. */
-async function fetchGeminiWithRetry(url: string, opts: RequestInit, maxAttempts = 5): Promise<Response> {
-  const delays = [5000, 10000, 20000, 40000];
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await fetch(url, opts);
-    if (res.status !== 429 && res.status !== 503) return res;
-    if (attempt === maxAttempts - 1) return res;
-    await new Promise((r) => setTimeout(r, delays[attempt] ?? 30000));
+/**
+ * Waits, retrying transient 429 (rate limit) / 503 (overloaded) responses with
+ * backoff, and rotates across several API keys — when one key's quota is
+ * exhausted (429), the next key (fresh quota) is tried right away.
+ */
+async function fetchGeminiWithRetry(
+  urlFor: (apiKey: string) => string,
+  optsFor: (apiKey: string) => RequestInit,
+  apiKeys: string[],
+): Promise<Response> {
+  const delays = [4000, 10000, 20000];
+  let lastRes: Response | null = null;
+  for (const key of apiKeys) {
+    for (let attempt = 0; attempt < delays.length + 1; attempt++) {
+      const res = await fetch(urlFor(key), optsFor(key));
+      if (res.status !== 429 && res.status !== 503) return res;
+      lastRes = res;
+      if (attempt === delays.length) break;
+      await new Promise((r) => setTimeout(r, delays[attempt]));
+    }
   }
-  return fetch(url, opts);
+  return lastRes as Response;
 }
 
 export async function extractAnswerKeyFromPdf(input: {
   fileBase64: string;
   mimeType?: string;
-  apiKey: string;
+  apiKeys: string[];
 }): Promise<AnswerKeyItem[]> {
   if (!input.fileBase64) throw new Error("Javoblar PDFi bo'sh");
   if (input.fileBase64.length > 25_000_000) {
     throw new Error("Javoblar PDFi juda katta. Faylni bo'lib yuboring.");
   }
-  if (!input.apiKey) throw new Error("GEMINI_API_KEY sozlanmagan");
+  if (!input.apiKeys || input.apiKeys.length === 0) throw new Error("GEMINI_API_KEY sozlanmagan");
 
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
   const res = await fetchGeminiWithRetry(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-    {
+    () => url,
+    (apiKey) => ({
       method: "POST",
       headers: {
-        "x-goog-api-key": input.apiKey,
+        "x-goog-api-key": apiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -115,7 +128,8 @@ export async function extractAnswerKeyFromPdf(input: {
         ],
         generationConfig: { responseMimeType: "application/json" },
       }),
-    },
+    }),
+    input.apiKeys,
   );
 
   if (!res.ok) {

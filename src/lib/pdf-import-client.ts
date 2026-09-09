@@ -184,37 +184,49 @@ function splitCompoundOpenQuestion(question: ExtractedQuestion): ExtractedQuesti
   return [first, second];
 }
 
-/** Waits, retrying transient 429 (rate limit) responses with backoff before giving up. */
-async function fetchGeminiWithRetry(url: string, opts: RequestInit, maxAttempts = 5): Promise<Response> {
-  const delays = [5000, 10000, 20000, 40000];
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await fetch(url, opts);
-    if (res.status !== 429 && res.status !== 503) return res;
-    if (attempt === maxAttempts - 1) return res;
-    await new Promise((r) => setTimeout(r, delays[attempt] ?? 30000));
+/**
+ * Waits, retrying transient 429 (rate limit) / 503 (overloaded) responses with
+ * backoff, and rotates across several API keys — when one key's quota is
+ * exhausted (429), the next key (fresh quota) is tried right away.
+ */
+async function fetchGeminiWithRetry(
+  urlFor: (apiKey: string) => string,
+  optsFor: (apiKey: string) => RequestInit,
+  apiKeys: string[],
+): Promise<Response> {
+  const delays = [4000, 10000, 20000];
+  let lastRes: Response | null = null;
+  for (const key of apiKeys) {
+    for (let attempt = 0; attempt < delays.length + 1; attempt++) {
+      const res = await fetch(urlFor(key), optsFor(key));
+      if (res.status !== 429 && res.status !== 503) return res;
+      lastRes = res;
+      if (attempt === delays.length) break; // exhausted retries for this key, try next key
+      await new Promise((r) => setTimeout(r, delays[attempt]));
+    }
   }
-  // unreachable, satisfies TS
-  return fetch(url, opts);
+  return lastRes as Response;
 }
 
 export async function extractQuestionsFromPdf(input: {
   fileBase64: string;
   mimeType?: string;
-  apiKey: string;
+  apiKeys: string[];
 }): Promise<ExtractedQuestion[]> {
   if (!input.fileBase64) throw new Error("Fayl bo'sh");
   if (input.fileBase64.length > 25_000_000) {
     throw new Error("PDF hajmi juda katta. Faylni bo'lib yuboring.");
   }
 
-  const apiKey = input.apiKey;
-  if (!apiKey) {
+  const apiKeys = input.apiKeys;
+  if (!apiKeys || apiKeys.length === 0) {
     throw new Error("GEMINI_API_KEY sozlanmagan — administratorga murojaat qiling");
   }
 
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
   const res = await fetchGeminiWithRetry(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
-    {
+    () => url,
+    (apiKey) => ({
       method: "POST",
       headers: { "x-goog-api-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -237,7 +249,8 @@ export async function extractQuestionsFromPdf(input: {
           media_resolution: "MEDIA_RESOLUTION_MEDIUM",
         },
       }),
-    },
+    }),
+    apiKeys,
   );
 
   if (!res.ok) {
