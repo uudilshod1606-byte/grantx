@@ -371,8 +371,19 @@ function questionToRow(q: Partial<Question>): Record<string, unknown> {
 
 export const questionsRepo = {
   list: async (): Promise<Question[]> => {
-    const rows = (await supabaseFetch(`/questions?select=*&order=created_at.desc`)) as Record<string, unknown>[] | null;
-    return (rows ?? []).map(rowToQuestion);
+    // Supabase/PostgREST caps a single response at ~1000 rows by default,
+    // so we page through with limit/offset until everything is fetched.
+    const pageSize = 1000;
+    const all: Record<string, unknown>[] = [];
+    for (let offset = 0; ; offset += pageSize) {
+      const batch = (await supabaseFetch(
+        `/questions?select=*&order=created_at.desc&limit=${pageSize}&offset=${offset}`,
+      )) as Record<string, unknown>[] | null;
+      const rows = batch ?? [];
+      all.push(...rows);
+      if (rows.length < pageSize) break;
+    }
+    return all.map(rowToQuestion);
   },
   add: async (q: Omit<Question, "id" | "createdAt" | "updatedAt">): Promise<Question> => {
     const rows = (await supabaseFetch(`/questions`, {
