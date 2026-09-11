@@ -24,7 +24,19 @@ Har bir element:
 QOIDALAR:
 - 1-35 kabi oddiy yopiq savollarda part=null va answer faqat javob harfi bo'lsin: A, B, C, D, E yoki F.
 - 36-45 kabi a/b savollarda har bir qismni alohida chiqaring: masalan {"questionNumber":36,"part":"a","answer":"21"} va {"questionNumber":36,"part":"b","answer":"-37"}.
-- Ochiq javoblarni PDFda qanday berilgan bo'lsa, mazmunini o'zgartirmasdan matn sifatida saqlang. Kasr, ildiz, daraja, minus va o'lchov birliklarini yo'qotmang.
+- Ochiq javoblar uchun answer formati:
+  * Agar javob oddiy butun son yoki oddiy kasr bo'lsa (masalan "294", "19/3", "-37"), uni O'ZGARTIRMASDAN oddiy matn sifatida yozing.
+  * Agar javobda ildiz (√), murakkab/ichma-ich kasr, daraja (kvadrat/kub va h.k.), log, trigonometrik funksiya yoki boshqa maxsus matematik belgi bo'lsa, uni albatta [[LATEX: <latex_kodi>]] formatida yozing — xuddi savol matnida ishlatilgan LaTeX uslubida.
+  * π belgisi alohida, oddiy ko'paytuvchi sifatida kelsa (masalan "75π", "63π"), uni oddiy matn holida qoldirishingiz mumkin.
+  * Hech qachon mazmunni o'zgartirmang yoki soddalashtirmang — faqat formatlang.
+
+  Misollar:
+  "294" -> "294"
+  "19/3" -> "19/3"
+  "75π" -> "75π"
+  "2√(4/3)" -> "[[LATEX: 2\\sqrt{\\frac{4}{3}}}]]"
+  "8√2·π" -> "[[LATEX: 8\\sqrt{2}\\pi]]"
+  "x²+1" -> "[[LATEX: x^2+1]]"
 - Jadval sarlavhalari, telefon raqamlari, Telegram username, reklama va boshqa matnlarni javob deb olmang.
 - Savol raqamlarini aynan PDFdagi raqam bilan chiqaring.
 - Agar javobni ishonchli o'qiy olmasang, o'sha elementni chiqarmaslik o'rniga answer maydonini bo'sh qoldir.
