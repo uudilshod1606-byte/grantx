@@ -26,6 +26,93 @@ const SUBJECT_NAMES: Record<string, string> = {
   "ona-tili-adabiyot": "Ona tili va adabiyot",
 };
 
+function unescapeHtmlEntities(s: string): string {
+  return s
+    .replace(/&quot;/g, "\"")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
+/**
+ * Admin/PDF-import saqlagan javoblar ba'zan tayyor HTML bo'ladi — masalan
+ * "<span class=\"formula-embed\" data-latex=\"2\\sqrt{5}/3\" ...>...</span>".
+ * Bu yerdan asl LaTeX'ni ("data-latex" atributidan) chiqarib olamiz, qolgan
+ * HTML teglarini esa olib tashlaymiz.
+ */
+function extractLatexFromHtml(s: string): string {
+  let out = s.replace(
+    /<span[^>]*\bdata-latex="([^"]*)"[^>]*>[\s\S]*?<\/span>/g,
+    (_m, g) => ` ${unescapeHtmlEntities(g)} `,
+  );
+  out = out.replace(/<[^>]+>/g, " ");
+  return unescapeHtmlEntities(out);
+}
+
+/**
+ * Matematik javoblarni solishtirish uchun kanonik shaklga keltiradi.
+ * LaTeX (MathLive'dan, shu jumladan "[[LATEX: ... ]]" belgisi va
+ * formula-embed HTML bilan) va oddiy matn (PDF import'dan) formatidagi
+ * bir xil javoblarni bir xil qatorga aylantiradi, masalan:
+ *   "[[LATEX: 2\sqrt{\frac53}]]"  →  "2sqrt((5)/(3))"
+ *   "2√5/3"                       →  "2sqrt(5)/3"
+ * To'liq CAS emas — ammo eng ko'p uchraydigan ildiz/kasr/ko'paytirish
+ * formatlashi farqlarini bartaraf qiladi.
+ */
+export function normalizeMathAnswer(raw: string): string {
+  let s = extractLatexFromHtml(raw).trim();
+  if (!s) return "";
+
+  // "[[LATEX: ... ]]", "$$...$$", "$...$", "\(...\)", "\[...\]" — belgilarni
+  // olib tashlab, faqat ichidagi LaTeX/matnni qoldiramiz.
+  s = s
+    .replace(/\[\[LATEX:([\s\S]*?)\]\]/g, (_m, g) => g)
+    .replace(/\$\$([\s\S]*?)\$\$/g, (_m, g) => g)
+    .replace(/\$([^$\r\n]+?)\$/g, (_m, g) => g)
+    .replace(/\\\(([\s\S]*?)\\\)/g, (_m, g) => g)
+    .replace(/\\\[([\s\S]*?)\\\]/g, (_m, g) => g)
+    .trim();
+
+  const unbrace = (g: string) => (g.startsWith("{") && g.endsWith("}") ? g.slice(1, -1) : g);
+
+  // \frac{A}{B}, \dfrac{A}{B}, and the braceless shorthand \frac53 -> (A)/(B).
+  // Bir necha marta qo'llaymiz (ichma-ich kasrlar uchun).
+  for (let i = 0; i < 5; i++) {
+    const next = s.replace(
+      /\\d?frac\s*(\{[^{}]*\}|[0-9a-zA-Z])\s*(\{[^{}]*\}|[0-9a-zA-Z])/g,
+      (_m, a: string, b: string) => `(${unbrace(a)})/(${unbrace(b)})`,
+    );
+    if (next === s) break;
+    s = next;
+  }
+
+  s = s
+    .replace(/\\sqrt\s*\{([^{}]*)\}/g, "sqrt($1)")
+    .replace(/\\sqrt\s*([0-9a-zA-Z])/g, "sqrt($1)")
+    .replace(/√\s*\{([^{}]*)\}/g, "sqrt($1)")
+    .replace(/√\s*([0-9a-zA-Z]+)/g, "sqrt($1)")
+    .replace(/\\left|\\right/g, "")
+    .replace(/\\cdot|\\times/g, "*")
+    .replace(/\\div/g, "/")
+    .replace(/\\pi/g, "pi")
+    .replace(/\\,|\\!|\\;|\\:|\\ /g, "")
+    .replace(/\^\{([^{}]*)\}/g, "^($1)")
+    .replace(/_\{([^{}]*)\}/g, "_($1)")
+    .replace(/[{}]/g, "")
+    .replace(/\\/g, "")
+    .replace(/\s+/g, "")
+    .toLowerCase();
+
+  return s;
+}
+
+/** MathLive/PDF-import formatidan qat'iy nazar, ikki javobni ma'noan solishtiradi. */
+export function answersMatch(given: string, expected: string): boolean {
+  if (!given.trim() || !expected.trim()) return false;
+  if (given.trim().toLowerCase() === expected.trim().toLowerCase()) return true;
+  return normalizeMathAnswer(given) === normalizeMathAnswer(expected);
+}
+
 export type QuestionSlotType = "yopiq" | "moslashtirish" | "ochiq" | "qisqa-ochiq" | "yozma" | "esse";
 
 export type SubjectStructure = {

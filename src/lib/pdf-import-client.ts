@@ -59,6 +59,8 @@ MATN VA FORMULA QOIDALARI:
 - Hech qachon \`[LATEX: ...]\`, "latex:", "LATEX:" yoki code fence ishlatma. Faqat [[LATEX: formula ]] markeridan foydalan.
 - Variantlari yo'q savollar uchun variant maydonlarini bo'sh qoldir.
 - Javob kaliti bo'lmasa "togri_javob" bo'sh, "yechim" esa "TEKSHIRISH KERAK" bo'lsin.
+- "ochiq" turdagi savollar uchun "togri_javob" ichida matematik ifoda (kasr, ildiz, daraja va h.k.) bo'lsa, uni ham [[LATEX: ...]] ko'rinishida yoz — masalan "togri_javob": "[[LATEX: 2\\sqrt{5}/3 ]]". Agar javob oddiy son yoki so'z bo'lsa (masalan "12" yoki "5 m"), [[LATEX: ...]] shart emas.
+- [[LATEX: ...]] ichida kasrni yozganda har doim \\frac{A}{B} ko'rinishida, TO'LIQ jingalak qavslar bilan yoz (\\frac53 kabi qavssiz qisqartmalardan foydalanma) — bu keyinchalik noaniqlikka olib keladi.
 
 RASMLAR — JUDA MUHIM:
 - [RASM: ...] belgisi faqat savolda HAQIQATAN ko'rinadigan diagramma, grafik, geometrik chizma yoki rasm bo'lsa ishlatiladi.
