@@ -13,6 +13,7 @@ import {
 import { buildQuestionSlots, type Question } from "@/lib/domain";
 import { MathContent } from "@/components/math/MathContent";
 import { MathQuestionField } from "@/components/math/MathQuestionField";
+import { MarkerContent } from "@/components/math/MarkerContent";
 import { ReferencePanel } from "./ReferencePanel";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"] as const;
@@ -599,6 +600,12 @@ function OpenGroup({
  * Students can keep typing plain numbers/text directly, or press the "fx"
  * button to open the same MathLive editor the admin question form uses;
  * the formula is appended to the answer as a [[LATEX: ...]] marker.
+ *
+ * Whenever the current value already contains a [[LATEX: ...]] marker,
+ * a small preview is shown below the input using the exact same
+ * renderTextWithLatexMarkers -> MathContent pipeline the question/exam
+ * pages use, so the student sees the typeset formula instead of the raw
+ * marker text.
  */
 function OpenAnswerField({
   value,
@@ -623,6 +630,8 @@ function OpenAnswerField({
     setDraft("");
     setMathOpen(false);
   };
+
+  const hasMarker = /\[\[LATEX:/.test(value);
 
   return (
     <div className="mt-6">
@@ -649,6 +658,16 @@ function OpenAnswerField({
           <Sigma className="h-5 w-5" />
         </button>
       </div>
+
+      {hasMarker && (
+        <div className="mt-2 max-w-md rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+          <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-gray-400">
+            Javobingiz shunday ko'rinadi:
+          </span>
+          <MarkerContent text={value} inline className="text-[16px] text-black" />
+        </div>
+      )}
+
       {mathOpen && (
         <div className="mt-3 max-w-md rounded-lg border border-gray-300 bg-white p-3 shadow-lg">
           <div className="mb-2 flex items-center justify-between">
