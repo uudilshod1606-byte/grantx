@@ -6,18 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type AnswerInput = {
-  question_id: string;
-  answer_index?: number | null;
-  answer_text?: string | null;
-};
-
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+type AnswerInput = { question_id: string; answer_index?: number | null; answer_text?: string | null };
 
 export default {
   fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
@@ -39,10 +35,9 @@ export default {
     if (!attemptId || answers.length > 1000) return json({ error: "Invalid submission" }, 400);
 
     const admin = ctx.supabaseAdmin;
-
     const { data: attempt, error: attemptError } = await admin
       .from("exam_attempts")
-      .select("id,user_id,status,expires_at,submitted_at")
+      .select("id,user_id,status,expires_at,question_ids")
       .eq("id", attemptId)
       .maybeSingle();
 
@@ -52,6 +47,15 @@ export default {
 
     const expiresAt = new Date(attempt.expires_at).getTime();
     if (!Number.isFinite(expiresAt)) return json({ error: "Invalid attempt deadline" }, 500);
+    if (Date.now() > expiresAt) {
+      await admin.from("exam_attempts").update({ status: "expired", updated_at: new Date().toISOString() }).eq("id", attemptId).eq("status", "active");
+      return json({ error: "Exam time has expired" }, 409);
+    }
+
+    const lockedIds = Array.isArray(attempt.question_ids)
+      ? [...new Set(attempt.question_ids.map((id: unknown) => String(id)).filter(Boolean))]
+      : [];
+    if (lockedIds.length === 0) return json({ error: "Attempt has no locked questions" }, 500);
 
     const normalized = answers
       .map((a) => ({
@@ -59,76 +63,59 @@ export default {
         answer_index: a?.answer_index == null ? null : Number(a.answer_index),
         answer_text: a?.answer_text == null ? null : String(a.answer_text).slice(0, 2000),
       }))
-      .filter((a) => a.question_id.length > 0)
-      .slice(0, 1000);
+      .filter((a) => lockedIds.includes(a.question_id) && a.question_id.length > 0)
+      .slice(0, lockedIds.length);
 
-    const uniqueIds = [...new Set(normalized.map((a) => a.question_id))];
     const { data: questions, error: questionError } = await admin
       .from("questions")
       .select("id,correct_index,points")
-      .in("id", uniqueIds);
+      .in("id", lockedIds);
 
     if (questionError) return json({ error: "Could not score submission" }, 500);
 
-    const questionMap = new Map(
-      (questions ?? []).map((q) => [String(q.id), q as { id: string; correct_index: number | null; points: number | null }]),
-    );
+    const questionMap = new Map((questions ?? []).map((q) => [String(q.id), q as { id: string; correct_index: number | null; points: number | null }]));
+    const answerMap = new Map(normalized.map((a) => [a.question_id, a]));
 
-    const answerRows = normalized.filter((a) => questionMap.has(a.question_id));
-    const correct = answerRows.reduce((sum, answer) => {
-      const q = questionMap.get(answer.question_id);
-      return sum + (q?.correct_index != null && answer.answer_index === Number(q.correct_index) ? 1 : 0);
-    }, 0);
+    let correct = 0;
+    let score = 0;
+    let maxScore = 0;
+    for (const id of lockedIds) {
+      const q = questionMap.get(id);
+      const pts = Number(q?.points ?? 0);
+      maxScore += Number.isFinite(pts) ? pts : 0;
+      const answer = answerMap.get(id);
+      if (q?.correct_index != null && answer?.answer_index === Number(q.correct_index)) {
+        correct += 1;
+        score += pts;
+      }
+    }
 
-    const total = questionMap.size;
-    const unanswered = Math.max(0, total - answerRows.length);
-    const incorrect = Math.max(0, answerRows.length - correct);
-    const percent = total > 0 ? Math.round((correct / total) * 10000) / 100 : 0;
-
+    const total = lockedIds.length;
+    const unanswered = lockedIds.filter((id) => !answerMap.has(id)).length;
+    const incorrect = Math.max(0, total - correct - unanswered);
+    const percent = maxScore > 0 ? Math.round((score / maxScore) * 10000) / 100 : Math.round((correct / total) * 10000) / 100;
     const now = new Date().toISOString();
 
     const { error: answersError } = await admin
       .from("exam_answers")
       .upsert(
-        answerRows.map((a) => ({
-          attempt_id: attemptId,
-          question_id: a.question_id,
-          answer_index: a.answer_index,
-          answer_text: a.answer_text,
-          answered_at: now,
-        })),
+        normalized.map((a) => ({ attempt_id: attemptId, question_id: a.question_id, answer_index: a.answer_index, answer_text: a.answer_text, answered_at: now })),
         { onConflict: "attempt_id,question_id" },
       );
-
     if (answersError) return json({ error: "Could not save answers" }, 500);
 
-    const { error: updateError } = await admin
+    const { data: finalized, error: updateError } = await admin
       .from("exam_attempts")
-      .update({
-        status: "submitted",
-        submitted_at: now,
-        total,
-        correct,
-        incorrect,
-        unanswered,
-        percent,
-        updated_at: now,
-      })
+      .update({ status: "submitted", submitted_at: now, total, correct, incorrect, unanswered, percent, updated_at: now })
       .eq("id", attemptId)
       .eq("user_id", userId)
-      .eq("status", "active");
+      .eq("status", "active")
+      .select("id")
+      .maybeSingle();
 
     if (updateError) return json({ error: "Could not finalize attempt" }, 500);
+    if (!finalized) return json({ error: "Attempt was finalized by another request" }, 409);
 
-    return json({
-      attempt_id: attemptId,
-      total,
-      correct,
-      incorrect,
-      unanswered,
-      percent,
-      submitted_at: now,
-      expired: Date.now() > expiresAt,
-    });
+    return json({ attempt_id: attemptId, total, correct, incorrect, unanswered, percent, score, max_score: maxScore, submitted_at: now });
   }),
 };
