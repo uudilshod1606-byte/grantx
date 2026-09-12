@@ -19,6 +19,40 @@ type SubjectInput = {
   questionCount: number;
 };
 
+const DTM_MANDATORY = ["ona-tili", "matematika-m", "tarix-m"] as const;
+const DTM_MAIN_SUBJECTS = [
+  "matematika",
+  "fizika",
+  "kimyo",
+  "biologiya",
+  "geografiya",
+  "ingliz",
+  "adabiyot",
+  "tarix",
+  "huquq",
+  "informatika",
+] as const;
+
+function isExactDtmConfig(subjects: SubjectInput[], duration: number) {
+  if (duration !== 180 || subjects.length !== 5) return false;
+  const mandatory = subjects.filter((s) => s.block === "mandatory");
+  const main1 = subjects.filter((s) => s.block === "main1");
+  const main2 = subjects.filter((s) => s.block === "main2");
+  if (mandatory.length !== 3 || main1.length !== 1 || main2.length !== 1) return false;
+
+  const mandatoryIds = mandatory.map((s) => String(s.id)).sort();
+  if (mandatoryIds.join("|") !== [...DTM_MANDATORY].sort().join("|")) return false;
+  if (mandatory.some((s) => Number(s.questionCount) !== 10)) return false;
+  if (Number(main1[0].questionCount) !== 30 || Number(main2[0].questionCount) !== 30) return false;
+
+  const main1Id = String(main1[0].id);
+  const main2Id = String(main2[0].id);
+  if (main1Id === main2Id) return false;
+  if (!(DTM_MAIN_SUBJECTS as readonly string[]).includes(main1Id)) return false;
+  if (!(DTM_MAIN_SUBJECTS as readonly string[]).includes(main2Id)) return false;
+  return true;
+}
+
 export default {
   fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -51,6 +85,12 @@ export default {
       return json({ error: "Invalid exam configuration" }, 400);
     }
 
+    // DTM structure is authoritative on the server. Never trust the browser to
+    // choose blocks, counts, duration, or arbitrary subject IDs.
+    if (kind === "dtm" && !isExactDtmConfig(subjects, duration)) {
+      return json({ error: "Invalid DTM exam configuration" }, 400);
+    }
+
     const admin = ctx.supabaseAdmin;
     const questionIds: string[] = [];
     const publicQuestions: unknown[] = [];
@@ -68,10 +108,14 @@ export default {
         .order("created_at", { ascending: true })
         .limit(count);
 
-      if (kind === "dtm" && subject.block) query = query.eq("block", subject.block);
+      if (kind === "dtm") query = query.eq("block", subject.block);
 
       const { data, error } = await query;
       if (error) return json({ error: "Could not load exam questions" }, 500);
+
+      if (kind === "dtm" && (data?.length ?? 0) !== count) {
+        return json({ error: `Not enough questions for ${subjectId}` }, 409);
+      }
 
       for (const q of data ?? []) {
         questionIds.push(String(q.id));
@@ -80,6 +124,8 @@ export default {
     }
 
     if (questionIds.length === 0) return json({ error: "No questions available" }, 404);
+    if (kind === "dtm" && questionIds.length !== 90) return json({ error: "DTM question set is incomplete" }, 409);
+    if (new Set(questionIds).size !== questionIds.length) return json({ error: "Duplicate questions detected" }, 409);
 
     const startedAt = new Date();
     const expiresAt = new Date(startedAt.getTime() + duration * 60_000);
