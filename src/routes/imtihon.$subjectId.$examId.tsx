@@ -9,7 +9,7 @@ import { MILLIY_SUBJECTS } from "@/lib/milliy";
 import { pointsForQuestionNumber } from "@/lib/exam-scoring";
 import { writtenRepo, type NewSubmission } from "@/lib/written-submissions";
 
-const DURATION_MINUTES = 90;
+const DURATION_MINUTES = 150;
 const LEGACY_LABEL = "Imtihon 1";
 const MASHQ_EXAM_ID = "mashq";
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
