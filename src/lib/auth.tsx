@@ -29,7 +29,7 @@ type AuthContextValue = {
   signInWithGoogle: () => Promise<void>;
 };
 
-export const INTIL_ADMIN_EMAIL = "dilshoduktamov34@gmail.com";
+export const INTIL_ADMIN_EMAIL = "uudilshod1606@gmail.com";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
