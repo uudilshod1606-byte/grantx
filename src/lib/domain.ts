@@ -455,7 +455,7 @@ export const attemptsRepo = {
 /*  Admin allowlist                                                           */
 /* -------------------------------------------------------------------------- */
 
-export const DEFAULT_ADMINS = ["dilshoduktamov34@gmail.com"];
+export const DEFAULT_ADMINS = ["uudilshod1606@gmail.com"];
 
 export function getAdminEmails(): string[] {
   if (typeof window === "undefined") return DEFAULT_ADMINS;
