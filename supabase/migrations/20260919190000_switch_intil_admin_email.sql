@@ -18,7 +18,7 @@ CREATE POLICY "question_images_admin_insert"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (
   bucket_id = 'question-images'
-  AND lower(coalesce(auth.jwt() ->> 'email','')) = 'uudilshod1601606@gmail.com'
+  AND lower(coalesce(auth.jwt() ->> 'email','')) = 'uudilshod1606@gmail.com'
 );
 
 CREATE POLICY "question_images_admin_update"
