@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2, Mail, User, Lock, ArrowRight, MailCheck } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -24,12 +24,24 @@ const schema = z.object({
 });
 
 function SignUpPage() {
-  const { signUp, loading: authLoading, isAuthenticated } = useAuth();
+  const { signUp, verifySignUpOtp, resendSignUpOtp, loading: authLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [otp, setOtp] = useState("");
+  const [resendSeconds, setResendSeconds] = useState(0);
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = window.setInterval(() => {
+      setResendSeconds((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendSeconds]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,13 +61,16 @@ function SignUpPage() {
       setErrors(fieldErrors);
       return;
     }
+
     setErrors({});
     setLoading(true);
     try {
       const { needsEmailConfirmation } = await signUp(parsed.data);
       if (needsEmailConfirmation) {
         setPendingEmail(parsed.data.email);
-        toast.success("Tasdiqlash havolasi emailingizga yuborildi");
+        setOtp("");
+        setResendSeconds(60);
+        toast.success("6 xonali tasdiqlash kodi emailingizga yuborildi");
       } else {
         toast.success("Hisob yaratildi! INTIL'ga xush kelibsiz");
         navigate({ to: "/dashboard" });
@@ -67,29 +82,116 @@ function SignUpPage() {
     }
   };
 
+  const onVerify = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!pendingEmail) return;
+
+    const normalizedOtp = otp.replace(/\D/g, "").slice(0, 6);
+    if (normalizedOtp.length !== 6) {
+      toast.error("6 xonali kodni to'liq kiriting");
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      await verifySignUpOtp({ email: pendingEmail, token: normalizedOtp });
+      toast.success("Email tasdiqlandi! Hisobingizga kiryapsiz...");
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Kod tekshirilmadi");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const onResend = async () => {
+    if (!pendingEmail || resendSeconds > 0 || resendLoading) return;
+
+    setResendLoading(true);
+    try {
+      await resendSignUpOtp(pendingEmail);
+      setOtp("");
+      setResendSeconds(60);
+      toast.success("Yangi 6 xonali kod emailingizga yuborildi");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Kod yuborilmadi");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   if (authLoading) return <AuthLoadingScreen />;
   if (isAuthenticated) return <Navigate to="/dashboard" />;
 
   if (pendingEmail) {
     return (
       <AuthShell
-        badge="Deyarli tayyor"
-        title="Emailingizni tasdiqlang"
-        subtitle={`Biz ${pendingEmail} manziliga tasdiqlash havolasini yubordik. Havolani bosing — shundan so'ng avtomatik tarzda hisobingizga kirasiz.`}
+        badge="Email tasdiqlash"
+        title="Kodni kiriting"
+        subtitle={"Biz " + pendingEmail + " manziliga 6 xonali tasdiqlash kodini yubordik. Emailingizni ochib, kodni shu yerga kiriting."}
         footer={
           <>
-            Havola kelmadimi? Spam papkasini tekshiring yoki{" "}
-            <button type="button" onClick={() => setPendingEmail(null)} className="font-medium text-foreground hover:text-primary">
-              qaytadan urinib ko'ring
+            Email manzilini o'zgartirmoqchimisiz?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setPendingEmail(null);
+                setOtp("");
+              }}
+              className="font-medium text-foreground hover:text-primary"
+            >
+              Orqaga qaytish
             </button>
-            .
           </>
         }
       >
-        <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-sm text-muted-foreground">
-          <MailCheck className="h-5 w-5 text-primary" />
-          Tasdiqlanmagan hisob bilan tizimga kirib bo'lmaydi.
+        <form onSubmit={onVerify} className="space-y-4" noValidate>
+          <div>
+            <label htmlFor="signup-otp" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+              6 xonali kod
+            </label>
+            <input
+              id="signup-otp"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              autoFocus
+              placeholder="000000"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-4 text-center text-2xl font-semibold tracking-[0.45em] text-foreground outline-none transition placeholder:text-muted-foreground/40 focus:border-primary/50 focus:bg-white/[0.06]"
+              aria-label="6 xonali email tasdiqlash kodi"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            disabled={otpLoading || otp.length !== 6}
+            className="gradient-bg w-full text-primary-foreground hover:opacity-90"
+          >
+            {otpLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                Tasdiqlash <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </form>
+
+        <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <MailCheck className="h-4 w-4 text-primary" />
+          <span>Kod kelmadimi?</span>
+          <button
+            type="button"
+            onClick={onResend}
+            disabled={resendSeconds > 0 || resendLoading}
+            className="font-medium text-foreground transition hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {resendLoading ? "Yuborilmoqda..." : resendSeconds > 0 ? "Qayta yuborish (" + resendSeconds + "s)" : "Qayta yuborish"}
+          </button>
         </div>
+
         <Link to="/login" className="mt-4 block text-center text-sm font-medium text-foreground hover:text-primary">
           Kirish sahifasiga o'tish
         </Link>
@@ -187,7 +289,14 @@ function Field({
       <label htmlFor={name} className="mb-1.5 block text-xs font-medium text-muted-foreground">
         {label}
       </label>
-      <div className={`group flex items-center gap-2 rounded-xl border px-3 py-2.5 transition ${error ? "border-destructive/60 bg-destructive/5" : "border-white/10 bg-white/[0.03] focus-within:border-primary/50 focus-within:bg-white/[0.06]"}`}>
+      <div
+        className={
+          "group flex items-center gap-2 rounded-xl border px-3 py-2.5 transition " +
+          (error
+            ? "border-destructive/60 bg-destructive/5"
+            : "border-white/10 bg-white/[0.03] focus-within:border-primary/50 focus-within:bg-white/[0.06]")
+        }
+      >
         {icon && <span className="text-muted-foreground">{icon}</span>}
         <input
           id={name}
