@@ -71,7 +71,7 @@ export const guides: Guide[] = [
           "Rejasiz o'qimang — har kuni nima o'qishingiz, qancha test ishlashingiz va qaysi mavzularni takrorlashingiz oldindan belgilangan bo'lsin.",
           "Xatolar ustida ishlang — har bir noto'g'ri javobni yozib boring va nima sababdan xato qilganingizni tahlil qiling.",
           "Natijani muntazam kuzatib boring — haftada kamida bir marta sinov testi ishlang va natijalaringizni tahlil qiling.",
-          "Hozirgi holatingizni aniqlab oling — intil.lovable.app saytidan foydalanib, har oy qancha o'sish ko'rsatayotganingizni muntazam kuzatib boring.",
+          "Hozirgi holatingizni aniqlab oling — intil.uudilshod1606.workers.dev saytidan foydalanib, har oy qancha o'sish ko'rsatayotganingizni muntazam kuzatib boring.",
         ],
       },
       {
@@ -111,7 +111,7 @@ export const guides: Guide[] = [
           "Xatolarni tahlil qilish",
           "Muntazam ravishda yangi testlardan foydalanish",
           "Telegram kanal: t.me/intil_hamjamiyat",
-          "INTIL platformasi: intil.lovable.app",
+          "INTIL platformasi: intil.uudilshod1606.workers.dev",
         ],
       },
     ],
