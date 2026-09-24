@@ -31,6 +31,21 @@ type AuthContextValue = {
 
 export const INTIL_ADMIN_EMAIL = "uudilshod1606@gmail.com";
 
+const PUBLIC_APP_URL = "https://intil.uudilshod1606.workers.dev";
+
+function getAuthRedirect(path: string) {
+  return `${PUBLIC_APP_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function redirectToCanonicalApp() {
+  if (typeof window === "undefined") return;
+  const origin = window.location.origin;
+  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  if (!isLocal && origin !== PUBLIC_APP_URL) {
+    window.location.replace(`${PUBLIC_APP_URL}${window.location.pathname}${window.location.search}${window.location.hash}`);
+  }
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function adminRoleFor(email: string): AuthUser["role"] {
@@ -56,6 +71,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    redirectToCanonicalApp();
+    if (typeof window !== "undefined") {
+      const isLocal =
+        window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      if (!isLocal && window.location.origin !== PUBLIC_APP_URL) return;
+    }
+
     let alive = true;
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
@@ -85,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { full_name: normalizedName },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: getAuthRedirect("/dashboard"),
       },
     });
 
@@ -123,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: getAuthRedirect("/dashboard"),
       },
     });
     if (error) throw new Error("Google orqali kirish amalga oshmadi. Qayta urinib ko'ring.");
