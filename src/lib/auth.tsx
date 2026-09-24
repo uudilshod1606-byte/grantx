@@ -25,6 +25,8 @@ type AuthContextValue = {
   isAdmin: boolean;
   signIn: (input: { email: string; password: string; remember?: boolean }) => Promise<void>;
   signUp: (input: { fullName: string; email: string; password: string }) => Promise<{ needsEmailConfirmation: boolean }>;
+  verifySignUpOtp: (input: { email: string; token: string }) => Promise<void>;
+  resendSignUpOtp: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
 };
@@ -122,6 +124,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { needsEmailConfirmation: !data.session };
   };
 
+  const verifySignUpOtp: AuthContextValue["verifySignUpOtp"] = async ({ email, token }) => {
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: token.trim(),
+      type: "email",
+    });
+
+    if (error) {
+      throw new Error("Kod noto'g'ri yoki muddati tugagan. Emaildagi eng so'nggi kodni kiriting.");
+    }
+  };
+
+  const resendSignUpOtp: AuthContextValue["resendSignUpOtp"] = async (email) => {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim().toLowerCase(),
+      options: {
+        emailRedirectTo: getAuthRedirect("/dashboard"),
+      },
+    });
+
+    if (error) {
+      throw new Error("Yangi tasdiqlash kodi yuborilmadi. Birozdan keyin qayta urinib ko'ring.");
+    }
+  };
+
   const signIn: AuthContextValue["signIn"] = async ({ email, password }) => {
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
@@ -130,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) {
       if (/email not confirmed/i.test(error.message)) {
-        throw new Error("Email hali tasdiqlanmagan. Pochtangizdagi tasdiqlash havolasini bosing.");
+        throw new Error("Email hali tasdiqlanmagan. Pochtangizga yuborilgan 6 xonali kodni kiriting.");
       }
       // Deliberately keep login failures generic so the UI does not reveal
       // whether a particular email exists.
@@ -167,6 +195,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAdmin: adminRoleFor(user?.email ?? "") === "admin",
     signIn,
     signUp,
+    verifySignUpOtp,
+    resendSignUpOtp,
     signOut,
     signInWithGoogle,
   }), [user, session, loading]);
