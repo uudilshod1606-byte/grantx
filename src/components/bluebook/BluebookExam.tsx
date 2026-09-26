@@ -11,6 +11,7 @@ import {
   Sigma,
 } from "lucide-react";
 import { buildQuestionSlots, type Question } from "@/lib/domain";
+import { gradeFor, pointsForQuestionNumber, subjectMaxPoints } from "@/lib/exam-scoring";
 import { MathContent } from "@/components/math/MathContent";
 import { MathQuestionField } from "@/components/math/MathQuestionField";
 import { MarkerContent } from "@/components/math/MarkerContent";
@@ -195,6 +196,32 @@ export function BluebookExam({
     [answers, questions],
   );
 
+  const physicsScore = useMemo(() => {
+    if (subjectName !== "Fizika") return null;
+    let rawScore = 0;
+    let maxScore = subjectMaxPoints("fizika") ?? 100;
+
+    for (let i = 0; i < questions.length; i++) {
+      const item = questions[i];
+      const a = answers[item.id];
+      if (!a) continue;
+
+      const match = item.groupId?.match(/^(\d{1,2})/);
+      const questionNumber = match ? Number(match[1]) : i + 1;
+      const correct =
+        item.questionType === "ochiq"
+          ? a.kind === "text" &&
+            !!item.answerText &&
+            normalizeAnswer(a.value) === normalizeAnswer(item.answerText)
+          : a.kind === "option" && a.index === item.correctIndex;
+
+      if (correct) rawScore += pointsForQuestionNumber("fizika", questionNumber) ?? item.points ?? 0;
+    }
+
+    const score75 = Math.round((rawScore / maxScore) * 75 * 100) / 100;
+    return { score75, grade: gradeFor(score75) };
+  }, [answers, questions, subjectName]);
+
   useEffect(() => {
     if (!submitted || reportedRef.current || !questions.length) return;
     reportedRef.current = true;
@@ -246,6 +273,10 @@ export function BluebookExam({
 
   if (submitted) {
     const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
+    const isPhysics = subjectName === "Fizika";
+    const displayScore = isPhysics && physicsScore ? physicsScore.score75.toFixed(2) : String(percent);
+    const displayGrade = isPhysics ? physicsScore?.grade : null;
+
     return (
       <div className="min-h-screen bg-[#FAF7F1] px-6 py-14 text-[#171717]">
         <div className="mx-auto w-full max-w-2xl">
@@ -255,17 +286,36 @@ export function BluebookExam({
           <h1 className="mt-5 text-[32px] font-semibold leading-tight sm:text-[40px]">
             Imtihon yakunlandi.
           </h1>
-          <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-[#6F6A62]">
-            Quyidagi ko'rsatkich — test natijasi. Rasmiy sertifikat balli Rash modeli asosida
-            alohida hisoblanadi.
-          </p>
-          <div className="mt-12 flex items-end gap-4 border-b border-[rgba(30,25,18,0.10)] pb-8">
-            <span className="text-[72px] font-semibold leading-none tabular-nums">{percent}</span>
-            <span className="pb-2 text-2xl text-[#6F6A62]">%</span>
-            <span className="pb-3 pl-2 text-sm text-[#6F6A62]">
-              {score} / {questions.length} to'g'ri javob
-            </span>
-          </div>
+          {isPhysics ? (
+            <>
+              <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-[#6F6A62]">
+                Fizika natijasi siz kiritgan Milliy Sertifikat ball tizimi bo'yicha hisoblandi.
+              </p>
+              <div className="mt-12 border-b border-[rgba(30,25,18,0.10)] pb-8">
+                <div className="flex items-end gap-3">
+                  <span className="text-[72px] font-semibold leading-none tabular-nums">{displayScore}</span>
+                  <span className="pb-2 text-2xl text-[#6F6A62]">ball</span>
+                </div>
+                <div className="mt-4 text-lg font-semibold">
+                  Daraja: {displayGrade ?? "Daraja mavjud emas"}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-[#6F6A62]">
+                Quyidagi ko'rsatkich — test natijasi. Rasmiy sertifikat balli Rash modeli asosida
+                alohida hisoblanadi.
+              </p>
+              <div className="mt-12 flex items-end gap-4 border-b border-[rgba(30,25,18,0.10)] pb-8">
+                <span className="text-[72px] font-semibold leading-none tabular-nums">{percent}</span>
+                <span className="pb-2 text-2xl text-[#6F6A62]">%</span>
+                <span className="pb-3 pl-2 text-sm text-[#6F6A62]">
+                  {score} / {questions.length} to'g'ri javob
+                </span>
+              </div>
+            </>
+          )}
           <h2 className="mt-10 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#6F6A62]">
             Natijangiz tahlili
           </h2>
