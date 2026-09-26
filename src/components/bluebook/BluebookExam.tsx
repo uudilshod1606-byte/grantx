@@ -197,9 +197,9 @@ export function BluebookExam({
   );
 
   const physicsScore = useMemo(() => {
-    if (subjectName !== "Fizika") return null;
+    if (subjectName !== "Fizika" && subjectName !== "Matematika") return null;
     let rawScore = 0;
-    let maxScore = subjectMaxPoints("fizika") ?? 100;
+    let maxScore = subjectMaxPoints(subjectName === "Matematika" ? "matematika" : "fizika") ?? 100;
 
     for (let i = 0; i < questions.length; i++) {
       const item = questions[i];
@@ -215,7 +215,7 @@ export function BluebookExam({
             normalizeAnswer(a.value) === normalizeAnswer(item.answerText)
           : a.kind === "option" && a.index === item.correctIndex;
 
-      if (correct) rawScore += pointsForQuestionNumber("fizika", questionNumber) ?? item.points ?? 0;
+      if (correct) rawScore += pointsForQuestionNumber(subjectName === "Matematika" ? "matematika" : "fizika", questionNumber) ?? item.points ?? 0;
     }
 
     const score75 = Math.round((rawScore / maxScore) * 75 * 100) / 100;
@@ -274,8 +274,9 @@ export function BluebookExam({
   if (submitted) {
     const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
     const isPhysics = subjectName === "Fizika";
-    const displayScore = isPhysics && physicsScore ? physicsScore.score75.toFixed(2) : String(percent);
-    const displayGrade = isPhysics ? physicsScore?.grade : null;
+    const isMathematics = subjectName === "Matematika";
+    const displayScore = (isPhysics || isMathematics) && physicsScore ? physicsScore.score75.toFixed(2) : String(percent);
+    const displayGrade = (isPhysics || isMathematics) ? physicsScore?.grade : null;
 
     return (
       <div className="min-h-screen bg-[#FAF7F1] px-6 py-14 text-[#171717]">
@@ -286,10 +287,10 @@ export function BluebookExam({
           <h1 className="mt-5 text-[32px] font-semibold leading-tight sm:text-[40px]">
             Imtihon yakunlandi.
           </h1>
-          {isPhysics ? (
+          {isPhysics || isMathematics ? (
             <>
               <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-[#6F6A62]">
-                Fizika natijasi siz kiritgan Milliy Sertifikat ball tizimi bo'yicha hisoblandi.
+                {subjectName} natijasi siz kiritgan Milliy Sertifikat ball tizimi bo'yicha hisoblandi.
               </p>
               <div className="mt-12 border-b border-[rgba(30,25,18,0.10)] pb-8">
                 <div className="flex items-end gap-3">
