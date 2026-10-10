@@ -1,6 +1,6 @@
 /* Browser-side Gemini PDF question extraction. Gemini keys are supplied only to the admin UI. */
 
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.6-flash";
 
 export type ExtractedQuestion = {
   savol_turi:string; asosiy_matn:string; savol_matni:string;
