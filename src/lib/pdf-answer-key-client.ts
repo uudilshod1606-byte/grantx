@@ -1,5 +1,5 @@
 /** Browser-side Gemini extraction for official answer-key PDFs. */
-const MODEL="gemini-2.5-flash";
+const MODEL="gemini-3.6-flash";
 export type AnswerKeyItem={questionNumber:number;part:"a"|"b"|null;answer:string};
 const PROMPT=`Sen O'zbekiston imtihonlarining JAVOBLAR KALITI PDFini raqamlashtiruvchi yordamchisan. PDFdagi javoblar jadvalini o'qi va FAQAT JSON massiv qaytar. Har bir element {"questionNumber":1,"part":null,"answer":"A"}. 1-35 kabi yopiq savollarda part=null va answer A-F bo'lsin. 36-45 kabi a/b savollarda a va b qismlarni alohida chiqaring. Ochiq javoblarni PDFdagidek saqla. Jadval sarlavhasi, reklama yoki boshqa matnni javob deb olma.`;
 const parse=(raw:string)=>{const s=raw.replace(/^\s*```(?:json)?/i,"").replace(/```\s*$/i,"").trim(),a=s.indexOf("["),b=s.lastIndexOf("]");const x=a>=0&&b>a?s.slice(a,b+1):s;try{return JSON.parse(x)}catch{throw new Error("AI javoblar kalitini JSON sifatida o'qib bo'lmadi")}};
